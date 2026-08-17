@@ -22,10 +22,6 @@ DEFAULT_TIMEOUT_SECONDS = 4 * 60 * 60
 BAZEL_TEST_TIMEOUT_SECONDS = 3000
 PIPELINE_SEPARATOR = "-" * 70
 
-PROPERTY_STATUS_PATTERN = re.compile(
-    r"^\[✓\] Completed: Property (\d+) "
-    r"\(Simulation State & Verification Encoding\)$"
-)
 OUTPUT_DIRECTORY_PATTERN = re.compile(
     r"^Output Directory: (smt_output_\d+)$"
 )
@@ -75,7 +71,7 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         add_help=False,
         usage=(
-            "%(prog)s (--subspec | --noscope | --fullsym) [-c] "
+            "%(prog)s [--subspec | --noscope | --fullsym] [-c] "
             "[-t THREADS] [--timeout SECONDS] [--internet2] [-v] "
             "work_directory [-h]"
         ),
@@ -88,11 +84,11 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         ),
     )
     workflows = parser.add_argument_group("SpecLens workflows")
-    workflow = workflows.add_mutually_exclusive_group(required=True)
+    workflow = workflows.add_mutually_exclusive_group()
     workflow.add_argument(
         "--subspec",
         action="store_true",
-        help="run the standard subspecification workflow",
+        help="run the standard subspecification workflow (default)",
     )
     workflow.add_argument(
         "--noscope",
@@ -149,7 +145,10 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         action="help",
         help="show this help message and exit",
     )
-    return parser.parse_args(argv)
+    options = parser.parse_args(argv)
+    if not (options.subspec or options.noscope or options.fullsym):
+        options.subspec = True
+    return options
 
 
 def _is_relative_to(path: Path, parent: Path) -> bool:
@@ -297,21 +296,10 @@ def generate_property(
     result = run_command(
         command,
         verbose=verbose,
-        visible_prefixes=(
-            "[✓] Completed: Property ",
-            "[✗] Failed: Property ",
-        ),
     )
     if not result.succeeded:
         return None, result
 
-    property_matches = [
-        PROPERTY_STATUS_PATTERN.fullmatch(line.strip())
-        for line in result.output.splitlines()
-    ]
-    property_matches = [
-        match for match in property_matches if match is not None
-    ]
     directory_matches = [
         OUTPUT_DIRECTORY_PATTERN.fullmatch(line.strip())
         for line in result.output.splitlines()
@@ -319,11 +307,7 @@ def generate_property(
     directory_matches = [
         match for match in directory_matches if match is not None
     ]
-    if (
-        len(property_matches) != 1
-        or int(property_matches[0].group(1)) != property_index
-        or len(directory_matches) != 1
-    ):
+    if len(directory_matches) != 1:
         return None, CommandResult(
             1,
             result.output
@@ -396,6 +380,10 @@ def run_pipeline(options: argparse.Namespace) -> bool:
             )
             return False
 
+        print(
+            f"[✓] Completed: Property {property_index:02d} "
+            "(Simulation State & Verification Encoding)"
+        )
         print(
             "[✓] Completed: Store Outputs to "
             f"'{_display_path(output_directory)}'"

@@ -5,8 +5,8 @@ Built on Batfish simulation states and Minesweeper verification encodings, it de
 sound localized constraints on individual routers, configuration lines, and fields 
 that explain how they preserve a verified network property.
 
-- Project website: [SpecLens](https://declarative-systems-lab.github.io/SpecLens)
-- User study: [SpecLens User Study](https://declarative-systems-lab.github.io/SpecLens/userstudy)
+- Project Website: [SpecLens](https://declarative-systems-lab.github.io/SpecLens)
+- User Study Interface: [SpecLens User Study](https://declarative-systems-lab.github.io/SpecLens/userstudy)
 
 ## User Study and Benchmarks
 
@@ -18,14 +18,6 @@ Each runnable work directory contains:
 
 - `configs/`: network device configurations.
 - `properties.json`: one or more network properties.
-
-## Workflows
-
-The top-level runner supports three subspecification workflows:
-
-- `--subspec`: runs the SubSpec pipeline.
-- `--noscope`: runs the SubSpec NoScope baseline pipeline.
-- `--fullsym`: runs the SubSpec FullSym baseline pipeline.
 
 ---
 
@@ -50,20 +42,28 @@ SpecLens requires:
 
 ## Test
 
-Run the user-study task1 network through the Batfish, Minesweeper, and SpecLens.
-The subspecifications are stored in directory `smts/smt_output_xxxx/4_subspec/`.
-Use `python3 run_benchmarks.py -h` to list more options.
+Run the user-study task1 network through Batfish, Minesweeper, and SpecLens:
 
 ```bash
-python3 run_benchmarks.py --subspec user-study/userstudy_task1
+python3 run_benchmarks.py user-study/userstudy_task1
 ```
 
-For every network, the command:
+The runner uses the SubSpec workflow by default. To run a baseline instead,
+specify one of the following options:
+
+- `--noscope`: runs the SubSpec NoScope baseline.
+- `--fullsym`: runs the SubSpec FullSym baseline.
+
+For each property, the runner:
 
 1. computes the simulation state with Batfish;
 2. generates the verification encoding with Minesweeper;
 3. checks consistency between the simulation state and verification encoding; and
 4. computes line-level and field-level subspecifications with SpecLens.
+
+Generated artifacts are stored under `smts/smt_output_xxxx/`, with the final
+SubSpec results in `smts/smt_output_xxxx/4_subspec/`. Run
+`python3 run_benchmarks.py -h` to list all options.
 
 ---
 
@@ -75,7 +75,7 @@ the simulation state and verification encoding.
 For the Internet2 real-world configurations, enable compatibility refinement:
 
 ```bash
-python3 run_benchmarks.py --subspec --internet2 benchmarks/Internet2
+python3 run_benchmarks.py --internet2 benchmarks/Internet2
 ```
 
 This option disables external BGP environment inputs in violation checks and
