@@ -18,9 +18,9 @@ class LogicalEdge {
 
   private EdgeType _type;
 
-  private SymbolicRoute _symbolicRoute;
+  private SymbolicRouteBV _symbolicRoute;
 
-  LogicalEdge(GraphEdge edge, EdgeType type, SymbolicRoute symbolicRoute) {
+  LogicalEdge(GraphEdge edge, EdgeType type, SymbolicRouteBV symbolicRoute) {
     _edge = edge;
     _type = type;
     _symbolicRoute = symbolicRoute;
@@ -30,7 +30,7 @@ class LogicalEdge {
     return _type;
   }
 
-  SymbolicRoute getSymbolicRecord() {
+  SymbolicRouteBV getSymbolicRecord() {
     return _symbolicRoute;
   }
 

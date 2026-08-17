@@ -4,8 +4,14 @@ import static java.util.Objects.requireNonNull;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.collect.ImmutableMap;
 import java.util.Set;
 import javax.annotation.Nonnull;
+
+import com.microsoft.z3.BoolExpr;
+import com.microsoft.z3.Context;
+import com.microsoft.z3.Solver;
+import org.batfish.common.BatfishException;
 import org.batfish.datamodel.bgp.community.Community;
 import org.batfish.datamodel.routing_policy.Environment;
 import org.batfish.datamodel.visitors.CommunitySetExprVisitor;
@@ -23,6 +29,9 @@ public class NamedCommunitySet extends CommunitySetExpr {
 
   public NamedCommunitySet(@Nonnull String name) {
     _name = name;
+
+    // initialize enable smt variable flag to true
+    _enableSmtVariable = false;
   }
 
   @Override
@@ -95,5 +104,35 @@ public class NamedCommunitySet extends CommunitySetExpr {
 
   private @Nonnull CommunitySetExpr resolve(@Nonnull Environment environment) {
     return requireNonNull(environment.getCommunityLists().get(_name));
+  }
+
+  /** Add configuration constant - SMT symbolic variable */
+  // private boolean _enableSmtVariable;    // Inherited from the parent class
+  // private String _configVarPrefix;       // Inherited from the parent class
+
+  @Override
+  public void initSmtVariable(
+      Context context, Solver solver, String configVarPrefix, boolean isTrue,
+      ImmutableMap<Community, Integer> commsIndex, int commsWidth) {
+    // assert that the named community set is not shared
+    if (_enableSmtVariable) {
+      throw new BatfishException("NamedCommunitySet.initSmtVariable: shared object.\n" +
+          "Previous configVarPrefix: " + _configVarPrefix + "\n" +
+          "Current  configVarPrefix: " + configVarPrefix);
+    }
+
+    // NOTE: do nothing, just refer to the RouteFilterList object
+    //       according to the parameter _name
+
+    // configure the smt variable enable flag to true
+    _enableSmtVariable = true;
+    _configVarPrefix = configVarPrefix;
+  }
+
+  @Override
+  public void initSmtVariable(
+      Context context, Solver solver, String configVarPrefix,
+      ImmutableMap<Community, Integer> commsIndex, int commsWidth) {
+    initSmtVariable(context, solver, configVarPrefix, true, commsIndex, commsWidth);
   }
 }

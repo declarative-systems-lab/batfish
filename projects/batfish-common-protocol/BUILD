@@ -74,6 +74,7 @@ java_library(
     ],
     deps = [
         "//projects/bdd",
+        "//projects/lib/z3",
         "@maven//:com_fasterxml_jackson_core_jackson_annotations",
         "@maven//:com_fasterxml_jackson_core_jackson_core",
         "@maven//:com_fasterxml_jackson_core_jackson_databind",

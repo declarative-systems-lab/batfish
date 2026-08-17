@@ -1,0 +1,19 @@
+{
+  "properties": [
+    {
+      "description": "USER STUDY WARM UP: Reachability",
+      "type": "reachability",
+      "ingressNodeRegex": "customer",
+      "finalNodeRegex": "isp1",
+      "dstIps": ["192.0.2.0/24"]
+    },
+    {
+      "description": "USER STUDY WARM UP: Reachability",
+      "type": "reachability",
+      "ingressNodeRegex": "customer",
+      "finalNodeRegex": "isp1",
+      "dstIps": ["198.51.100.0/24"],
+      "negate": true
+    }
+  ]
+}

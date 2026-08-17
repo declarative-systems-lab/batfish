@@ -10,10 +10,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
+
+import org.batfish.common.BatfishException;
 import org.batfish.common.Warnings;
 import org.batfish.datamodel.routing_policy.Environment;
 import org.batfish.datamodel.routing_policy.Result;
 import org.batfish.datamodel.routing_policy.RoutingPolicy;
+
+import org.batfish.datamodel.routing_policy.expr.CommunitySetExpr;
+import org.batfish.datamodel.routing_policy.expr.NamedCommunitySet;
+import org.batfish.datamodel.routing_policy.expr.LiteralCommunitySet;
+import org.batfish.datamodel.routing_policy.expr.LiteralCommunity;
+import org.batfish.datamodel.RegexCommunitySet;
+import org.batfish.datamodel.CommunityList;
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "class")
 @JsonSubTypes({
@@ -88,5 +97,27 @@ public abstract class Statement implements Serializable {
     } else {
       return super.toString();
     }
+  }
+
+  public static CommunitySetExpr cloneCommunityExpr(CommunitySetExpr expr) {
+    if (expr instanceof RegexCommunitySet) {
+      RegexCommunitySet rcs =  (RegexCommunitySet) expr;
+      return new RegexCommunitySet(rcs.getRegex());
+    } else if (expr instanceof NamedCommunitySet) {
+      NamedCommunitySet ncs =  (NamedCommunitySet) expr;
+      return new NamedCommunitySet(ncs.getName());
+    } else if (expr instanceof CommunityList) {
+      CommunityList cl = (CommunityList) expr;
+      return new CommunityList(cl.getName(), cl.getLines(), cl.getInvertMatch());
+    } else if (expr instanceof LiteralCommunitySet) {
+      LiteralCommunitySet lcs =  (LiteralCommunitySet) expr;
+      return new LiteralCommunitySet(lcs.getCommunities());
+    } else if (expr instanceof LiteralCommunity) {
+      LiteralCommunity lc = (LiteralCommunity) expr;
+      return new LiteralCommunity(lc.getCommunity());
+    }
+
+    throw new BatfishException(
+            "Statement.cloneCommunityExpr: unknown community type: " + expr.getClass().getName());
   }
 }

@@ -10,6 +10,11 @@ import java.util.Optional;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
+
+import com.microsoft.z3.BoolExpr;
+import com.microsoft.z3.Context;
+import com.microsoft.z3.Solver;
+import org.batfish.common.BatfishException;
 import org.batfish.common.WellKnownCommunity;
 
 /**
@@ -56,6 +61,9 @@ public final class StandardCommunity extends Community {
     checkArgument(
         value >= 0 && value <= 0xFFFFFFFFL, "Community value %s is not in the valid range", value);
     _value = value;
+
+    // initialize enable smt variable flag to false
+    _enableSmtVariable = false;
   }
 
   @JsonCreator
@@ -172,5 +180,11 @@ public final class StandardCommunity extends Community {
   @Override
   protected BigInteger asBigIntImpl() {
     return BigInteger.valueOf(_value);
+  }
+
+  /** Add get community string for configVarPrefix */
+  @Override
+  public String getCommunityString() {
+    return (_value >> 16) + ":" + (_value & 0xFFFF);
   }
 }

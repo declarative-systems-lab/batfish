@@ -3,9 +3,11 @@ package org.batfish.minesweeper.smt;
 import com.microsoft.z3.ArithExpr;
 import com.microsoft.z3.BitVecExpr;
 import com.microsoft.z3.BoolExpr;
+import com.microsoft.z3.IntNum;
 import com.microsoft.z3.Context;
 import com.microsoft.z3.Expr;
 import com.microsoft.z3.Model;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -128,7 +130,7 @@ public class PropertyChecker {
     }
   }
 
-  private BoolExpr equal(Encoder e, Configuration conf, SymbolicRoute r1, SymbolicRoute r2) {
+  private BoolExpr equal(Encoder e, Configuration conf, SymbolicRouteBV r1, SymbolicRouteBV r2) {
     EncoderSlice main = e.getMainSlice();
     BoolExpr eq = main.equal(conf, Protocol.CONNECTED, r1, r2, null, true);
     BoolExpr samePermitted = e.mkEq(r1.getPermitted(), r2.getPermitted());
@@ -158,25 +160,25 @@ public class PropertyChecker {
 
   private BoolExpr relateEnvironments(Encoder enc1, Encoder enc2) {
     // create a map for enc2 to lookup a related environment variable from enc
-    Table2<GraphEdge, EdgeType, SymbolicRoute> relatedEnv = new Table2<>();
-    for (Entry<LogicalEdge, SymbolicRoute> entry :
+    Table2<GraphEdge, EdgeType, SymbolicRouteBV> relatedEnv = new Table2<>();
+    for (Entry<LogicalEdge, SymbolicRouteBV> entry :
         enc2.getMainSlice().getLogicalGraph().getEnvironmentVars().entrySet()) {
       LogicalEdge lge = entry.getKey();
-      SymbolicRoute r = entry.getValue();
+      SymbolicRouteBV r = entry.getValue();
       relatedEnv.put(lge.getEdge(), lge.getEdgeType(), r);
     }
     // relate environments if necessary
     BoolExpr related = enc1.mkTrue();
-    Map<LogicalEdge, SymbolicRoute> map =
+    Map<LogicalEdge, SymbolicRouteBV> map =
         enc1.getMainSlice().getLogicalGraph().getEnvironmentVars();
-    for (Map.Entry<LogicalEdge, SymbolicRoute> entry : map.entrySet()) {
+    for (Map.Entry<LogicalEdge, SymbolicRouteBV> entry : map.entrySet()) {
       LogicalEdge le = entry.getKey();
-      SymbolicRoute r1 = entry.getValue();
+      SymbolicRouteBV r1 = entry.getValue();
       String router = le.getEdge().getRouter();
       Configuration conf = enc1.getMainSlice().getGraph().getConfigurations().get(router);
       // Lookup the same environment variable in the other copy
       // The copy will have a different name but the same edge and type
-      SymbolicRoute r2 = relatedEnv.get(le.getEdge(), le.getEdgeType());
+      SymbolicRouteBV r2 = relatedEnv.get(le.getEdge(), le.getEdgeType());
       assert r2 != null;
       BoolExpr x = equal(enc1, conf, r1, r2);
       related = enc1.mkAnd(related, x);
@@ -243,12 +245,12 @@ public class PropertyChecker {
       case ANY:
         break;
       case NONE:
-        for (SymbolicRoute vars : lg.getEnvironmentVars().values()) {
+        for (SymbolicRouteBV vars : lg.getEnvironmentVars().values()) {
           enc.add(ctx.mkNot(vars.getPermitted()));
         }
         break;
       case SANE:
-        for (SymbolicRoute vars : lg.getEnvironmentVars().values()) {
+        for (SymbolicRouteBV vars : lg.getEnvironmentVars().values()) {
           enc.add(ctx.mkLe(vars.getMetric(), ctx.mkInt(50)));
         }
         break;
@@ -362,9 +364,19 @@ public class PropertyChecker {
       Function<VerifyParam, AnswerElement> answer) {
 
     long totalTime = System.currentTimeMillis();
-    PathRegexes p = new PathRegexes(qOrig);
+    // Note: Configure Graph _bddBasedAnalysis to false by default.
+    //   * true:  BDD-based analysis
+    //   * false: SMT-based analysis
     Graph graph = new Graph(_batfish, snapshot);
+    PathRegexes p = new PathRegexes(qOrig);
+
+    // Filter GrapeEdge.
+    //   * match _dstRegex and not match _notDstRegex
+    //     + if not GrapeEdge.isAbstract()
+    //       - match _ifaceRegex and not match _notIfaceRegex
     Set<GraphEdge> destPorts = findFinalInterfaces(graph, p);
+    // Filter Router(String).
+    //   * match _srcRegex and not match _notSrcRegex
     List<String> sourceRouters = PatternUtils.findMatchingSourceNodes(graph, p);
 
     if (destPorts.isEmpty()) {
@@ -377,10 +389,26 @@ public class PropertyChecker {
     // copy before updating header space, so these changes don't get propagated to the answer
     HeaderLocationQuestion q = new HeaderLocationQuestion(qOrig);
     q.setHeaderSpace(q.getHeaderSpace().toBuilder().build());
+    // Infer dstIps and notDstIps in HeaderLocationQuestion HeaderSpace.
+    // * isExternal interface
+    //   + it can be any prefix, leave it unconstrained
+    //   + set headerSpace.setDstIps    (Collections.emptySet())
+    //   + set headerSpace.setNotDstIps (Collections.emptySet())
+    // * isNull (ge.getPeer() == null)
+    //   + set headerSpace.setDstIps    (ge.getStart() IpSpaces)
+    // * isHost
+    //   + set headerSpace.setDstIps    (ge.getStart() IpSpaces)
+    //   + set headerSpace.setNotDstIps (ge.getEnd()   exact Ip address)
+    // * otherwise
+    //   + set headerSpace.setDstIps    (ge.getStart() exact Ip address)
     inferDestinationHeaderSpace(graph, destPorts, q);
 
+    // Identify all GraphEdges that are allowed to fail optionally.
     Set<GraphEdge> failOptions = failLinkSet(graph, q);
+    // Identify all Routers that are allowed to fail optionally.
     Set<String> failNodeOptions = failNodeSet(graph, q);
+
+    // When HeaderQuestion abstraction is enabled, enable network slices.
     Tuple<Stream<Supplier<NetworkSlice>>, Long> ecs = findAllNetworkSlices(q, graph, true);
     Stream<Supplier<NetworkSlice>> stream = ecs.getFirst();
     Long timeAbstraction = ecs.getSecond();
@@ -404,10 +432,15 @@ public class PropertyChecker {
 
                 // Get the EC graph and mapping
                 Graph g = slice.getGraph();
+                // TODO concrete nodes -> abstract nodes
                 Set<String> srcRouters = mapConcreteToAbstract(slice, sourceRouters);
 
                 long timeEncoding = System.currentTimeMillis();
-                Encoder enc = new Encoder(g, question);
+                // TODO: initialize Encoder ...
+                // TODO: initialize EncoderSlice ...
+                Encoder enc = new Encoder(g, question, destPorts);
+                // TODO: call Encoder computeEncoding ..., add some basic constraints ?
+                // TODO: call EncoderSlice computeEncoding ...
                 enc.computeEncoding();
                 timeEncoding = System.currentTimeMillis() - timeEncoding;
 
@@ -420,6 +453,10 @@ public class PropertyChecker {
                   addEnvironmentConstraints(enc, question.getBaseEnvironmentType());
                 }
 
+                // This function dispatches to the PropertyAdder.instrumentxxx method.
+                // Call PropertyAdder instrumentReachability for checkReachability.
+                //   (initialReachability and resursiveReachability)
+                // Call PropertyAdder instrumentLoad for checkLoadBalancing.
                 Map<String, BoolExpr> prop = instrument.apply(enc, srcRouters, destPorts);
 
                 // If this is a equivalence query, we create a second copy of the network
@@ -428,6 +465,7 @@ public class PropertyChecker {
 
                 if (question.getDiffType() != null) {
                   HeaderLocationQuestion q2 = new HeaderLocationQuestion(question);
+                  // Set the number of link failure (GraphEdges) to 0, no failed GrphEdge.
                   q2.setFailures(0);
                   long timeDiffEncoding = System.currentTimeMillis();
                   enc2 = new Encoder(enc, g, q2);
@@ -439,7 +477,7 @@ public class PropertyChecker {
                 if (question.getDiffType() != null) {
                   assert (enc2 != null);
                   // create a map for enc2 to lookup a related environment variable from enc
-                  Table2<GraphEdge, EdgeType, SymbolicRoute> relatedEnv = new Table2<>();
+                  Table2<GraphEdge, EdgeType, SymbolicRouteBV> relatedEnv = new Table2<>();
                   enc2.getMainSlice()
                       .getLogicalGraph()
                       .getEnvironmentVars()
@@ -481,21 +519,33 @@ public class PropertyChecker {
                   enc.add(enc.mkNot(required));
 
                 } else {
+                  // get a writer for the property variables
+                  PrintWriter writer = enc.getPropertiesVarWriter();
+
                   // Not a differential query; just a query on a single version of the network.
                   BoolExpr allProp = enc.mkTrue();
                   for (String router : srcRouters) {
                     BoolExpr r = prop.get(router);
+                    writer.println(r);
+                    // NOTE: Choose original network property or negated network property.
+                    // Enable negate flag to verify isolation property via checkReachability method.
                     if (q.getNegate()) {
                       r = enc.mkNot(r);
                     }
                     allProp = enc.mkAnd(allProp, r);
                   }
+                  // Negate this network property for verification.
                   enc.add(enc.mkNot(allProp));
+
+                  // Flush and close the writer
+                  writer.flush();
+                  writer.close();
                 }
 
                 addLinkFailureConstraints(enc, destPorts, failOptions);
                 addNodeFailureConstraints(enc, failNodeOptions);
 
+                // Call Solver.check to verify and print relevant information.
                 Tuple<VerificationResult, Model> tup = enc.verify();
                 VerificationResult res = tup.getFirst();
                 Model model = tup.getSecond();
@@ -559,6 +609,7 @@ public class PropertyChecker {
         snapshot,
         q,
         (enc, srcRouters, destPorts) -> {
+          // NOTE: srcRouters is declared but not used in the lambda body.
           PropertyAdder pa = new PropertyAdder(enc.getMainSlice());
           return pa.instrumentReachability(destPorts);
         },
@@ -653,11 +704,46 @@ public class PropertyChecker {
           PropertyAdder pa = new PropertyAdder(enc.getMainSlice());
           Map<String, ArithExpr> loads = pa.instrumentLoad(destPorts);
           Map<String, BoolExpr> prop = new HashMap<>();
+
           // TODO: implement this properly after refactoring
-          loads.forEach((name, ae) -> prop.put(name, enc.mkTrue()));
+          // loads.forEach((name, ae) -> prop.put(name, enc.mkTrue()));
+          // NOTE: modified by yongzheng in 20240522 for enabling load balancing property
+          IntNum kExpr = (IntNum) enc.mkInt(k);
+          IntNum negkExpr = (IntNum) enc.mkInt(-k);
+
+          for (Map.Entry<String, ArithExpr> loadEntry1 : loads.entrySet()) {
+            BoolExpr loadExprs = enc.mkTrue();
+            String router = loadEntry1.getKey();
+
+            for (Map.Entry<String, ArithExpr> loadEntry2: loads.entrySet()) {
+              String other = loadEntry2.getKey();
+
+              if (router.equals(other))  continue;
+
+              ArithExpr loadRouter1 = loadEntry1.getValue();
+              ArithExpr loadRouter2 = loadEntry2.getValue();
+
+              BoolExpr loadExpr = 
+                  addLoadBalancing(enc, loadRouter1, loadRouter2, kExpr, negkExpr);
+              loadExprs = enc.mkAnd(loadExprs, loadExpr);
+            }
+            
+            prop.put(router, loadExprs);
+          }
+
           return prop;
         },
         (vp) -> new SmtOneAnswerElement(vp.getResult()));
+  }
+
+  public BoolExpr addLoadBalancing(
+      Encoder enc, ArithExpr loadA, ArithExpr loadB, IntNum kExpr, IntNum negkExpr) {
+    // -k <= loadA - loadB <= k
+    ArithExpr loadDiff = enc.mkSub(loadA, loadB);
+    BoolExpr lowerBound = enc.mkLe(negkExpr, loadDiff);
+    BoolExpr upperBound = enc.mkLe(loadDiff, kExpr);
+    BoolExpr loadExpr = enc.mkAnd(lowerBound, upperBound);
+    return loadExpr;
   }
 
   /*
@@ -975,7 +1061,7 @@ public class PropertyChecker {
       // Set environments equal
       Set<String> communities = new HashSet<>();
 
-      Set<SymbolicRoute> envRecords = new HashSet<>();
+      Set<SymbolicRouteBV> envRecords = new HashSet<>();
 
       for (Protocol proto1 : slice1.getProtocols().get(r1)) {
         for (ArrayList<LogicalEdge> es :
@@ -988,8 +1074,8 @@ public class PropertyChecker {
 
             if (lge1.getEdgeType() == EdgeType.IMPORT) {
 
-              SymbolicRoute vars1 = slice1.getLogicalGraph().getEnvironmentVars().get(lge1);
-              SymbolicRoute vars2 = slice2.getLogicalGraph().getEnvironmentVars().get(lge2);
+              SymbolicRouteBV vars1 = slice1.getLogicalGraph().getEnvironmentVars().get(lge1);
+              SymbolicRouteBV vars2 = slice2.getLogicalGraph().getEnvironmentVars().get(lge2);
 
               BoolExpr aclIn1 = slice1.getIncomingAcls().get(lge1.getEdge());
               BoolExpr aclIn2 = slice2.getIncomingAcls().get(lge2.getEdge());
@@ -1010,54 +1096,71 @@ public class PropertyChecker {
                 BoolExpr samePermitted = ctx.mkEq(vars1.getPermitted(), vars2.getPermitted());
 
                 // Set communities equal
-                BoolExpr equalComms = e1.mkTrue();
-                for (Map.Entry<CommunityVar, BoolExpr> entry : vars1.getCommunities().entrySet()) {
-                  CommunityVar cvar = entry.getKey();
-                  BoolExpr ce1 = entry.getValue();
-                  BoolExpr ce2 = vars2.getCommunities().get(cvar);
-                  if (ce2 != null) {
-                    equalComms = e1.mkAnd(equalComms, e1.mkEq(ce1, ce2));
-                  }
+                // BoolExpr equalComms = e1.mkTrue();
+                // for (Map.Entry<CommunityVar, BoolExpr> entry : vars1.getCommunities().entrySet()) {
+                //   CommunityVar cvar = entry.getKey();
+                //   BoolExpr ce1 = entry.getValue();
+                //   BoolExpr ce2 = vars2.getCommunities().get(cvar);
+                //   if (ce2 != null) {
+                //     equalComms = e1.mkAnd(equalComms, e1.mkEq(ce1, ce2));
+                //   }
+                // }
+
+                // NOTE: modified communities equal checking (BoolExpr -> BitVecExpr communities)
+                BoolExpr equalComms = null;
+                BitVecExpr vars1Comms = vars1.getCommunitiesBitVec();
+                BitVecExpr vars2Comms = vars2.getCommunitiesBitVec();
+                if (null == vars1Comms && null == vars2Comms) {
+                  equalComms = ctx.mkFalse();
+                } else if (null == vars1Comms || null == vars2Comms) {
+                  equalComms = ctx.mkTrue();
+                } else {
+                  equalComms = ctx.mkEq(vars1Comms, vars2Comms);
                 }
 
                 // Set communities belonging to one but not the other
                 // off, but give a warning of the difference
-                BoolExpr unsetComms = e1.mkTrue();
+                // BoolExpr unsetComms = e1.mkTrue();
 
-                for (Map.Entry<CommunityVar, BoolExpr> entry : vars1.getCommunities().entrySet()) {
-                  CommunityVar cvar = entry.getKey();
-                  BoolExpr ce1 = entry.getValue();
-                  BoolExpr ce2 = vars2.getCommunities().get(cvar);
-                  if (ce2 == null) {
-                    if (!communities.contains(cvar.getRegex())) {
-                      communities.add(cvar.getRegex());
-                      /* String msg =
-                       String.format(
-                           "Warning: community %s found for router %s but not %s.",
-                           cvar.getRegex(), conf1.getEnvName(), conf2.getEnvName());
-                      System.out.println(msg); */
-                    }
-                    unsetComms = e1.mkAnd(unsetComms, e1.mkNot(ce1));
-                  }
-                }
+                // for (Map.Entry<CommunityVar, BoolExpr> entry : vars1.getCommunities().entrySet()) {
+                //   CommunityVar cvar = entry.getKey();
+                //   BoolExpr ce1 = entry.getValue();
+                //   BoolExpr ce2 = vars2.getCommunities().get(cvar);
+                //   if (ce2 == null) {
+                //     if (!communities.contains(cvar.getRegex())) {
+                //       communities.add(cvar.getRegex());
+                //       /* String msg =
+                //        String.format(
+                //            "Warning: community %s found for router %s but not %s.",
+                //            cvar.getRegex(), conf1.getEnvName(), conf2.getEnvName());
+                //       System.out.println(msg); */
+                //     }
+                //     unsetComms = e1.mkAnd(unsetComms, e1.mkNot(ce1));
+                //   }
+                // }
 
                 // Do the same thing for communities missing from the other side
-                for (Map.Entry<CommunityVar, BoolExpr> entry : vars2.getCommunities().entrySet()) {
-                  CommunityVar cvar = entry.getKey();
-                  BoolExpr ce2 = entry.getValue();
-                  BoolExpr ce1 = vars1.getCommunities().get(cvar);
-                  if (ce1 == null) {
-                    if (!communities.contains(cvar.getRegex())) {
-                      communities.add(cvar.getRegex());
-                      /* String msg =
-                       String.format(
-                           "Warning: community %s found for router %s but not %s.",
-                           cvar.getRegex(), conf2.getEnvName(), conf1.getEnvName());
-                      System.out.println(msg); */
-                    }
-                    unsetComms = e1.mkAnd(unsetComms, e1.mkNot(ce2));
-                  }
-                }
+                // for (Map.Entry<CommunityVar, BoolExpr> entry : vars2.getCommunities().entrySet()) {
+                //   CommunityVar cvar = entry.getKey();
+                //   BoolExpr ce2 = entry.getValue();
+                //   BoolExpr ce1 = vars1.getCommunities().get(cvar);
+                //   if (ce1 == null) {
+                //     if (!communities.contains(cvar.getRegex())) {
+                //       communities.add(cvar.getRegex());
+                //       /* String msg =
+                //        String.format(
+                //            "Warning: community %s found for router %s but not %s.",
+                //            cvar.getRegex(), conf2.getEnvName(), conf1.getEnvName());
+                //       System.out.println(msg); */
+                //     }
+                //     unsetComms = e1.mkAnd(unsetComms, e1.mkNot(ce2));
+                //   }
+                // }
+
+                // NOTE: modified unset communities checking (BoolExpr -> BitVecExpr communities)
+                BoolExpr unsetComms =
+                    SymbolicRouteBV.communitiesEmpty(
+                        ctx, ctx.mkBVXOR(vars1Comms, vars2Comms), graph.getAllCommunitiesIndex().size());
 
                 envRecords.add(vars1);
                 BoolExpr equalVars = slice1.equal(conf1, proto1, vars1, vars2, lge1, true);
@@ -1071,8 +1174,8 @@ public class PropertyChecker {
 
             } else {
 
-              SymbolicRoute out1 = lge1.getSymbolicRecord();
-              SymbolicRoute out2 = lge2.getSymbolicRecord();
+              SymbolicRouteBV out1 = lge1.getSymbolicRecord();
+              SymbolicRouteBV out2 = lge2.getSymbolicRecord();
 
               equalOutputs =
                   ctx.mkAnd(equalOutputs, slice1.equal(conf1, proto1, out1, out2, lge1, false));
@@ -1084,8 +1187,8 @@ public class PropertyChecker {
       // Ensure that there is only one active environment message if we want to
       // check the stronger version of local equivalence
       if (strict) {
-        for (SymbolicRoute env1 : envRecords) {
-          for (SymbolicRoute env2 : envRecords) {
+        for (SymbolicRouteBV env1 : envRecords) {
+          for (SymbolicRouteBV env2 : envRecords) {
             if (!env1.equals(env2)) {
               BoolExpr c = e2.mkImplies(env1.getPermitted(), e2.mkNot(env2.getPermitted()));
               e2.add(c);
@@ -1110,9 +1213,9 @@ public class PropertyChecker {
       // Best choices should be the same
       BoolExpr required;
       if (strict) {
-        SymbolicRoute best1 =
+        SymbolicRouteBV best1 =
             e1.getMainSlice().getSymbolicDecisions().getBestNeighbor().get(conf1.getHostname());
-        SymbolicRoute best2 =
+        SymbolicRouteBV best2 =
             e2.getMainSlice().getSymbolicDecisions().getBestNeighbor().get(conf2.getHostname());
         // Just pick some protocol for defaults, shouldn't matter for best choice
         required = equal(e2, conf2, best1, best2);

@@ -5,25 +5,23 @@ import static com.google.common.base.Preconditions.checkState;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
-import java.io.ObjectStreamException;
+import com.microsoft.z3.Context;
+import com.microsoft.z3.Solver;
+import com.microsoft.z3.BoolExpr;
+import com.microsoft.z3.ArithExpr;
+import com.microsoft.z3.BitVecExpr;
+
 import java.io.Serializable;
 import java.util.Comparator;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 
+import org.batfish.common.BatfishException;
+
 /** An IP wildcard consisting of a IP address and a wildcard (also expressed as an IP address) */
 @ParametersAreNonnullByDefault
 public final class IpWildcard implements Serializable, Comparable<IpWildcard> {
-  // Soft values: let it be garbage collected in times of pressure.
-  // Maximum size 2^20: Just some upper bound on cache size, well less than GiB.
-  //   (16 bytes seems smallest possible entry (long), would be 16 MiB total).
-  private static final LoadingCache<IpWildcard, IpWildcard> CACHE =
-      CacheBuilder.newBuilder().softValues().maximumSize(1 << 20).build(CacheLoader.from(x -> x));
-
   @Nonnull private final Ip _ip;
   // Set bits are "don't care" bits
   private final long _wildcardMask;
@@ -66,8 +64,7 @@ public final class IpWildcard implements Serializable, Comparable<IpWildcard> {
    * <p>Bits that are set in the {@code wildcardMask} are "don't care" bits.
    */
   public static IpWildcard ipWithWildcardMask(Ip address, long wildcardMask) {
-    IpWildcard wildcard = new IpWildcard(address, wildcardMask);
-    return CACHE.getUnchecked(wildcard);
+    return new IpWildcard(address, wildcardMask);
   }
 
   /**
@@ -161,6 +158,9 @@ public final class IpWildcard implements Serializable, Comparable<IpWildcard> {
     return (differentIpBits & canDiffer) == differentIpBits;
   }
 
+  // if _wildcardMask is       0b0000000011111111
+  // then _wlidcardMask + 1 is 0b0000000100000000
+  // so _wlidcardMask & (_wlidcardMask + 1) is 0L
   public boolean isPrefix() {
     return (_wildcardMask & (_wildcardMask + 1L)) == 0L;
   }
@@ -201,6 +201,13 @@ public final class IpWildcard implements Serializable, Comparable<IpWildcard> {
     return Prefix.create(_ip, Integer.numberOfLeadingZeros((int) _wildcardMask));
   }
 
+  public Prefix toPrefixWithSymbolicVariables() {
+    checkState(isPrefix(), "Invalid wildcard format for conversion to prefix: %s", _wildcardMask);
+    return Prefix.create(
+        _ip, Integer.numberOfLeadingZeros((int) _wildcardMask), _configVarIp, _configVarMask,
+        _configVarLength);
+  }
+
   @JsonValue
   @Override
   public String toString() {
@@ -222,10 +229,70 @@ public final class IpWildcard implements Serializable, Comparable<IpWildcard> {
     long canonicalIp = inputIp & (ALL_BITS_MASKED ^ wildcardMask);
     _ip = (canonicalIp == inputIp) ? address : Ip.create(canonicalIp);
     _wildcardMask = wildcardMask;
+
+    // initialize SMT variable flag to false
+    _enableSmtVariable = false;
   }
 
-  /** Cache after deserialization. */
-  private Object readResolve() throws ObjectStreamException {
-    return CACHE.getUnchecked(this);
+  /** Add configuration constant - SMT symbolic variable */
+  private static int BITVEC_EXPR_SIZE = 32;
+
+  private boolean _enableSmtVariable;
+  private String _configVarPrefix;
+
+  private transient BitVecExpr _configVarIp;
+  private transient BitVecExpr _configVarMask;
+  private transient ArithExpr _configVarLength;
+
+  public void initSmtVariable(Context context, Solver solver, String configVarPrefix) {
+    // assert that the ip wildcard is not shared object
+    if (_enableSmtVariable) {
+      throw new BatfishException("IpWildcard.initSmtVariable: shared object.\n" +
+          "Previous configVarPrefix: " + _configVarPrefix + "\n" +
+          "Current  configVarPrefix: " + configVarPrefix);
+    }
+
+    long prefixIp = _ip.asLong();
+
+    _configVarIp = context.mkBVConst(configVarPrefix + "ip", BITVEC_EXPR_SIZE);
+    _configVarMask = context.mkBVConst(configVarPrefix + "mask", BITVEC_EXPR_SIZE);
+    _configVarLength = context.mkIntConst(configVarPrefix + "length");
+
+    // add relevant configuration constant constraints
+    // original wildcardMask is 0b000011111111
+    // modified subnetMask is   0b111100000000
+    BoolExpr configVarIpConstraint = context.mkEq(
+        _configVarIp, context.mkBV(prefixIp, BITVEC_EXPR_SIZE));
+    BoolExpr configVarMaskConstraint = context.mkEq(
+        _configVarMask, context.mkBV((~_wildcardMask), BITVEC_EXPR_SIZE));
+    BoolExpr configVarLengthConstraint = context.mkEq(
+        _configVarLength, context.mkInt(Prefix.MAX_PREFIX_LENGTH - Long.bitCount(_wildcardMask)));
+    solver.add(configVarIpConstraint);
+    solver.add(configVarMaskConstraint);
+    solver.add(configVarLengthConstraint);
+
+    // configure the smt variable enable flag to true
+    _enableSmtVariable = true;
+    _configVarPrefix = configVarPrefix;
+  }
+
+  public boolean getEnableSmtVariable() {
+    return _enableSmtVariable;
+  }
+
+  public String getConfigVarPrefix() {
+    return _configVarPrefix;
+  }
+
+  public BitVecExpr getConfigVarIp() {
+    return _configVarIp;
+  }
+
+  public BitVecExpr getConfigVarMask() {
+    return _configVarMask;
+  }
+
+  public ArithExpr getConfigVarLength() {
+    return _configVarLength;
   }
 }

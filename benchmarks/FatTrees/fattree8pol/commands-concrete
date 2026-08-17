@@ -1,0 +1,2 @@
+init-snapshot fattree8pol fat8-tr-smt
+get smt-reachability dstIps=["70.0.79.0"], finalIfaceRegex=".*", baseEnvType=none, benchmark=true

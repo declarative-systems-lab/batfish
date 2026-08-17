@@ -22,6 +22,7 @@ import org.batfish.datamodel.EvpnRoute;
 import org.batfish.datamodel.Fib;
 import org.batfish.datamodel.ForwardingAnalysis;
 import org.batfish.datamodel.GenericRib;
+import org.batfish.datamodel.OspfRoute;
 import org.batfish.datamodel.Prefix;
 import org.batfish.datamodel.Topology;
 import org.batfish.datamodel.vxlan.Layer2Vni;
@@ -50,6 +51,20 @@ public final class IncrementalDataPlane implements Serializable, DataPlane {
   @Override
   public Table<String, String, Set<Bgpv4Route>> getBgpRoutes() {
     return _bgpRoutes;
+  }
+
+  /**
+   * Return ALL routes in the BGP rib for each node/VRF, including local/redistributed routes.
+   */
+  @Nonnull
+  public Table<String, String, Set<Bgpv4Route>> getBgpRoutesAll() {
+    return _bgpRoutesAll;
+  }
+
+  /** Return routes selected by the combined OSPF RIB for each node/VRF. */
+  @Nonnull
+  public Table<String, String, Set<OspfRoute>> getOspfRoutes() {
+    return _ospfRoutes;
   }
 
   @Override
@@ -102,6 +117,8 @@ public final class IncrementalDataPlane implements Serializable, DataPlane {
   /////////////////////////
 
   @Nonnull private final Table<String, String, Set<Bgpv4Route>> _bgpRoutes;
+  @Nonnull private final Table<String, String, Set<Bgpv4Route>> _bgpRoutesAll;
+  @Nonnull private final Table<String, String, Set<OspfRoute>> _ospfRoutes;
   @Nonnull private final Map<String, Map<String, Fib>> _fibs;
   @Nonnull private final ForwardingAnalysis _forwardingAnalysis;
   @Nonnull private final Table<String, String, Set<EvpnRoute<?, ?>>> _evpnRoutes;
@@ -123,6 +140,8 @@ public final class IncrementalDataPlane implements Serializable, DataPlane {
     Map<String, Configuration> configs = DataplaneUtil.computeConfigurations(nodes);
     // Order of initialization matters:
     _bgpRoutes = DataplaneUtil.computeBgpRoutes(nodes);
+    _bgpRoutesAll = DataplaneUtil.computeAllBgpRoutes(nodes);
+    _ospfRoutes = DataplaneUtil.computeOspfRoutes(nodes);
     _evpnRoutes = DataplaneUtil.computeEvpnRoutes(nodes);
     _ribs = DataplaneUtil.computeRibs(nodes);
     _fibs = DataplaneUtil.computeFibs(nodes);

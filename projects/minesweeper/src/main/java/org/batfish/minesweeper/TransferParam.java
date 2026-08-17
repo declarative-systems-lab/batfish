@@ -1,5 +1,6 @@
 package org.batfish.minesweeper;
 
+import com.microsoft.z3.BoolExpr;
 import javax.annotation.Nullable;
 import org.batfish.datamodel.routing_policy.statement.SetDefaultPolicy;
 import org.batfish.minesweeper.collections.PList;
@@ -34,6 +35,9 @@ public class TransferParam<T extends IDeepCopy<T>> {
 
   private SetDefaultPolicy _defaultPolicy;
 
+  /** Enclosing If guard for the current policy term (TransferSSA community updates). */
+  @Nullable private BoolExpr _termGuard;
+
   private boolean _debug;
 
   public TransferParam(T data, boolean debug) {
@@ -45,6 +49,7 @@ public class TransferParam<T extends IDeepCopy<T>> {
     _defaultAccept = false;
     _defaultAcceptLocal = false;
     _defaultPolicy = null;
+    _termGuard = null;
     _debug = debug;
   }
 
@@ -57,6 +62,7 @@ public class TransferParam<T extends IDeepCopy<T>> {
     _defaultAccept = p._defaultAccept;
     _defaultAcceptLocal = p._defaultAcceptLocal;
     _defaultPolicy = p._defaultPolicy;
+    _termGuard = p._termGuard;
     _debug = p._debug;
   }
 
@@ -82,6 +88,17 @@ public class TransferParam<T extends IDeepCopy<T>> {
 
   public SetDefaultPolicy getDefaultPolicy() {
     return _defaultPolicy;
+  }
+
+  @Nullable
+  public BoolExpr getTermGuard() {
+    return _termGuard;
+  }
+
+  public TransferParam<T> setTermGuard(@Nullable BoolExpr termGuard) {
+    TransferParam<T> ret = new TransferParam<>(this);
+    ret._termGuard = termGuard;
+    return ret;
   }
 
   public boolean getInitialCall() {

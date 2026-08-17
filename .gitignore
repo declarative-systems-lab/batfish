@@ -42,6 +42,10 @@ coverage*
 # Ignore python cache files
 __pycache__
 .pytest_cache/
+speclens/__pycache__
+speclens/tools/__pycache__
+speclens/utils/__pycache__
+smts/__pycache__
 
 # pyenv files
 /.python-version

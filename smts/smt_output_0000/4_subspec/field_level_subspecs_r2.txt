@@ -1,0 +1,38 @@
+Field-Level Subspecs
+====================
+
+Config Variable: Config_r2_RouteFilterList_isp2_network__Line1__203_0_113_0__action
+Subspecs (1):
+  1. (= Config_r2_RouteFilterList_isp2_network__Line1__203_0_113_0__action true) [from r2]
+--------------------------------------------------
+
+Config Variable: Config_r2_RouteFilterList_isp2_network__Line1__203_0_113_0__ip
+Subspecs (1):
+  1. (= ((_ extract 31 8) |0_dst-ip|) #xcb0071) AND (= (bvand |0_dst-ip| Config_r2_RouteFilterList_isp2_network__Line1__203_0_113_0__mask) (bvand Config_r2_RouteFilterList_isp2_network__Line1__203_0_113_0__ip Config_r2_RouteFilterList_isp2_network__Line1__203_0_113_0__mask)) [from r2]
+--------------------------------------------------
+
+Config Variable: Config_r2_RouteFilterList_isp2_network__Line1__203_0_113_0__length
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r2_RouteFilterList_isp2_network__Line1__203_0_113_0__prefix_range_end
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r2_RouteFilterList_isp2_network__Line1__203_0_113_0__prefix_range_start
+Subspecs (1):
+  1. (= Config_r2_RouteFilterList_isp2_network__Line1__203_0_113_0__prefix_range_start 24) [from r2]
+--------------------------------------------------
+
+Config Variable: Config_r2_RoutingPolicy_R2_IN_FROM_ISP2__Seq10__Line2__add_community_500_200__community
+Subspecs (1):
+  1. (= Config_r2_RoutingPolicy_R2_IN_FROM_ISP2__Seq10__Line2__add_community_500_200__community #b000100) [from r2]
+--------------------------------------------------
+
+Config Variable: Config_r2_RoutingPolicy_R2_OUT_TO_R1__Seq100__Line1__set_community_200_100__community
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+

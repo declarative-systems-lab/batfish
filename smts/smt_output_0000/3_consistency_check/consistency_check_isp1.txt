@@ -1,0 +1,9 @@
+================================================================================
+ASSUME-GUARANTEE TEST SUMMARY
+================================================================================
+
+Device isp1                      | Satisfaction: SAT   | Violation: UNSAT | Status: PASS
+
+Total devices tested: 1
+Failed devices: 0
+All tests passed! ✓

@@ -141,6 +141,38 @@ public class BatfishTestUtils {
     return batfish;
   }
 
+  /** chx: a hacky way to init Batfish object. */
+  public static Batfish initBatfish(
+          SortedMap<String, Configuration> configurations,
+          Path path)
+          throws IOException {
+    Settings settings = new Settings(new String[] {});
+    settings.setLogger(new BatfishLogger("debug", false));
+    final Cache<NetworkSnapshot, SortedMap<String, Configuration>> testrigs = makeTestrigCache();
+
+    settings.setStorageBase(path);
+    settings.setContainer(TEST_SNAPSHOT.getNetwork().getId());
+    settings.setTestrig(TEST_SNAPSHOT.getSnapshot().getId());
+    settings.setSnapshotName(TEST_SNAPSHOT_NAME);
+    if (!configurations.isEmpty()) {
+      testrigs.put(TEST_SNAPSHOT, configurations);
+    }
+    Batfish batfish =
+            new Batfish(
+                    settings,
+                    testrigs,
+                    makeDataPlaneCache(),
+                    makeEnvBgpCache(),
+                    makeVendorConfigurationCache(),
+                    null,
+                    new TestStorageBasedIdResolver(settings.getStorageBase()));
+    if (!configurations.isEmpty()) {
+      batfish.initializeTopology(batfish.getSnapshot());
+    }
+    registerDataPlanePlugins(batfish);
+    return batfish;
+  }
+
   private static void registerDataPlanePlugins(Batfish batfish) {
     IncrementalDataPlanePlugin ibdpPlugin = new IncrementalDataPlanePlugin();
     ibdpPlugin.initialize(batfish);

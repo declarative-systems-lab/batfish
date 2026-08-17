@@ -70,7 +70,9 @@ public class RoutesAnswerer extends Answerer {
   // Diff Only
   static final String COL_ROUTE_ENTRY_PRESENCE = "Entry_Presence";
 
-  RoutesAnswerer(Question question, IBatfish batfish) {
+  // modified by yongzheng for printing RIB data in 20250611
+  // RoutesAnswerer(Question question, IBatfish batfish) {
+  public RoutesAnswerer(Question question, IBatfish batfish) {
     super(question, batfish);
   }
 

@@ -70,5 +70,9 @@ public final class SetCommunities extends Statement {
     return new SetCommunities(communitySetExpr);
   }
 
+  public CommunitySetExpr getExpr() {
+    return _communitySetExpr;
+  }
+
   private final @Nonnull CommunitySetExpr _communitySetExpr;
 }

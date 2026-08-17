@@ -2,9 +2,12 @@ package org.batfish.minesweeper.smt;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedSet;
 import com.microsoft.z3.ArithExpr;
 import com.microsoft.z3.BoolExpr;
+import com.microsoft.z3.BitVecExpr;
+import com.microsoft.z3.BitVecNum;
 import com.microsoft.z3.Expr;
 import com.microsoft.z3.Model;
 import java.util.ArrayList;
@@ -46,6 +49,7 @@ import org.batfish.minesweeper.answers.FlowHistory;
 import org.batfish.minesweeper.answers.FlowTrace;
 import org.batfish.minesweeper.answers.FlowTraceHop;
 import org.batfish.minesweeper.utils.Tuple;
+import org.batfish.common.BatfishException;
 
 class CounterExample {
 
@@ -154,9 +158,9 @@ class CounterExample {
     EncoderSlice slice = enc.getMainSlice();
     LogicalGraph logicalGraph = slice.getLogicalGraph();
 
-    for (Entry<LogicalEdge, SymbolicRoute> entry : logicalGraph.getEnvironmentVars().entrySet()) {
+    for (Entry<LogicalEdge, SymbolicRouteBV> entry : logicalGraph.getEnvironmentVars().entrySet()) {
       LogicalEdge logicalEdge = entry.getKey();
-      SymbolicRoute record = entry.getValue();
+      SymbolicRouteBV record = entry.getValue();
       // If there is an external advertisement
       if (boolVal(record.getPermitted())) {
         // If we actually use it
@@ -167,7 +171,7 @@ class CounterExample {
         assert ctrFwd != null;
 
         if (boolVal(ctrFwd)) {
-          SymbolicRoute symbolicRoute = decisions.getBestNeighbor().get(routerName);
+          SymbolicRouteBV symbolicRoute = decisions.getBestNeighbor().get(routerName);
           SymbolicPacket pkt = slice.getSymbolicPacket();
           Flow flow = buildFlow(pkt, routerName);
           Prefix pfx = buildPrefix(symbolicRoute, flow);
@@ -187,12 +191,29 @@ class CounterExample {
           AsPath path = AsPath.of(b.build());
 
           // Recover communities
+          // ImmutableSortedSet.Builder<Community> communities = ImmutableSortedSet.naturalOrder();
+          // for (Entry<CommunityVar, BoolExpr> entry2 : symbolicRoute.getCommunities().entrySet()) {
+          //   CommunityVar cvar = entry2.getKey();
+          //   BoolExpr expr = entry2.getValue();
+          //   if (cvar.getType() == Type.EXACT && boolVal(expr) && cvar.getLiteralValue() != null) {
+          //     communities.add(cvar.getLiteralValue());
+          //   }
+          // }
+
+          // NOTE: modified communities recovery (BoolExpr -> BitVecExpr communities)
+          BitVecExpr comms = symbolicRoute.getCommunitiesBitVec();
           ImmutableSortedSet.Builder<Community> communities = ImmutableSortedSet.naturalOrder();
-          for (Entry<CommunityVar, BoolExpr> entry2 : symbolicRoute.getCommunities().entrySet()) {
-            CommunityVar cvar = entry2.getKey();
-            BoolExpr expr = entry2.getValue();
-            if (cvar.getType() == Type.EXACT && boolVal(expr) && cvar.getLiteralValue() != null) {
-              communities.add(cvar.getLiteralValue());
+          if (null != comms) {
+            Expr commsExpr = _model.evaluate(comms, true);
+            if (!(commsExpr instanceof BitVecNum)) {
+              throw new BatfishException("Expected BitVecNum for communities, got: " + commsExpr);
+            }
+            ImmutableSet<CommunityVar> commsVars =
+                SymbolicRouteBV.communitiesVars((BitVecNum) commsExpr, enc.getGraph().getAllCommunitiesIndex());
+            for (CommunityVar cvar : commsVars) {
+              if (cvar.getType() == Type.EXACT && cvar.getLiteralValue() != null) {
+                communities.add(cvar.getLiteralValue());
+              }
             }
           }
 
@@ -264,7 +285,7 @@ class CounterExample {
   String buildRoute(EncoderSlice slice, GraphEdge graphEdge) {
     String router = graphEdge.getRouter();
     SymbolicDecisions decisions = slice.getSymbolicDecisions();
-    SymbolicRoute symbolicRoute = decisions.getBestNeighbor().get(router);
+    SymbolicRouteBV symbolicRoute = decisions.getBestNeighbor().get(router);
     SymbolicPacket pkt = slice.getSymbolicPacket();
     Flow flow = buildFlow(pkt, router);
     Prefix pfx = buildPrefix(symbolicRoute, flow);
@@ -275,7 +296,7 @@ class CounterExample {
   /*
    * Reconstruct the prefix from a symbolic record
    */
-  Prefix buildPrefix(SymbolicRoute symbolicRoute, Flow flow) {
+  Prefix buildPrefix(SymbolicRouteBV symbolicRoute, Flow flow) {
     int pfxLen = intVal(symbolicRoute.getPrefixLength());
     return Prefix.create(flow.getDstIp(), pfxLen);
   }
@@ -283,7 +304,7 @@ class CounterExample {
   /*
    * Reconstruct the protocol from a symbolic record
    */
-  Protocol buildProcotol(SymbolicRoute symbolicRoute, EncoderSlice slice, String router) {
+  Protocol buildProcotol(SymbolicRouteBV symbolicRoute, EncoderSlice slice, String router) {
     Protocol proto;
     if (symbolicRoute.getProtocolHistory().getBitVec() == null) {
       proto = slice.getProtocols().get(router).get(0);
@@ -315,7 +336,7 @@ class CounterExample {
       Map<GraphEdge, BoolExpr> across =
           encoder.getMainSlice().getForwardsAcross().get(currentRouterName);
       // Find the route used
-      SymbolicRoute symbolicRoute = decisions.getBestNeighbor().get(currentRouterName);
+      SymbolicRouteBV symbolicRoute = decisions.getBestNeighbor().get(currentRouterName);
       Protocol proto = buildProcotol(symbolicRoute, slice, currentRouterName);
       Prefix pfx = buildPrefix(symbolicRoute, flow);
       // pick the next router

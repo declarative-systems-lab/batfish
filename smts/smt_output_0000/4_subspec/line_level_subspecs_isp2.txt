@@ -1,0 +1,23 @@
+Line-Level Subspecs
+==================
+
+Line Group: Config_r2_CommunityList_400100__Line1
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Line Group: Config_r2_RouteFilterList_default_ips__Line1
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Line Group: Config_r2_RouteFilterList_isp2_network__Line1
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Line Group: Config_r2_RoutingPolicy_R2_IN_FROM_ISP2__Seq10__Line2
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+

@@ -4,25 +4,23 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
-import java.io.ObjectStreamException;
 import java.io.Serializable;
 import java.util.Optional;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 
+import com.microsoft.z3.Context;
+import com.microsoft.z3.Solver;
+import com.microsoft.z3.BoolExpr;
+import com.microsoft.z3.ArithExpr;
+import com.microsoft.z3.BitVecExpr;
+
+import org.batfish.common.BatfishException;
+
 /** An IPv4 Prefix */
 @ParametersAreNonnullByDefault
 public final class Prefix implements Comparable<Prefix>, Serializable {
-
-  // Soft values: let it be garbage collected in times of pressure.
-  // Maximum size 2^20: Just some upper bound on cache size, well less than GiB.
-  //   (12 bytes seems smallest possible entry (long + int), would be 12 MiB total).
-  private static final LoadingCache<Prefix, Prefix> CACHE =
-      CacheBuilder.newBuilder().softValues().maximumSize(1 << 20).build(CacheLoader.from(x -> x));
 
   /** Maximum prefix length (number of bits) for a IPv4 address, which is 32 */
   public static final int MAX_PREFIX_LENGTH = 32;
@@ -108,15 +106,51 @@ public final class Prefix implements Comparable<Prefix>, Serializable {
       _ip = ip;
     }
     _prefixLength = prefixLength;
+    
+    // initialize enable smt variable flag to false
+    _enableSmtVariable = false;
+  }
+
+  private Prefix(
+      Ip ip, int prefixLength, BitVecExpr configVarIp, BitVecExpr configVarMask,
+      ArithExpr configVarLength) {
+    checkArgument(
+            prefixLength >= 0 && prefixLength <= MAX_PREFIX_LENGTH,
+            "Invalid prefix length %s",
+            prefixLength);
+    if (ip.valid()) {
+      // TODO: stop using Ip as a holder for invalid values.
+      _ip = ip.getNetworkAddress(prefixLength);
+    } else {
+      _ip = ip;
+    }
+    _prefixLength = prefixLength;
+
+    // copy configuration symbolic variables and relevant flag
+    _configVarIp = configVarIp;
+    _configVarMask = configVarMask;
+    _configVarLength = configVarLength;
+    _enableSmtVariable = true;
   }
 
   public static Prefix create(Ip ip, int prefixLength) {
-    Prefix p = new Prefix(ip, prefixLength);
-    return CACHE.getUnchecked(p);
+    return new Prefix(ip, prefixLength);
+  }
+
+  public static Prefix create(
+      Ip ip, int prefixLength, BitVecExpr configVarIp, BitVecExpr configVarMask,
+      ArithExpr configVarLength) {
+    return new Prefix(ip, prefixLength, configVarIp, configVarMask, configVarLength);
   }
 
   public static Prefix create(Ip address, Ip mask) {
     return create(address, mask.numSubnetBits());
+  }
+
+  public static Prefix create(
+      Ip address, Ip mask, BitVecExpr configVarIp, BitVecExpr configVarMask,
+      ArithExpr configVarLength) {
+    return create(address, mask.numSubnetBits(), configVarIp, configVarMask, configVarLength);
   }
 
   /** Return the longest prefix that contains both input prefixes. */
@@ -251,8 +285,65 @@ public final class Prefix implements Comparable<Prefix>, Serializable {
     return _ip + "/" + _prefixLength;
   }
 
-  /** Cache after deserialization. */
-  private Object readResolve() throws ObjectStreamException {
-    return CACHE.getUnchecked(this);
+  /** Add configuration constant - SMT symbolic variable */
+  private static int BITVEC_EXPR_SIZE = 32;
+
+  private boolean _enableSmtVariable;
+  private String _configVarPrefix;
+
+  private transient BitVecExpr _configVarIp;
+  private transient BitVecExpr _configVarMask;
+  private transient ArithExpr _configVarLength;
+
+  public void initSmtVariable(Context context, Solver solver, String configVarPrefix) {
+    // assert that the prefix is not shared
+    if (_enableSmtVariable) {
+      throw new BatfishException("Prefix.initSmtVariable: shared object.\n" +
+          "Previous configVarPrefix: " + _configVarPrefix + "\n" +
+          "Current  configVarPrefix: " + configVarPrefix);
+    }
+
+    long prefixIp = _ip.asLong();
+
+    _configVarIp = context.mkBVConst(configVarPrefix + "ip", BITVEC_EXPR_SIZE);
+    _configVarMask = context.mkBVConst(configVarPrefix + "mask", BITVEC_EXPR_SIZE);
+    _configVarLength = context.mkIntConst(configVarPrefix + "length");
+
+    // add relevant configuration constant constraints
+    // original wildcardMask is 0b0000111111111111 (0x0FFF)
+    // modified subnetMask is   0b1111000000000000 (0xF000)
+    BoolExpr configVarIpConstraint = context.mkEq(
+        _configVarIp, context.mkBV(prefixIp, BITVEC_EXPR_SIZE));
+    BoolExpr configVarMaskConstraint = context.mkEq(
+        _configVarMask, context.mkBV(~(getPrefixWildcard().asLong()), BITVEC_EXPR_SIZE));
+    BoolExpr configVarLengthConstraint = context.mkEq(
+        _configVarLength, context.mkInt(_prefixLength));
+    solver.add(configVarIpConstraint);
+    solver.add(configVarMaskConstraint);
+    solver.add(configVarLengthConstraint);
+
+    // config the smt variable enable flag to true
+    _enableSmtVariable = true;
+    _configVarPrefix = configVarPrefix;
+  }
+
+  public boolean getEnableSmtVariable() {
+    return _enableSmtVariable;
+  }
+
+  public String getConfigVarPrefix() {
+    return _configVarPrefix;
+  }
+
+  public BitVecExpr getConfigVarIp() {
+    return _configVarIp;
+  }
+
+  public BitVecExpr getConfigVarMask() {
+    return _configVarMask;
+  }
+
+  public ArithExpr getConfigVarLength() {
+    return _configVarLength;
   }
 }

@@ -50,6 +50,7 @@ import io.opentracing.SpanContext;
 import io.opentracing.util.GlobalTracer;
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.PrintWriter;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -97,6 +98,7 @@ import org.batfish.common.BatfishException;
 import org.batfish.common.BatfishException.BatfishStackTrace;
 import org.batfish.common.BatfishLogger;
 import org.batfish.common.BfConsts;
+import org.batfish.dataplane.ibdp.IncrementalDataPlane;
 import org.batfish.common.CleanBatfishException;
 import org.batfish.common.CompletionMetadata;
 import org.batfish.common.CoordConsts;
@@ -145,7 +147,11 @@ import org.batfish.datamodel.Interface.Dependency;
 import org.batfish.datamodel.Interface.DependencyType;
 import org.batfish.datamodel.InterfaceType;
 import org.batfish.datamodel.NetworkConfigurations;
+import org.batfish.datamodel.OspfExternalRoute;
+import org.batfish.datamodel.OspfRoute;
 import org.batfish.datamodel.Prefix;
+import org.batfish.datamodel.Route;
+import org.batfish.datamodel.RoutingProtocol;
 import org.batfish.datamodel.SubRange;
 import org.batfish.datamodel.SwitchportMode;
 import org.batfish.datamodel.Topology;
@@ -799,6 +805,159 @@ public class Batfish extends PluginConsumer implements IBatfish {
         }
       };
 
+  /** Compute the dataplane and print all BGPv4 routes. */
+  public DataPlaneAnswerElement computeDataPlane(
+      NetworkSnapshot snapshot, PrintWriter bgpRouteWriter) {
+    return computeDataPlaneWithRouteWriters(snapshot, bgpRouteWriter, null);
+  }
+
+  /** Compute the dataplane and print all BGPv4 and OSPF routes to separate writers. */
+  public DataPlaneAnswerElement computeDataPlane(
+      NetworkSnapshot snapshot, PrintWriter bgpRouteWriter, PrintWriter ospfRouteWriter) {
+    return computeDataPlaneWithRouteWriters(snapshot, bgpRouteWriter, ospfRouteWriter);
+  }
+
+  private DataPlaneAnswerElement computeDataPlaneWithRouteWriters(
+      NetworkSnapshot snapshot,
+      PrintWriter bgpRouteWriter,
+      @Nullable PrintWriter ospfRouteWriter) {
+    // If already present, invalidate a dataplane for this snapshot.
+    // (unlikely, only when devs force recomputation)
+    _cachedDataPlanes.invalidate(snapshot);
+
+    // Reserve space for the new dataplane in the in-memory cache by inserting and invalidating a
+    // dummy value.
+    _cachedDataPlanes.put(DUMMY_SNAPSHOT, DUMMY_DATAPLANE);
+    _cachedDataPlanes.invalidate(DUMMY_SNAPSHOT);
+
+    ComputeDataPlaneResult result = getDataPlanePlugin().computeDataPlane(snapshot);
+    DataPlane dataplane = result._dataPlane;
+    printBgpRoutes(dataplane, bgpRouteWriter);
+    if (ospfRouteWriter != null) {
+      if (!(dataplane instanceof IncrementalDataPlane)) {
+        throw new IllegalStateException("OSPF route output requires the incremental dataplane");
+      }
+      printOspfRoutes((IncrementalDataPlane) dataplane, ospfRouteWriter);
+    }
+
+    DataPlaneAnswerElement answerElement = result._answerElement;
+    TopologyContainer topologyContainer = result._topologies;
+    result = null; // let it be garbage collected.
+
+    saveDataPlane(snapshot, dataplane, topologyContainer);
+    return answerElement;
+  }
+
+  private static void printBgpRoutes(DataPlane dataplane, PrintWriter writer) {
+    String format = "%-12s %-10s %-20s %-10s %-15s %-30s %-30s %-15s %-10s %-10s%n";
+    String header =
+        String.format(
+            format,
+            "Node",
+            "VRF",
+            "Network",
+            "Protocol",
+            "NextHop",
+            "ASPath",
+            "Communities",
+            "LocalPreference",
+            "Med",
+            "Weight");
+    writer.print(header);
+    writer.println(repeatChar('=', header.length()));
+
+    Table<String, String, Set<Bgpv4Route>> bgpRoutes = dataplane.getBgpRoutes();
+    if (dataplane instanceof IncrementalDataPlane) {
+      bgpRoutes = ((IncrementalDataPlane) dataplane).getBgpRoutesAll();
+    }
+    for (Table.Cell<String, String, Set<Bgpv4Route>> cell : bgpRoutes.cellSet()) {
+      String vrfName = cell.getColumnKey();
+      if (!Configuration.DEFAULT_VRF_NAME.equals(vrfName)) {
+        continue;
+      }
+      for (Bgpv4Route route : cell.getValue()) {
+        String nextHop =
+            route.getNextHopIp().equals(Route.UNSET_ROUTE_NEXT_HOP_IP)
+                ? "-"
+                : route.getNextHopIp().toString();
+        writer.printf(
+            format,
+            cell.getRowKey(),
+            vrfName,
+            route.getNetwork(),
+            route.getProtocol(),
+            nextHop,
+            route.getAsPath(),
+            route.getCommunities().getCommunities(),
+            route.getLocalPreference(),
+            route.getMetric(),
+            route.getWeight());
+      }
+    }
+    writer.flush();
+  }
+
+  private static void printOspfRoutes(IncrementalDataPlane dataplane, PrintWriter writer) {
+    String format = "%-12s %-10s %-20s %-8s %-10s %-10s %-10s %-15s%n";
+    String header =
+        String.format(
+            format,
+            "Node",
+            "VRF",
+            "Network",
+            "Type",
+            "Area",
+            "Metric",
+            "PathCost",
+            "NextHop");
+    writer.print(header);
+    writer.println(repeatChar('=', header.length()));
+
+    for (Table.Cell<String, String, Set<OspfRoute>> cell : dataplane.getOspfRoutes().cellSet()) {
+      String vrfName = cell.getColumnKey();
+      if (!Configuration.DEFAULT_VRF_NAME.equals(vrfName)) {
+        continue;
+      }
+      for (OspfRoute route : cell.getValue()) {
+        String area = route.getArea() == OspfRoute.NO_AREA ? "-" : Long.toString(route.getArea());
+        long pathCost =
+            route instanceof OspfExternalRoute
+                ? ((OspfExternalRoute) route).getCostToAdvertiser()
+                : route.getMetric();
+        String nextHop =
+            route.getNextHopIp().equals(Route.UNSET_ROUTE_NEXT_HOP_IP)
+                ? "-"
+                : route.getNextHopIp().toString();
+        writer.printf(
+            format,
+            cell.getRowKey(),
+            vrfName,
+            route.getNetwork(),
+            ospfRouteType(route.getProtocol()),
+            area,
+            route.getMetric(),
+            pathCost,
+            nextHop);
+      }
+    }
+    writer.flush();
+  }
+
+  private static String ospfRouteType(RoutingProtocol protocol) {
+    switch (protocol) {
+      case OSPF:
+        return "O";
+      case OSPF_IA:
+        return "OIA";
+      case OSPF_E1:
+        return "E1";
+      case OSPF_E2:
+        return "E2";
+      default:
+        return protocol.toString();
+    }
+  }
+
   @Override
   public DataPlaneAnswerElement computeDataPlane(NetworkSnapshot snapshot) {
     // If already present, invalidate a dataplane for this snapshot.
@@ -811,6 +970,16 @@ public class Batfish extends PluginConsumer implements IBatfish {
     _cachedDataPlanes.invalidate(DUMMY_SNAPSHOT);
 
     ComputeDataPlaneResult result = getDataPlanePlugin().computeDataPlane(snapshot);
+    // System.out.println(result._dataPlane.getBgpRoutes());
+    // for (Table.Cell<String, String, Set<Bgpv4Route>> route : result._dataPlane.getBgpRoutes().cellSet()) {
+    //   String hostname = route.getRowKey();
+    //   String vrfname = route.getColumnKey();
+    //   for (Bgpv4Route r : route.getValue()) {
+    //     System.out.println(
+    //         hostname + " " + vrfname + " " +
+    //         r.getNetwork() + " " + r.getAsPath() + " " + r.getCommunities());
+    //   }
+    // }
     DataPlaneAnswerElement answerElement = result._answerElement;
     DataPlane dataplane = result._dataPlane;
     TopologyContainer topologyContainer = result._topologies;
@@ -3225,4 +3394,19 @@ public class Batfish extends PluginConsumer implements IBatfish {
   }
 
   private static final Logger LOGGER = LogManager.getLogger(Batfish.class);
+
+  /**
+   * Repeat a character `count` times and return the resulting string.
+   *
+   * @param c the character to repeat
+   * @param count the number of repetitions
+   * @return a String with the character repeated `count` times
+   */
+  private static String repeatChar(char c, int count) {
+    StringBuilder builder = new StringBuilder(count);
+    for (int i = 0; i < count; i++) {
+      builder.append(c);
+    }
+    return builder.toString();
+  }
 }

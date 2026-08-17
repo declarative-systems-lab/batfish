@@ -1,0 +1,128 @@
+Field-Level Subspecs
+====================
+
+Config Variable: Config_r1_CommunityList_200100__Line1__200_100__community
+Subspecs (1):
+  1. (not (= ((_ extract 0 0) Config_r1_CommunityList_200100__Line1__200_100__community) #b0)) [from isp1]
+--------------------------------------------------
+
+Config Variable: Config_r1_CommunityList_200100__Line1__action
+Subspecs (1):
+  1. (= Config_r1_CommunityList_200100__Line1__action true) [from isp1]
+--------------------------------------------------
+
+Config Variable: Config_r1_CommunityList_500200__Line1__500_200__community
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r1_CommunityList_500200__Line1__action
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r1_RouteFilterList_default_ips__Line1__0_0_0_0__action
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r1_RouteFilterList_default_ips__Line1__0_0_0_0__ip
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r1_RouteFilterList_default_ips__Line1__0_0_0_0__length
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r1_RouteFilterList_default_ips__Line1__0_0_0_0__prefix_range_end
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r1_RouteFilterList_default_ips__Line1__0_0_0_0__prefix_range_start
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r1_RouteFilterList_isp1_network__Line1__198_51_96_0__action
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r1_RouteFilterList_isp1_network__Line1__198_51_96_0__ip
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r1_RouteFilterList_isp1_network__Line1__198_51_96_0__length
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r1_RouteFilterList_isp1_network__Line1__198_51_96_0__prefix_range_end
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r1_RouteFilterList_isp1_network__Line1__198_51_96_0__prefix_range_start
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r1_RouteFilterList_isp1_network__Line2__192_0_2_0__action
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r1_RouteFilterList_isp1_network__Line2__192_0_2_0__ip
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r1_RouteFilterList_isp1_network__Line2__192_0_2_0__length
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r1_RouteFilterList_isp1_network__Line2__192_0_2_0__prefix_range_end
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r1_RouteFilterList_isp1_network__Line2__192_0_2_0__prefix_range_start
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r1_RouteFilterList_isp1_network__Line3__198_51_100_0__action
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r1_RouteFilterList_isp1_network__Line3__198_51_100_0__ip
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r1_RouteFilterList_isp1_network__Line3__198_51_100_0__length
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r1_RouteFilterList_isp1_network__Line3__198_51_100_0__prefix_range_end
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r1_RouteFilterList_isp1_network__Line3__198_51_100_0__prefix_range_start
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r1_RoutingPolicy_R1_IN_FROM_ISP1__Seq10__Line2__add_community_400_100__community
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+

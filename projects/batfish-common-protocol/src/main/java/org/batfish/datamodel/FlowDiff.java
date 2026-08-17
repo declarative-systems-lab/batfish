@@ -143,11 +143,13 @@ public final class FlowDiff implements Comparable<FlowDiff> {
       Integer srcPort2,
       Integer dstPort2) {
     ImmutableSortedSet.Builder<FlowDiff> diffs = ImmutableSortedSet.naturalOrder();
-    if (dstPort1 != dstPort2) {
+    // if (dstPort1 != dstPort2) {
+    if (!dstPort1.equals(dstPort2)) {
       diffs.add(
           new FlowDiff(PROP_DST_PORT, Integer.toString(dstPort1), Integer.toString(dstPort2)));
     }
-    if (srcPort1 != srcPort2) {
+    // if (srcPort1 != srcPort2) {
+    if (!srcPort1.equals(srcPort2)) {
       diffs.add(
           new FlowDiff(PROP_SRC_PORT, Integer.toString(srcPort1), Integer.toString(srcPort2)));
     }

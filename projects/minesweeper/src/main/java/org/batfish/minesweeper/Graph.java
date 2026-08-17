@@ -3,6 +3,7 @@ package org.batfish.minesweeper;
 import static java.util.stream.Collectors.toMap;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -32,6 +33,7 @@ import org.batfish.datamodel.BgpActivePeerConfig;
 import org.batfish.datamodel.BgpPeerConfig;
 import org.batfish.datamodel.BgpProcess;
 import org.batfish.datamodel.CommunityList;
+import org.batfish.datamodel.CommunityListLine;
 import org.batfish.datamodel.ConcreteInterfaceAddress;
 import org.batfish.datamodel.Configuration;
 import org.batfish.datamodel.Interface;
@@ -45,6 +47,7 @@ import org.batfish.datamodel.StaticRoute;
 import org.batfish.datamodel.Topology;
 import org.batfish.datamodel.Vrf;
 import org.batfish.datamodel.bgp.AddressFamily;
+import org.batfish.datamodel.bgp.community.Community;
 import org.batfish.datamodel.collections.NodeInterfacePair;
 import org.batfish.datamodel.ospf.OspfArea;
 import org.batfish.datamodel.ospf.OspfProcess;
@@ -53,6 +56,8 @@ import org.batfish.datamodel.routing_policy.expr.BooleanExpr;
 import org.batfish.datamodel.routing_policy.expr.CommunitySetExpr;
 import org.batfish.datamodel.routing_policy.expr.Conjunction;
 import org.batfish.datamodel.routing_policy.expr.ExplicitPrefixSet;
+import org.batfish.datamodel.routing_policy.expr.LiteralCommunity;
+import org.batfish.datamodel.routing_policy.expr.LiteralCommunitySet;
 import org.batfish.datamodel.routing_policy.expr.MatchPrefixSet;
 import org.batfish.datamodel.routing_policy.expr.MatchProtocol;
 import org.batfish.datamodel.routing_policy.expr.Not;
@@ -60,6 +65,7 @@ import org.batfish.datamodel.routing_policy.expr.PrefixSetExpr;
 import org.batfish.datamodel.routing_policy.statement.Statement;
 import org.batfish.minesweeper.CommunityVar.Type;
 import org.batfish.minesweeper.bdd.CommunityVarConverter;
+import org.batfish.minesweeper.smt.Encoder;
 import org.batfish.minesweeper.collections.Table2;
 import org.batfish.minesweeper.communities.RoutePolicyStatementVarCollector;
 
@@ -90,22 +96,30 @@ public class Graph {
   public static final String BGP_COMMON_FILTER_LIST_NAME = "BGP_COMMON_EXPORT_POLICY";
   private static final String NULL_INTERFACE_NAME = "null_interface";
   private final IBatfish _batfish;
+
   private final Set<String> _routers;
   private final Map<String, Configuration> _configurations;
   private final NetworkSnapshot _snapshot;
+  // <HostName, Set<OSPFAreaID>>
   private final Map<String, Set<Long>> _areaIds;
+
   private final Table2<String, String, List<StaticRoute>> _staticRoutes;
   private final Map<String, List<StaticRoute>> _nullStaticRoutes;
+
   private final Map<String, Set<String>> _neighbors;
   private final Map<String, List<GraphEdge>> _edgeMap;
+
   private final Set<GraphEdge> _allRealEdges;
   private final Set<GraphEdge> _allEdges;
   private final Map<GraphEdge, GraphEdge> _otherEnd;
+
   private final Map<GraphEdge, BgpActivePeerConfig> _ebgpNeighbors;
   private final Map<GraphEdge, BgpActivePeerConfig> _ibgpNeighbors;
+
   private final Map<String, String> _routeReflectorParent;
   private final Map<String, Set<String>> _routeReflectorClients;
   private final Map<String, Integer> _originatorId;
+
   private final Map<String, Integer> _domainMap;
   private final Map<Integer, Set<String>> _domainMapInverse;
 
@@ -120,10 +134,14 @@ public class Graph {
   /**
    * A graph with a static route with a dynamic next hop cannot be encoded to SMT, so some of the
    * Minesweeper analyses will fail. Compression is still possible though.
+   * FIXME: annotated by yongzheng on 20250318
    */
   private boolean _hasStaticRouteWithDynamicNextHop;
 
   private final Set<CommunityVar> _allCommunities;
+
+  /** EXACT/OTHER only; bit index {@code i} is the {@code i}th entry in {@link CommunityVar} sort. */
+  private final ImmutableMap<CommunityVar, Integer> _allCommunitiesIndex;
 
   /**
    * Keys are all REGEX vars, and values are lists of EXACT or OTHER vars. This field is only used
@@ -261,14 +279,29 @@ public class Graph {
       topology = topology.prune(ImmutableSet.of(), toRemove, ImmutableSet.of());
     }
 
+    // initialize _edgeMap, _neighbors, _allEdges, _allRealEdges and _otherEnd
     initGraph(topology);
+    // initialize _staticRoutes, _nullStaticRoutes, _hasStaticRouteWithDynamicNextHop
     initStaticRoutes();
+    // initialize _staticRoutes
+    // and create relevant Null Interface for _allEdges, allRealEdges and _edgeMap
     addNullRouteEdges();
+    // initialize _ebgpNeighbors
     initEbgpNeighbors();
+    // initialize _ibgpNeighbors
+    // initialize _originatorId for Route Reflector
+    // initialize _routeReflectorParent and _routeReflectorClients for Route Reflector
+    // RR router, EBGP neighbor, IBGP client neighbor, IBGP non-client neighbor
+    // create relevant iBGP abstract interface in GraphEdge for _allEdges, _edgeMap and _otherEnd
     initIbgpNeighbors();
+    // initialize _areaIds for OSPF
     initAreaIds();
+    // initialize _domainMap and _domainMapInverse for iBGP
     initDomains();
+    // initialize _allCommunities and _allCommunitiesIndex
     initAllCommunities(communities);
+    _allCommunitiesIndex = buildAllCommunitiesIndex(_allCommunities);
+
     if (_bddBasedAnalysis) {
       // compute atomic predicates for the BDD-based analysis
       // ignore community regexes of type OTHER, which are not used by that analysis
@@ -358,11 +391,12 @@ public class Graph {
   public static Set<Prefix> getOriginatedNetworks(Configuration conf, Protocol proto) {
     Set<Prefix> acc = new HashSet<>();
 
+    // collect interface ip prefix address in all OSPF areas
     if (proto.isOspf()) {
       OspfProcess ospf = getFirstOspfProcess(conf.getDefaultVrf());
       for (OspfArea area : ospf.getAreas().values()) {
         for (String ifaceName : area.getInterfaces()) {
-          Interface iface = conf.getAllInterfaces().get(ifaceName);
+          Interface iface = conf.getAllInterfaces(Configuration.DEFAULT_VRF_NAME).get(ifaceName);
           if (iface.getActive() && iface.getOspfEnabled()) {
             acc.add(iface.getConcreteAddress().getPrefix());
           }
@@ -371,6 +405,7 @@ public class Graph {
       return acc;
     }
 
+    // collect ip prefix address in BGP RoutingPolicy
     if (proto.isBgp()) {
       RoutingPolicy defaultPol = findCommonRoutingPolicy(conf, Protocol.BGP);
       if (defaultPol != null) {
@@ -409,8 +444,9 @@ public class Graph {
       return acc;
     }
 
+    // collect interface ip prefix address according to configuration (default VRF only)
     if (proto.isConnected()) {
-      for (Interface iface : conf.getAllInterfaces().values()) {
+      for (Interface iface : conf.getAllInterfaces(Configuration.DEFAULT_VRF_NAME).values()) {
         ConcreteInterfaceAddress address = iface.getConcreteAddress();
         if (address != null) {
           acc.add(address.getPrefix());
@@ -419,6 +455,7 @@ public class Graph {
       return acc;
     }
 
+    // collect static route ip prefix address
     if (proto.isStatic()) {
       for (StaticRoute sr : conf.getDefaultVrf().getStaticRoutes()) {
         acc.add(sr.getNetwork());
@@ -447,14 +484,18 @@ public class Graph {
    * create the opposite edge mapping.
    */
   private void initGraph(Topology topology) {
+    // Map<Pair<HostName, InterfaceName>, Interface>
     Map<NodeInterfacePair, Interface> ifaceMap = new HashMap<>();
+    // Map<HostName, Set<Pair<HostName, InterfaceName>>>
+    // the element storage a host and all relevant interface
     Map<String, Set<NodeInterfacePair>> routerIfaceMap = new HashMap<>();
 
+    // initialize ifaceMap and routerIfaceMap from default VRF interfaces only
     for (Entry<String, Configuration> entry : _configurations.entrySet()) {
       String router = entry.getKey();
       Configuration conf = entry.getValue();
       Set<NodeInterfacePair> ifacePairs = new HashSet<>();
-      for (Entry<String, Interface> entry2 : conf.getAllInterfaces().entrySet()) {
+      for (Entry<String, Interface> entry2 : conf.getAllInterfaces(Configuration.DEFAULT_VRF_NAME).entrySet()) {
         String name = entry2.getKey();
         Interface iface = entry2.getValue();
         NodeInterfacePair nip = NodeInterfacePair.of(router, name);
@@ -471,10 +512,11 @@ public class Graph {
       Set<String> neighs = new HashSet<>();
 
       for (NodeInterfacePair nip : nips) {
-        SortedSet<NodeInterfacePair> neighborIfaces = topology.getNeighbors(nip);
         Interface i1 = ifaceMap.get(nip);
+        SortedSet<NodeInterfacePair> neighborIfaces = topology.getNeighbors(nip);
         boolean hasNoOtherEnd = (neighborIfaces.isEmpty() && i1.getConcreteAddress() != null);
         if (hasNoOtherEnd) {
+          // neighbor interface set is empty and this host interface have concrete address
           GraphEdge ge = new GraphEdge(i1, null, router, null, false, false);
           graphEdges.add(ge);
         }
@@ -512,9 +554,16 @@ public class Graph {
   /*
    * Collect all static routes after inferring which interface they indicate
    * should be used for the next-hop.
+   * 
+   * A static route's next-hop can be configured in three ways:
+   *   + Next-Hop IP Address (Neighbor Router Interface)
+   *     ip route 192.168.2.0 255.255.255.0 192.168.1.2 (Neighbor Interface Ip Address)
+   *   + Exit Interface (This Router's Interface)
+   *     ip route 192.168.2.0 255.255.255.0 GigabitEthernet0/1 (Local Interface Name)
+   *   + Null Interface (to drop packets)
+   *     ip route 192.168.2.0 255.255.255.0 Null0 (Cisco format)
    */
   private void initStaticRoutes() {
-
     for (Entry<String, Configuration> entry : _configurations.entrySet()) {
       String router = entry.getKey();
       Configuration conf = entry.getValue();
@@ -523,7 +572,6 @@ public class Graph {
       _staticRoutes.put(router, map);
 
       for (StaticRoute sr : conf.getDefaultVrf().getStaticRoutes()) {
-
         boolean someIface = false;
 
         for (GraphEdge ge : _edgeMap.get(router)) {
@@ -630,10 +678,12 @@ public class Graph {
       if (conf.getDefaultVrf().getBgpProcess() != null) {
         List<GraphEdge> edges = _edgeMap.get(router);
         for (GraphEdge ge : edges) {
+          // FIXME: annotated by yongzheng in 20250318 for modifying this for loop
           for (int i = 0; i < ipList.size(); i++) {
             Ip ip = ipList.get(i);
             BgpActivePeerConfig n = ns.get(i);
             Interface iface = ge.getStart();
+            // check GraphEdge start interface ip address and end interface ip address
             if (ip != null && iface.getConcreteAddress().getPrefix().containsIp(ip)) {
               _ebgpNeighbors.put(ge, n);
             }
@@ -662,6 +712,7 @@ public class Graph {
    * with the same AS number.
    */
   private void initIbgpNeighbors() {
+    // <LocalHostName, PeerHostName, LocalBgpConfig>
     Table2<String, String, BgpActivePeerConfig> neighbors = generateIbgpNeighbors(_configurations);
 
     // Add abstract graph edges for iBGP sessions
@@ -805,6 +856,7 @@ public class Graph {
     if (_ebgpNeighbors.get(ge) != null) {
       return BgpSendType.TO_EBGP;
     }
+
     if (_ibgpNeighbors.get(ge) != null) {
       Set<String> clients = _routeReflectorClients.get(ge.getPeer());
       Set<String> clients2 = _routeReflectorClients.get(ge.getRouter());
@@ -816,6 +868,7 @@ public class Graph {
         return BgpSendType.TO_NONCLIENT;
       }
     }
+
     throw new BatfishException("Invalid BGP edge: " + ge);
   }
 
@@ -908,6 +961,25 @@ public class Graph {
   }
 
   /**
+   * {@link CommunityVar.Type#EXACT} and {@link CommunityVar.Type#OTHER} from {@code allCommunities}
+   * → bit index, in {@link CommunityVar#compareTo} order.
+   */
+  private static ImmutableMap<CommunityVar, Integer> buildAllCommunitiesIndex(
+      Set<CommunityVar> allCommunities) {
+    ImmutableMap.Builder<CommunityVar, Integer> builder = ImmutableMap.builder();
+    List<CommunityVar> ordered =
+        allCommunities.stream()
+            .filter(c -> c.getType() == Type.EXACT || c.getType() == Type.OTHER)
+            .distinct()
+            .sorted()
+            .collect(Collectors.toList());
+    for (int i = 0; i < ordered.size(); i++) {
+      builder.put(ordered.get(i), i);
+    }
+    return builder.build();
+  }
+
+  /**
    * Identifies all of the AS-path regexes in the given configurations. An optional set of
    * additional AS-path regexes is also included, which is used to support user-specified AS-path
    * constraints for symbolic analysis.
@@ -990,12 +1062,30 @@ public class Graph {
     return _allCommunities;
   }
 
+  public ImmutableMap<CommunityVar, Integer> getAllCommunitiesIndex() {
+    return _allCommunitiesIndex;
+  }
+
+  public ImmutableMap<Community, Integer> getAllExactCommunitiesIndex() {
+    return _allCommunitiesIndex.entrySet().stream()
+        .filter(e -> e.getKey().getType() == Type.EXACT)
+        .collect(ImmutableMap.toImmutableMap(e -> e.getKey().getLiteralValue(), e -> e.getValue()));
+  }
+
   public boolean getBddBasedAnalysis() {
     return _bddBasedAnalysis;
   }
 
   public SortedMap<CommunityVar, List<CommunityVar>> getCommunityDependencies() {
     return _communityDependencies;
+  }
+
+  public List<CommunityVar> getCommunityDependencies(CommunityVar cvar) {
+    if (!_communityDependencies.containsKey(cvar)) {
+      throw new BatfishException("Graph.getCommunityDependencies: " +
+          "variable " + cvar + " not found");
+    }
+    return _communityDependencies.get(cvar);
   }
 
   public Map<String, String> getNamedCommunities() {
@@ -1041,7 +1131,37 @@ public class Graph {
         comms.addAll(stmt.accept(new RoutePolicyStatementVarCollector(), conf));
       }
     }
+    // Also collect communities from community list definitions.
+    comms.addAll(findAllCommunitiesFromCommunityLists(conf));
     return comms;
+  }
+
+  /**
+   * Collect community literals and regexes from all CommunityList definitions on a router.
+   */
+  private static Set<CommunityVar> findAllCommunitiesFromCommunityLists(Configuration conf) {
+    ImmutableSet.Builder<CommunityVar> builder = ImmutableSet.builder();
+    for (CommunityList cl : conf.getCommunityLists().values()) {
+      for (CommunityListLine line : cl.getLines()) {
+        collectCommunityVarsFromExpr(line.getMatchCondition(), builder);
+      }
+    }
+    return builder.build();
+  }
+
+  private static void collectCommunityVarsFromExpr(
+      CommunitySetExpr expr, ImmutableSet.Builder<CommunityVar> builder) {
+    if (expr instanceof LiteralCommunity) {
+      builder.add(
+          CommunityVarConverter.toCommunityVar(((LiteralCommunity) expr).getCommunity()));
+    } else if (expr instanceof RegexCommunitySet) {
+      builder.add(CommunityVarConverter.toCommunityVar((RegexCommunitySet) expr));
+    } else if (expr instanceof LiteralCommunitySet) {
+      ((LiteralCommunitySet) expr)
+          .getCommunities().stream()
+              .map(CommunityVarConverter::toCommunityVar)
+              .forEach(builder::add);
+    }
   }
 
   /**
@@ -1198,6 +1318,7 @@ public class Graph {
     if (iface.getName().startsWith("iBGP-")) {
       return proto.isBgp();
     }
+
     // Never use Loopbacks for any protocol except connected
     if (ge.getStart().isLoopback()) {
       return proto.isConnected();

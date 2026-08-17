@@ -15,6 +15,16 @@ import org.batfish.question.QuestionPlugin;
 @AutoService(Plugin.class)
 public class SmtLoadBalanceQuestionPlugin extends QuestionPlugin {
 
+  @Override
+  protected Answerer createAnswerer(Question question, IBatfish batfish) {
+    return new LoadBalanceAnswerer(question, batfish);
+  }
+
+  @Override
+  protected Question createQuestion() {
+    return new LoadBalanceQuestion();
+  }
+
   public static class LoadBalanceAnswerer extends Answerer {
 
     public LoadBalanceAnswerer(Question question, IBatfish batfish) {
@@ -58,15 +68,5 @@ public class SmtLoadBalanceQuestionPlugin extends QuestionPlugin {
     public String getName() {
       return "smt-load-balance";
     }
-  }
-
-  @Override
-  protected Answerer createAnswerer(Question question, IBatfish batfish) {
-    return new LoadBalanceAnswerer(question, batfish);
-  }
-
-  @Override
-  protected Question createQuestion() {
-    return new LoadBalanceQuestion();
   }
 }

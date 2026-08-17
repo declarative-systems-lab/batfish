@@ -1,6 +1,11 @@
 package org.batfish.datamodel.routing_policy.expr;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.microsoft.z3.ArithExpr;
+import com.microsoft.z3.BoolExpr;
+import com.microsoft.z3.Context;
+import com.microsoft.z3.Solver;
+import org.batfish.common.BatfishException;
 import org.batfish.datamodel.routing_policy.Environment;
 
 public class DecrementMetric extends LongExpr {
@@ -12,6 +17,9 @@ public class DecrementMetric extends LongExpr {
 
   public DecrementMetric(long subtrahend) {
     _subtrahend = subtrahend;
+
+    // initialize enable smt variable flag to false
+    _enableSmtVariable = false;
   }
 
   @Override
@@ -58,5 +66,42 @@ public class DecrementMetric extends LongExpr {
 
   public void setSubtrahend(long subtrahend) {
     _subtrahend = subtrahend;
+  }
+
+  /** Add configuration constant - SMT symbolic variable */
+  // private boolean _enableSmtVariable;    // Inherited from the parent class
+  // private String _configVarPrefix;       // Inherited from the parent class
+
+  private transient ArithExpr _configVarLocalpreference;
+
+  @Override
+  public void initSmtVariable(Context context, Solver solver, String configVarPrefix) {
+    // assert that the literal long value is not shared object
+    if (_enableSmtVariable) {
+      throw new BatfishException("DecrementMetric.initSmtVariable: shared object.\n" +
+          "Previous configVarPrefix: " + _configVarPrefix + "\n" +
+          "Current  configVarPrefix: " + configVarPrefix);
+    }
+
+    // init smt variable for literal long value
+    _configVarLocalpreference = context.mkIntConst(configVarPrefix);
+    // add relevant configuration constant constraints
+    BoolExpr configVarLpConstraint = context.mkEq(
+        _configVarLocalpreference, context.mkInt(_subtrahend));
+    solver.add(configVarLpConstraint);
+
+    // config the smt variable enable flag to true
+    _enableSmtVariable = true;
+    _configVarPrefix = configVarPrefix;
+  }
+
+  public ArithExpr getConfigVarLocalpreference() {
+    return _configVarLocalpreference;
+  }
+
+  /** Add get literal long value for configVarPrefix */
+  @Override
+  public String getLiteralLongString() {
+    return String.valueOf(_subtrahend);
   }
 }

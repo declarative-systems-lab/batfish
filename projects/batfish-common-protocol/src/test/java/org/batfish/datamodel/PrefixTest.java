@@ -6,9 +6,11 @@ import static org.batfish.datamodel.Prefix.strict;
 import static org.batfish.datamodel.matchers.IpSpaceMatchers.containsIp;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.not;
+import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertThat;
 
 import net.sf.javabdd.BDD;
+import org.apache.commons.lang3.SerializationUtils;
 import org.batfish.common.bdd.BDDInteger;
 import org.batfish.common.bdd.BDDUtils;
 import org.batfish.common.bdd.IpSpaceToBDD;
@@ -22,6 +24,16 @@ import org.junit.runners.JUnit4;
 public class PrefixTest {
 
   @Rule public ExpectedException _thrown = ExpectedException.none();
+
+  @Test
+  public void testSerializationCreatesIndependentInstances() {
+    Prefix original = Prefix.parse("192.0.2.0/24");
+
+    Prefix firstClone = SerializationUtils.clone(original);
+    Prefix secondClone = SerializationUtils.clone(original);
+
+    assertNotSame(firstClone, secondClone);
+  }
 
   @Test
   public void testCanonicalization() {

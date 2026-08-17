@@ -3,12 +3,18 @@ package org.batfish.datamodel.bgp.community;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.microsoft.z3.BoolExpr;
+import com.microsoft.z3.Context;
+import com.microsoft.z3.Solver;
+
 import java.math.BigInteger;
 import java.util.Objects;
 import java.util.Optional;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
+
+import org.batfish.common.BatfishException;
 
 /**
  * Represents a large BGP community, as described in <a
@@ -28,6 +34,9 @@ public final class LargeCommunity extends Community {
     _globalAdministrator = globalAdministrator;
     _localData1 = localData1;
     _localData2 = localData2;
+
+    // initialize enable smt variable flag to false
+    _enableSmtVariable = false;
   }
 
   @JsonCreator
@@ -137,5 +146,11 @@ public final class LargeCommunity extends Community {
         .shiftLeft(64)
         .or(BigInteger.valueOf(_localData1).shiftLeft(32))
         .or(BigInteger.valueOf(_localData2));
+  }
+
+  /** Add get community string for configVarPrefix */
+  @Override
+  public String getCommunityString() {
+    return _globalAdministrator + ":" + _localData1 + ":" + _localData2;
   }
 }

@@ -1,0 +1,74 @@
+{
+  "properties": [
+    {
+      "description": "Bics reachability to peergeneva_8",
+      "type": "reachability",
+      "ingressNodeRegex": ".*",
+      "finalNodeRegex": "peergeneva_8",
+      "dstIps": ["128.0.8.0/24"]
+    },
+    {
+      "description": "Bics reachability to peerbrussels_4",
+      "type": "reachability",
+      "ingressNodeRegex": ".*",
+      "finalNodeRegex": "peerbrussels_4",
+      "dstIps": ["128.0.4.0/24"]
+    },
+    {
+      "description": "Bics reachability to peerfrankfurt_7",
+      "type": "reachability",
+      "ingressNodeRegex": ".*",
+      "finalNodeRegex": "peerfrankfurt_7",
+      "dstIps": ["200.1.27.0/24"]
+    },
+    {
+      "description": "Bics reachability to luxembourg",
+      "type": "reachability",
+      "ingressNodeRegex": ".*",
+      "finalNodeRegex": "luxembourg",
+      "dstIps": ["200.1.51.0/24"]
+    },
+    {
+      "description": "Bics reachability to madrid",
+      "type": "reachability",
+      "ingressNodeRegex": ".*",
+      "finalNodeRegex": "madrid",
+      "dstIps": ["200.1.56.0/24"]
+    },
+    {
+      "description": "Bics reachability to strasbourg",
+      "type": "reachability",
+      "ingressNodeRegex": ".*",
+      "finalNodeRegex": "strasbourg",
+      "dstIps": ["200.1.64.0/24"]
+    },
+    {
+      "description": "Bics reachability to zagreb",
+      "type": "reachability",
+      "ingressNodeRegex": ".*",
+      "finalNodeRegex": "zagreb",
+      "dstIps": ["200.1.59.0/24"]
+    },
+    {
+      "description": "Bics reachability to warsaw",
+      "type": "reachability",
+      "ingressNodeRegex": ".*",
+      "finalNodeRegex": "warsaw",
+      "dstIps": ["200.1.67.0/24"]
+    },
+    {
+      "description": "Bics reachability to peergeneva_9",
+      "type": "reachability",
+      "ingressNodeRegex": ".*",
+      "finalNodeRegex": "peergeneva_9",
+      "dstIps": ["200.1.54.0/24"]
+    },
+    {
+      "description": "Bics reachability to peermarseille_13",
+      "type": "reachability",
+      "ingressNodeRegex": ".*",
+      "finalNodeRegex": "peermarseille_13",
+      "dstIps": ["200.1.19.0/24"]
+    }
+  ]
+}

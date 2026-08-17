@@ -1,0 +1,28 @@
+{
+  "properties": [
+    {
+      "description": "USER STUDY TASK 4: No Transit",
+      "type": "reachability",
+      "ingressNodeRegex": "isp2",
+      "finalNodeRegex": "isp1",
+      "dstIps": ["192.0.2.0/24"],
+      "negate": true
+    },
+    {
+      "description": "USER STUDY TASK 4: No Transit",
+      "type": "reachability",
+      "ingressNodeRegex": "isp2",
+      "finalNodeRegex": "isp1",
+      "dstIps": ["198.51.100.0/24"],
+      "negate": true
+    },
+    {
+      "description": "USER STUDY TASK 4: No Transit",
+      "type": "reachability",
+      "ingressNodeRegex": "isp1",
+      "finalNodeRegex": "isp2",
+      "dstIps": ["203.0.113.0/24"],
+      "negate": true
+    }
+  ]
+}

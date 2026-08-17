@@ -842,7 +842,9 @@ final class BgpRoutingProcess implements RoutingProcess<BgpTopology, BgpRoute<?,
         }
       } else {
         // Merge into staging rib, note delta
-        ribDeltas.get(targetRib).from(targetRib.mergeRouteGetDelta(transformedIncomingRoute));
+        RibDelta<Bgpv4Route> delta =
+            targetRib.mergeRouteGetDelta(transformedIncomingRoute);
+        ribDeltas.get(targetRib).from(delta);
         if (useRibGroups) {
           perNeighborDeltaForRibGroups.add(annotatedTransformedRoute);
         }
@@ -1827,6 +1829,16 @@ final class BgpRoutingProcess implements RoutingProcess<BgpTopology, BgpRoute<?,
    */
   public Set<Bgpv4Route> getV4Routes() {
     return _bgpv4Rib.getTypedRoutes();
+  }
+
+  /**
+   * Return a set of all bgpv4 routes, including locally-generated (redistributed) routes.
+   */
+  public Set<Bgpv4Route> getAllV4Routes() {
+    return ImmutableSet.<Bgpv4Route>builder()
+        .addAll(_bgpv4Rib.getTypedRoutes())
+        .addAll(_localBgpv4Rib.getTypedRoutes())
+        .build();
   }
 
   /** Return a set of all bgpv4 bestpath routes */

@@ -4,14 +4,26 @@ import static org.batfish.datamodel.matchers.IpSpaceMatchers.containsIp;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 import com.google.common.testing.EqualsTester;
+import org.apache.commons.lang3.SerializationUtils;
 import org.junit.Test;
 
 /** Tests of {@link IpWildcard}. */
 public class IpWildcardTest {
+  @Test
+  public void testSerializationCreatesIndependentInstances() {
+    IpWildcard original = IpWildcard.parse("192.0.2.0/24");
+
+    IpWildcard firstClone = SerializationUtils.clone(original);
+    IpWildcard secondClone = SerializationUtils.clone(original);
+
+    assertNotSame(firstClone, secondClone);
+  }
+
   @Test
   public void testConstructionAndEquality() {
     new EqualsTester()

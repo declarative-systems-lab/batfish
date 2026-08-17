@@ -318,6 +318,12 @@ final class OspfRoutingProcess implements RoutingProcess<OspfTopology, OspfRoute
     return result;
   }
 
+  /** Return the current routes selected by this process's combined OSPF RIB. */
+  @Nonnull
+  Set<OspfRoute> getRoutes() {
+    return _ospfRib.getTypedRoutes();
+  }
+
   @Override
   public void redistribute(RibDelta<? extends AnnotatedRoute<AbstractRoute>> mainRibDelta) {
     _queuedForRedistribution = computeRedistributionDelta(mainRibDelta);

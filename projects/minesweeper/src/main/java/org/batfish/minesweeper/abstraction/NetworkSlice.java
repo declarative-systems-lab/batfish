@@ -36,6 +36,7 @@ public class NetworkSlice {
 
   public static List<Supplier<NetworkSlice>> allSlices(
       NetworkSnapshot snapshot, BDDPacket packet, DestinationClasses dcs, int fails) {
+    // TODO: I don't understand how this function works. Needs further review.
     BDDNetwork network = BDDNetwork.create(snapshot, packet, dcs.getGraph());
     ArrayList<Supplier<NetworkSlice>> classes = new ArrayList<>();
     for (Entry<Set<String>, Tuple<HeaderSpace, Tuple<List<Prefix>, Boolean>>> entry :

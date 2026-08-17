@@ -6,16 +6,24 @@ import static com.google.common.base.MoreObjects.toStringHelper;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Sets;
 import java.util.Collection;
 import java.util.Set;
 import java.util.SortedSet;
 import javax.annotation.Nonnull;
+
+import com.microsoft.z3.BoolExpr;
+import org.batfish.common.BatfishException;
 import org.batfish.datamodel.bgp.community.Community;
 import org.batfish.datamodel.routing_policy.Environment;
 import org.batfish.datamodel.visitors.CommunitySetExprVisitor;
 import org.batfish.datamodel.visitors.VoidCommunitySetExprVisitor;
+
+import com.microsoft.z3.Context;
+import com.microsoft.z3.Solver;
+// import org.batfish.main.Batfish;
 
 /**
  * A {@link CommunitySetExpr} matching only community-sets that contain ALL of the communities
@@ -105,5 +113,24 @@ public final class LiteralCommunityConjunction extends CommunitySetExpr {
   @JsonProperty(PROP_REQUIRED_COMMUNITIES)
   private SortedSet<Community> getJsonRequiredCommunities() {
     return ImmutableSortedSet.copyOf(_requiredCommunities);
+  }
+
+  /** Add configuration constant - SMT symbolic variable */
+  // private boolean _enableSmtVariable;    // Inherited from the parent class
+  // private String _configVarPrefix;       // Inherited from the parent class
+
+  @Override
+  public void initSmtVariable(
+      Context context, Solver solver, String configVarPrefix, boolean isTrue,
+      ImmutableMap<Community, Integer> commsIndex, int commsWidth) {
+    // TODO: implement me when needed
+    throw new BatfishException("LiteralCommunityConjunction.initSmtVariable: not implemented yet.");
+  }
+
+  @Override
+  public void initSmtVariable(
+      Context context, Solver solver, String configVarPrefix,
+      ImmutableMap<Community, Integer> commsIndex, int commsWidth) {
+    initSmtVariable(context, solver, configVarPrefix, true, commsIndex, commsWidth);
   }
 }

@@ -235,15 +235,45 @@ junit_tests(
         "src/test/java/org/batfish/minesweeper/smt/*.java",
     ]),
     tags = ["z3"],
+    data = [
+        "//networks:all",
+        "//benchmarks:all",
+    ],
     deps = [
         "//projects/batfish",
         "//projects/batfish:batfish_testlib",
         "//projects/batfish-common-protocol:common",
+        "//projects/question",
         "//projects/minesweeper",
         "//projects/minesweeper:matchers",
         "@maven//:com_google_guava_guava",
         "@maven//:junit_junit",
         "@maven//:org_hamcrest_hamcrest",
+        "@bazel_tools//tools/java/runfiles",
+    ],
+)
+
+junit_tests(
+    name = "smt_property_tests",
+    size = "small",
+    srcs = glob([
+        "src/test/java/org/batfish/allinone/smt/*.java",
+    ]),
+    tags = ["z3"],
+    data = [
+        "//benchmarks:all",
+        "//user-study:all",
+    ],
+    deps = [
+        "//projects/batfish",
+        "//projects/batfish:batfish_testlib",
+        "//projects/batfish-common-protocol:common",
+        "//projects/question",
+        "//projects/minesweeper",
+        "@maven//:com_fasterxml_jackson_core_jackson_databind",
+        "@maven//:junit_junit",
+        "@maven//:org_hamcrest_hamcrest",
+        "@bazel_tools//tools/java/runfiles",
     ],
 )
 

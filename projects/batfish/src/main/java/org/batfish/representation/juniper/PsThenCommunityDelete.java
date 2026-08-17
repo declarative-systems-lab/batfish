@@ -4,10 +4,8 @@ import java.util.List;
 import javax.annotation.Nonnull;
 import org.batfish.common.Warnings;
 import org.batfish.datamodel.Configuration;
-import org.batfish.datamodel.routing_policy.communities.CommunityMatchExprReference;
-import org.batfish.datamodel.routing_policy.communities.CommunitySetDifference;
-import org.batfish.datamodel.routing_policy.communities.InputCommunities;
-import org.batfish.datamodel.routing_policy.communities.SetCommunities;
+import org.batfish.datamodel.routing_policy.expr.NamedCommunitySet;
+import org.batfish.datamodel.routing_policy.statement.DeleteCommunity;
 import org.batfish.datamodel.routing_policy.statement.Statement;
 
 public final class PsThenCommunityDelete extends PsThen {
@@ -22,14 +20,11 @@ public final class PsThenCommunityDelete extends PsThen {
       JuniperConfiguration juniperVendorConfiguration,
       Configuration c,
       Warnings warnings) {
-    if (!c.getCommunityMatchExprs().containsKey(_name)) {
+    if (!c.getCommunityLists().containsKey(_name)) {
       // undefined reference
       return;
     }
-    statements.add(
-        new SetCommunities(
-            new CommunitySetDifference(
-                InputCommunities.instance(), new CommunityMatchExprReference(_name))));
+    statements.add(new DeleteCommunity(new NamedCommunitySet(_name)));
   }
 
   public @Nonnull String getName() {

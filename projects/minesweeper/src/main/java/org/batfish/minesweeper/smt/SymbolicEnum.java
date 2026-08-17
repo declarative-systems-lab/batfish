@@ -10,7 +10,7 @@ import java.util.Objects;
 
 /**
  * Represents a symbolic variable for a small, finite number of choices. For optimization purposes,
- * we use a small domain bitvector to represent the possble choices.
+ * we use a small domain bitvector to represent the possible choices.
  *
  * @param <T> The underlying domain of values
  * @author Ryan Beckett
@@ -115,6 +115,7 @@ class SymbolicEnum<T> {
   BoolExpr checkIfValue(T p) {
     if (_bitvec == null) {
       T q = _values.get(0);
+      // for SymbolicOriginatorId, the following code line equal to _enc.mkFalse()
       return _enc.mkBool(p == q);
     }
 
@@ -155,5 +156,9 @@ class SymbolicEnum<T> {
     int result = _bitvec != null ? _bitvec.hashCode() : 0;
     result = 31 * result + _numBits;
     return result;
+  }
+
+  public Map<T, BitVecExpr> getValueMap() {
+    return _valueMap;
   }
 }

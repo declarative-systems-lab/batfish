@@ -13,6 +13,7 @@ java_library(
         "//:auto_service_plugin",
     ],
     deps = [
+        "//projects/batfish",
         "//projects/batfish-common-protocol:common",
         "//projects/bdd",
         "//projects/lib/z3",
@@ -24,6 +25,7 @@ java_library(
         "@maven//:dk_brics_automaton",
         "@maven//:org_apache_commons_commons_lang3",
         "@maven//:org_parboiled_parboiled_core",
+        "@maven//:com_fasterxml_jackson_core_jackson_databind",
     ],
 )
 

@@ -1,0 +1,11 @@
+{
+  "properties": [
+    {
+      "description": "FT 20: Reachability",
+      "type": "reachability",
+      "ingressNodeRegex": ".*",
+      "finalNodeRegex": "edge-499",
+      "dstIps": ["70.1.243.0/24"]
+    }
+  ]
+}

@@ -7,6 +7,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
+
+import com.microsoft.z3.ArithExpr;
+import com.microsoft.z3.BoolExpr;
+import com.microsoft.z3.Context;
+import com.microsoft.z3.Solver;
+import org.batfish.common.BatfishException;
 import org.batfish.datamodel.routing_policy.Environment;
 
 @ParametersAreNonnullByDefault
@@ -24,6 +30,9 @@ public final class IncrementMetric extends LongExpr {
 
   public IncrementMetric(long addend) {
     _addend = addend;
+
+    // initialize enable smt variable flag to false
+    _enableSmtVariable = false;
   }
 
   @Override
@@ -60,5 +69,42 @@ public final class IncrementMetric extends LongExpr {
     int result = 1;
     result = prime * result + Long.hashCode(_addend);
     return result;
+  }
+
+  /** Add configuration constant - SMT symbolic variable */
+  // private boolean _enableSmtVariable;    // Inherited from the parent class
+  // private String _configVarPrefix;       // Inherited from the parent class
+
+  private transient ArithExpr _configVarLocalpreference;
+
+  @Override
+  public void initSmtVariable(Context context, Solver solver, String configVarPrefix) {
+    // assert that the literal long value is not shared object
+    if (_enableSmtVariable) {
+      throw new BatfishException("IncrementMetric.initSmtVariable: shared object.\n" +
+          "Previous configVarPrefix: " + _configVarPrefix + "\n" +
+          "Current  configVarPrefix: " + configVarPrefix);
+    }
+
+    // init smt variable for literal long value
+    _configVarLocalpreference = context.mkIntConst(configVarPrefix);
+    // add relevant configuration constant constraints
+    BoolExpr configVarLpConstraint = context.mkEq(
+        _configVarLocalpreference, context.mkInt(_addend));
+    solver.add(configVarLpConstraint);
+
+    // config the smt variable enable flag to true
+    _enableSmtVariable = true;
+    _configVarPrefix = configVarPrefix;
+  }
+
+  public ArithExpr getConfigVarLocalpreference() {
+    return _configVarLocalpreference;
+  }
+
+  /** Add get literal long value for configVarPrefix */
+  @Override
+  public String getLiteralLongString() {
+    return String.valueOf(_addend);
   }
 }

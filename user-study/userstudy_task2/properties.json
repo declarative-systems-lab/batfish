@@ -1,0 +1,20 @@
+{
+  "properties": [
+    {
+      "description": "USER STUDY TASK 2: Private Prefix Filtering",
+      "type": "reachability",
+      "ingressNodeRegex": "r3",
+      "finalNodeRegex": "customer",
+      "dstIps": ["192.168.128.0/24"],
+      "negate": true
+    },
+    {
+      "description": "USER STUDY TASK 2: Private Prefix Filtering",
+      "type": "reachability",
+      "ingressNodeRegex": "r3",
+      "finalNodeRegex": "customer",
+      "dstIps": ["192.168.129.0/24"],
+      "negate": true
+    }
+  ]
+}

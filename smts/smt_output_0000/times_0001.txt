@@ -1,0 +1,8 @@
+started_at=2026-08-17T22:22:35
+work_directory=/home/deza/codes/batfish/smts/smt_output_0001
+router_level_subspec=0.044s status=completed
+router_local_encoding=0.159s status=completed
+consistency_check=0.077s status=completed
+subspec_line=0.202s status=completed
+subspec_field=0.143s status=completed
+total=0.626s status=completed

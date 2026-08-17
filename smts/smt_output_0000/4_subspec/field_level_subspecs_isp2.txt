@@ -1,0 +1,68 @@
+Field-Level Subspecs
+====================
+
+Config Variable: Config_r2_CommunityList_400100__Line1__400_100__community
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r2_CommunityList_400100__Line1__action
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r2_RouteFilterList_default_ips__Line1__0_0_0_0__action
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r2_RouteFilterList_default_ips__Line1__0_0_0_0__ip
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r2_RouteFilterList_default_ips__Line1__0_0_0_0__length
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r2_RouteFilterList_default_ips__Line1__0_0_0_0__prefix_range_end
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r2_RouteFilterList_default_ips__Line1__0_0_0_0__prefix_range_start
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r2_RouteFilterList_isp2_network__Line1__203_0_113_0__action
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r2_RouteFilterList_isp2_network__Line1__203_0_113_0__ip
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r2_RouteFilterList_isp2_network__Line1__203_0_113_0__length
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r2_RouteFilterList_isp2_network__Line1__203_0_113_0__prefix_range_end
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r2_RouteFilterList_isp2_network__Line1__203_0_113_0__prefix_range_start
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r2_RoutingPolicy_R2_IN_FROM_ISP2__Seq10__Line2__add_community_500_200__community
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+

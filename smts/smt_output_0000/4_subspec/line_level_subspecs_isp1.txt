@@ -1,0 +1,38 @@
+Line-Level Subspecs
+==================
+
+Line Group: Config_r1_CommunityList_200100__Line1
+Subspecs (1):
+  1. (not (= ((_ extract 0 0) Config_r1_CommunityList_200100__Line1__200_100__community) #b0)) AND (= Config_r1_CommunityList_200100__Line1__action true) [from isp1]
+--------------------------------------------------
+
+Line Group: Config_r1_CommunityList_500200__Line1
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Line Group: Config_r1_RouteFilterList_default_ips__Line1
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Line Group: Config_r1_RouteFilterList_isp1_network__Line1
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Line Group: Config_r1_RouteFilterList_isp1_network__Line2
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Line Group: Config_r1_RouteFilterList_isp1_network__Line3
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Line Group: Config_r1_RoutingPolicy_R1_IN_FROM_ISP1__Seq10__Line2
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+

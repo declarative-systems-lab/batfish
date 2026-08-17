@@ -323,6 +323,19 @@ public class OspfRoutingProcessTest {
     assertTrue(_routingProcess.isDirty());
   }
 
+  @Test
+  public void testGetRoutesPostInitialization() {
+    _routingProcess.initialize(new Node(_c));
+
+    assertThat(
+        _routingProcess.getRoutes(),
+        containsInAnyOrder(
+            hasPrefix(PASSIVE_ADDR.getPrefix()),
+            hasPrefix(ACTIVE_ADDR_1.getPrefix()),
+            hasPrefix(ACTIVE_ADDR_2.getPrefix()),
+            hasPrefix(ACTIVE_ADDR_3_SUMMARIZED.getPrefix())));
+  }
+
   /**
    * Ensure that if no new incoming messages are supplied, one iteration is sufficient to return to
    * non-dirty state

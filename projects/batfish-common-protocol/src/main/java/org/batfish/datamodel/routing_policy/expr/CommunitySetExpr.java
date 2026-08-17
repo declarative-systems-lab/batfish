@@ -2,14 +2,26 @@ package org.batfish.datamodel.routing_policy.expr;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableMap;
 import java.io.Serializable;
 import java.util.Set;
+import java.math.BigInteger;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+
+import com.microsoft.z3.BoolExpr;
+import org.batfish.common.BatfishException;
 import org.batfish.datamodel.bgp.community.Community;
 import org.batfish.datamodel.routing_policy.Environment;
 import org.batfish.datamodel.visitors.CommunitySetExprVisitor;
 import org.batfish.datamodel.visitors.VoidCommunitySetExprVisitor;
+import org.batfish.datamodel.bgp.community.ExtendedCommunity;
+import org.batfish.datamodel.bgp.community.StandardCommunity;
+import org.batfish.datamodel.bgp.community.LargeCommunity;
+
+import com.microsoft.z3.Context;
+import com.microsoft.z3.Solver;
+import com.microsoft.z3.BitVecExpr;
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "class")
 public abstract class CommunitySetExpr implements Serializable {
@@ -84,4 +96,50 @@ public abstract class CommunitySetExpr implements Serializable {
    * community-sets with at least two elements.
    */
   public abstract boolean reducible();
+
+  /** Add configuration constant - SMT symbolic variable */
+  protected boolean _enableSmtVariable;
+  protected String _configVarPrefix;
+
+  public abstract void initSmtVariable(
+      Context context, Solver solver, String configVarPrefix, boolean isTrue,
+      ImmutableMap<Community, Integer> commsIndex, int commsWidth);
+  public abstract void initSmtVariable(
+      Context context, Solver solver, String configVarPrefix,
+      ImmutableMap<Community, Integer> commsIndex, int commsWidth);
+
+  public boolean getEnableSmtVariable() {
+    return _enableSmtVariable;
+  }
+
+  public String getConfigVarPrefix() {
+    return _configVarPrefix;
+  }
+
+  // clone a community
+  protected Community cloneCommunity(Community community) {
+    if (community instanceof ExtendedCommunity) {
+      ExtendedCommunity e = (ExtendedCommunity) community;
+      return ExtendedCommunity.of(
+          e.getSubType(), e.getGlobalAdministrator(), e.getLocalAdministrator());
+    } else if (community instanceof StandardCommunity) {
+      StandardCommunity s = (StandardCommunity) community;
+      return StandardCommunity.of(s.asLong());
+    } else if (community instanceof LargeCommunity) {
+      LargeCommunity l = (LargeCommunity) community;
+      return LargeCommunity.of(
+          l.getGlobalAdministrator(), l.getLocalData1(), l.getLocalData2());
+    }
+
+    // only has three subclasses of Community
+    throw new BatfishException(
+            "CommunitySetExpr.cloneCommunity: unknown community type: " + community.getClass().getName());
+  }
+
+  // Community Index -> Community BitVec
+  // TODO: improve long type to support more communities
+  protected String communityString(Integer index) {
+    BigInteger comm = BigInteger.ONE.shiftLeft(index);
+    return comm.toString();
+  }
 }

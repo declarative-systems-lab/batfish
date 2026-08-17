@@ -18,6 +18,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import javax.annotation.Nullable;
 
+import com.microsoft.z3.Context;
+import com.microsoft.z3.Solver;
+import org.batfish.common.BatfishException;
+import org.batfish.datamodel.bgp.community.Community;
+
 /** Describes a collection of {@link Prefix}es and {@link PrefixRange}s */
 public class PrefixSpace implements Serializable {
 
@@ -194,6 +199,9 @@ public class PrefixSpace implements Serializable {
   public PrefixSpace() {
     _trie = new BitTrie();
     _cache = new ConcurrentHashMap<>();
+
+    // initialize enable smt variable flag to false
+    _enableSmtVariable = false;
   }
 
   @JsonCreator
@@ -340,5 +348,50 @@ public class PrefixSpace implements Serializable {
   @Override
   public String toString() {
     return getPrefixRanges().toString();
+  }
+
+  /** Add configuration constant - SMT symbolic variable */
+  private boolean _enableSmtVariable;
+  private String _configVarPrefix;
+
+  public void initSmtVariable(Context context, Solver solver, String configVarPrefix) {
+    // assert that the prefix set is not shared
+    if (_enableSmtVariable) {
+      throw new BatfishException("PrefixSpace.initSmtVariable: shared object.\n" +
+          "Previous configVarPrefix: " + _configVarPrefix + "\n" +
+          "Current  configVarPrefix: " + configVarPrefix);
+    }
+
+    // check and avoid shared object for SubRange
+    for (PrefixRange prefixRange : getPrefixRanges()) {
+      if (prefixRange.getEnableSmtVariable()) {
+        System.out.println("WARNING: PrefixSpace.initSmtVariable: " +
+            "found shared PrefixRange, cloning it.");
+
+        PrefixRange prefixRangeBackup = prefixRange;
+        prefixRange = new PrefixRange(prefixRange.getPrefix(), prefixRange.getLengthRange());
+
+        // add additional assert for using shared object
+        if (prefixRangeBackup.getEnableSmtVariable() == prefixRange.getEnableSmtVariable()) {
+          throw new BatfishException("PrefixSpace.initSmtVariable: " +
+              "cloning failed for shared object.");
+        }
+      }
+
+      // init smt variable for prefix range configuration
+      prefixRange.initSmtVariable(context, solver, configVarPrefix);
+    }
+
+    // configure the smt variable enable flag to true
+    _enableSmtVariable = true;
+    _configVarPrefix = configVarPrefix;
+  }
+
+  public boolean getEnableSmtVariable() {
+    return _enableSmtVariable;
+  }
+
+  public String getConfigVarPrefix() {
+    return _configVarPrefix;
   }
 }

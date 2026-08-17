@@ -1,0 +1,18 @@
+Line-Level Subspecs
+==================
+
+Line Group: Config_r2_RouteFilterList_isp2_network__Line1
+Subspecs (1):
+  1. (>= Config_r2_RouteFilterList_isp2_network__Line1__203_0_113_0__prefix_range_end Config_r2_RouteFilterList_isp2_network__Line1__203_0_113_0__length) AND (>= Config_r2_RouteFilterList_isp2_network__Line1__203_0_113_0__prefix_range_start Config_r2_RouteFilterList_isp2_network__Line1__203_0_113_0__length) AND (= ((_ extract 31 8) |0_dst-ip|) #xcb0071) AND (= (bvand |0_dst-ip| Config_r2_RouteFilterList_isp2_network__Line1__203_0_113_0__mask) (bvand Config_r2_RouteFilterList_isp2_network__Line1__203_0_113_0__ip Config_r2_RouteFilterList_isp2_network__Line1__203_0_113_0__mask)) AND (= Config_r2_RouteFilterList_isp2_network__Line1__203_0_113_0__action true) AND (>= Config_r2_RouteFilterList_isp2_network__Line1__203_0_113_0__length 0) AND (<= Config_r2_RouteFilterList_isp2_network__Line1__203_0_113_0__length 32) AND (>= Config_r2_RouteFilterList_isp2_network__Line1__203_0_113_0__prefix_range_end 24) AND (<= Config_r2_RouteFilterList_isp2_network__Line1__203_0_113_0__prefix_range_end 32) AND (>= Config_r2_RouteFilterList_isp2_network__Line1__203_0_113_0__prefix_range_start 0) AND (<= Config_r2_RouteFilterList_isp2_network__Line1__203_0_113_0__prefix_range_start 24) [from r2]
+--------------------------------------------------
+
+Line Group: Config_r2_RoutingPolicy_R2_IN_FROM_ISP2__Seq10__Line2
+Subspecs (1):
+  1. (= Config_r2_RoutingPolicy_R2_IN_FROM_ISP2__Seq10__Line2__add_community_500_200__community #b000100) [from r2]
+--------------------------------------------------
+
+Line Group: Config_r2_RoutingPolicy_R2_OUT_TO_R1__Seq100__Line1
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+

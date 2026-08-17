@@ -2,9 +2,6 @@ package org.batfish.representation.juniper;
 
 import org.batfish.common.Warnings;
 import org.batfish.datamodel.Configuration;
-import org.batfish.datamodel.routing_policy.communities.CommunitySetMatchExprReference;
-import org.batfish.datamodel.routing_policy.communities.InputCommunities;
-import org.batfish.datamodel.routing_policy.communities.MatchCommunities;
 import org.batfish.datamodel.routing_policy.expr.BooleanExpr;
 import org.batfish.datamodel.routing_policy.expr.BooleanExprs;
 
@@ -23,11 +20,13 @@ public final class PsFromCommunity extends PsFrom {
 
   @Override
   public BooleanExpr toBooleanExpr(JuniperConfiguration jc, Configuration c, Warnings warnings) {
-    if (!c.getCommunitySetMatchExprs().containsKey(_name)) {
+    NamedCommunity namedCommunity =
+        jc.getMasterLogicalSystem().getNamedCommunities().get(_name);
+    if (namedCommunity == null) {
       // undefined reference; illegal config, but just treat as unmatchable for best-effort
       return BooleanExprs.FALSE;
     }
-    return new MatchCommunities(
-        InputCommunities.instance(), new CommunitySetMatchExprReference(_name));
+    // Use legacy MatchCommunitySet API for minesweeper / symbolic configuration compatibility.
+    return JuniperConfiguration.toLegacyFromCommunityBooleanExpr(namedCommunity);
   }
 }

@@ -1,5 +1,8 @@
 package org.batfish.datamodel.routing_policy.expr;
 
+import com.microsoft.z3.Context;
+import com.microsoft.z3.Solver;
+import org.batfish.common.BatfishException;
 import org.batfish.datamodel.routing_policy.Environment;
 
 public class IgpCost extends LongExpr {
@@ -34,5 +37,22 @@ public class IgpCost extends LongExpr {
     int result = 1;
     result = prime * result + 0x12345678;
     return result;
+  }
+
+  /** Add configuration constant - SMT symbolic variable */
+  // private boolean _enableSmtVariable;    // Inherited from the parent class
+  // private String _configVarPrefix;       // Inherited from the parent class
+
+  @Override
+  public void initSmtVariable(Context context, Solver solver, String configVarPrefix) {
+    // TODO: implement me when needed
+    throw new BatfishException("IgpCost.initSmtVariable: not implemented yet.");
+  }
+
+  /** Add get literal long value for configVarPrefix */
+  @Override
+  public String getLiteralLongString() {
+    // TODO: implement ne when needed
+    throw new BatfishException("IgpCost.getLiteralLongString: not implemented yet.");
   }
 }

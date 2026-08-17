@@ -1,0 +1,24 @@
+; Violation assume-guarantee
+
+; Boundary control-forwarding decisions are coupled with peer route cases
+
+; ********************************************************************
+; Assume: Peer Best Routes
+; ********************************************************************
+
+; Peer: customer
+(assert (and (= |0_customer_OVERALL_BEST_None_permitted| true) (= |0_customer_OVERALL_BEST_None_prefixLength| 24) (= |0_customer_OVERALL_BEST_None_metric| 4) (or (= |0_customer_OVERALL_BEST_None_community| #b000001) (= |0_customer_OVERALL_BEST_None_community| #b000100)) (= |0_CONTROL-FORWARDING_customer_GigabitEthernet0/0| true)))
+
+; Peer: r1
+(assert (and (= |0_r1_OVERALL_BEST_None_permitted| true) (= |0_r1_OVERALL_BEST_None_prefixLength| 24) (= |0_r1_OVERALL_BEST_None_metric| 2) (= |0_r1_OVERALL_BEST_None_community| #b000001) (= |0_CONTROL-FORWARDING_r1_GigabitEthernet1/0| false)))
+
+; Peer: r2
+(assert (and (= |0_r2_OVERALL_BEST_None_permitted| true) (= |0_r2_OVERALL_BEST_None_prefixLength| 24) (= |0_r2_OVERALL_BEST_None_metric| 1) (= |0_r2_OVERALL_BEST_None_community| #b000100) (= |0_CONTROL-FORWARDING_r2_GigabitEthernet1/0| false)))
+
+; ********************************************************************
+; Guarantee: Local Best Route & Local Control-Forwarding Decisions
+; ********************************************************************
+
+(assert (or (or (not (= |0_CONTROL-FORWARDING_r3_GigabitEthernet0/0| true)) (not (= |0_CONTROL-FORWARDING_r3_GigabitEthernet1/0| true)) (not (= |0_CONTROL-FORWARDING_r3_GigabitEthernet2/0| false))) (and (and (= |0_CONTROL-FORWARDING_r3_GigabitEthernet0/0| true) (= |0_CONTROL-FORWARDING_r3_GigabitEthernet1/0| true) (= |0_CONTROL-FORWARDING_r3_GigabitEthernet2/0| false)) (or (not (= |0_r3_OVERALL_BEST_None_prefixLength| 24)) (not (= |0_r3_OVERALL_BEST_None_permitted| true)) (not (= |0_r3_OVERALL_BEST_None_metric| 3)) (not (or (= |0_r3_OVERALL_BEST_None_community| #b000001) (= |0_r3_OVERALL_BEST_None_community| #b000100)))))))
+(assert (<= |0_r3_OVERALL_BEST_None_prefixLength| 24))
+(assert (>= |0_r3_OVERALL_BEST_None_prefixLength| 0))

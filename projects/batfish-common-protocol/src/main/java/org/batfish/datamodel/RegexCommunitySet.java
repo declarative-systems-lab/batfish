@@ -6,10 +6,16 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
+import com.google.common.collect.ImmutableMap;
 import java.io.Serializable;
 import java.util.Set;
 import java.util.regex.Pattern;
 import javax.annotation.Nonnull;
+
+import com.microsoft.z3.BoolExpr;
+import com.microsoft.z3.Context;
+import com.microsoft.z3.Solver;
+import org.batfish.common.BatfishException;
 import org.batfish.datamodel.bgp.community.Community;
 import org.batfish.datamodel.routing_policy.Environment;
 import org.batfish.datamodel.routing_policy.expr.CommunitySetExpr;
@@ -45,6 +51,9 @@ public final class RegexCommunitySet extends CommunitySetExpr {
   public RegexCommunitySet(@Nonnull String regex) {
     _regex = regex;
     _pattern = Suppliers.memoize(new PatternSupplier());
+
+    // initialize enable smt variable flag to false
+    _enableSmtVariable = false;
   }
 
   @Override
@@ -104,5 +113,36 @@ public final class RegexCommunitySet extends CommunitySetExpr {
   @Override
   public boolean reducible() {
     return true;
+  }
+
+  /** Add configuration constant - SMT symbolic variable */
+  // private boolean _enableSmtVariable;    // Inherited from the parent class
+  // private String _configVarPrefix;       // Inherited from the parent class
+
+  @Override
+  public void initSmtVariable(
+      Context context, Solver solver, String configVarPrefix, boolean isTrue,
+      ImmutableMap<Community, Integer> commsIndex, int commsWidth) {
+    // assert that the regex community set is not shared
+    if (_enableSmtVariable) {
+      throw new BatfishException("RegexCommunitySet.initSmtVariable: shared object.\n" +
+          "Previous configVarPrefix: " + _configVarPrefix + "\n" +
+          "Current  configVarPrefix: " + configVarPrefix);
+    }
+
+    // NOTE: regex community is not directly used in match community encoding,
+    //       its corresponding community dependencies are used in match community encoding
+    //       (BoolExpr -> BitVecExpr communities)
+
+    // configure the smt variable enable flag to true
+    _enableSmtVariable = true;
+    _configVarPrefix = configVarPrefix;
+  }
+
+  @Override
+  public void initSmtVariable(
+      Context context, Solver solver, String configVarPrefix,
+      ImmutableMap<Community, Integer> commsIndex, int commsWidth) {
+    initSmtVariable(context, solver, configVarPrefix, true, commsIndex, commsWidth);
   }
 }

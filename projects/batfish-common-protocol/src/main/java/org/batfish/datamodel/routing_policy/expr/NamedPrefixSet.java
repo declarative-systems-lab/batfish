@@ -7,6 +7,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Objects;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
+
+import com.microsoft.z3.Context;
+import com.microsoft.z3.Solver;
+import org.batfish.common.BatfishException;
 import org.batfish.datamodel.Prefix;
 import org.batfish.datamodel.RouteFilterList;
 import org.batfish.datamodel.routing_policy.Environment;
@@ -26,6 +30,9 @@ public final class NamedPrefixSet extends PrefixSetExpr {
 
   public NamedPrefixSet(String name) {
     _name = name;
+
+    // initialize enable smt variable flag to false
+    _enableSmtVariable = false;
   }
 
   @Override
@@ -59,5 +66,24 @@ public final class NamedPrefixSet extends PrefixSetExpr {
       environment.setError(true);
       return false;
     }
+  }
+
+  /** Add configuration constant - SMT symbolic variable */
+  // private boolean _enableSmtVariable;    // Inherited from the parent class
+  // private String _configVarPrefix;       // Inherited from the parent class
+
+  @Override
+  public void initSmtVariable(Context context, Solver solver, String configVarPrefix) {
+    // assert that the named prefix set is not shared
+    if (_enableSmtVariable) {
+      throw new BatfishException("NamedPrefixSet.initSmtVariable: shared object.\n" +
+              "Previous configVarPrefix: " + _configVarPrefix + "\n" +
+              "Current  configVarPrefix: " + configVarPrefix);
+    }
+
+    // do nothing, just refer to the RouteFilterList object according to parameter _name
+
+    // configure the smt variable enable flag to true
+    _enableSmtVariable = true;
   }
 }

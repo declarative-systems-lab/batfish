@@ -1,0 +1,28 @@
+Line-Level Subspecs
+==================
+
+Line Group: Config_r1_RouteFilterList_isp1_network__Line1
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Line Group: Config_r1_RouteFilterList_isp1_network__Line2
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Line Group: Config_r1_RouteFilterList_isp1_network__Line3
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Line Group: Config_r1_RoutingPolicy_R1_IN_FROM_ISP1__Seq10__Line2
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Line Group: Config_r2_RoutingPolicy_R2_OUT_TO_R1__Seq100__Line1
+Subspecs (1):
+  1. (= Config_r2_RoutingPolicy_R2_OUT_TO_R1__Seq100__Line1__set_community_200_100__community #b000001) [from r1]
+--------------------------------------------------
+

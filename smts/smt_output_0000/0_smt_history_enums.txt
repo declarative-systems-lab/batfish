@@ -1,0 +1,14 @@
+|0_r2_OVERALL_BEST_None_history| (0) 
+	BGP : null
+|0_r3_OVERALL_BEST_None_history| (0) 
+	BGP : null
+|0_isp1_OVERALL_BEST_None_history| (0) 
+	BGP : null
+|0_isp2_OVERALL_BEST_None_history| (1) 
+	BGP : 0
+	STATIC : 1
+|0_customer_OVERALL_BEST_None_history| (0) 
+	BGP : null
+|0_r1_OVERALL_BEST_None_history| (0) 
+	BGP : null
+

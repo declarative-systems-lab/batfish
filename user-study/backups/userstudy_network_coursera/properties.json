@@ -1,0 +1,12 @@
+{
+  "properties": [
+    {
+      "description": "USER STUDY COURSERA: Reachability",
+      "type": "reachability",
+      "ingressNodeRegex": "r1",
+      "finalNodeRegex": "customer",
+      "dstIps": ["192.168.0.0/16"],
+      "negate": true
+    }
+  ]
+}

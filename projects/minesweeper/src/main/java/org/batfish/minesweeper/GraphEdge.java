@@ -35,9 +35,9 @@ public class GraphEdge {
   private String _router;
 
   private String _peer;
-
+  // the default configuration is false
   private boolean _isAbstract;
-
+  // the default configuration is false
   private boolean _isNullEdge;
 
   @JsonCreator

@@ -5,14 +5,21 @@ import static java.util.Objects.requireNonNull;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.collect.ImmutableMap;
 import java.util.Objects;
 import java.util.Set;
 import javax.annotation.Nonnull;
+
+import com.microsoft.z3.BoolExpr;
+import com.microsoft.z3.Context;
+import com.microsoft.z3.Solver;
+import org.batfish.common.BatfishException;
 import org.batfish.datamodel.bgp.community.Community;
 import org.batfish.datamodel.bgp.community.StandardCommunity;
 import org.batfish.datamodel.routing_policy.Environment;
 import org.batfish.datamodel.visitors.CommunitySetExprVisitor;
 import org.batfish.datamodel.visitors.VoidCommunitySetExprVisitor;
+// import org.batfish.main.Batfish;
 
 /**
  * A {@link CommunitySetExpr} that matches 32-bit community values via two separate {@link
@@ -110,5 +117,24 @@ public class CommunityHalvesExpr extends CommunitySetExpr {
   @Override
   public String toString() {
     return toStringHelper(getClass()).add(PROP_LEFT, _left).add(PROP_RIGHT, _right).toString();
+  }
+
+  /** Add configuration constant - SMT symbolic variable */
+  // private boolean _enableSmtVariable;    // Inherited from the parent class
+  // private String _configVarPrefix;       // Inherited from the parent class
+
+  @Override
+  public void initSmtVariable(
+      Context context, Solver solver, String configVarPrefix, boolean isTrue,
+      ImmutableMap<Community, Integer> commsIndex, int commsWidth) {
+    // TODO: implement me when needed
+    throw new BatfishException("CommunityHalvesExpr.initSmtVariable: not implemented yet.");
+  }
+
+  @Override
+  public void initSmtVariable(
+      Context context, Solver solver, String configVarPrefix,
+      ImmutableMap<Community, Integer> commsIndex, int commsWidth) {
+    initSmtVariable(context, solver, configVarPrefix, true, commsIndex, commsWidth);
   }
 }

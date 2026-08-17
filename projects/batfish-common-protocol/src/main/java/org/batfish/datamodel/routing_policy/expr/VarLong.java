@@ -1,6 +1,9 @@
 package org.batfish.datamodel.routing_policy.expr;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.microsoft.z3.Context;
+import com.microsoft.z3.Solver;
+import org.batfish.common.BatfishException;
 import org.batfish.datamodel.routing_policy.Environment;
 
 public class VarLong extends LongExpr {
@@ -60,5 +63,22 @@ public class VarLong extends LongExpr {
 
   public void setVar(String var) {
     _var = var;
+  }
+
+  /** Add configuration constant - SMT symbolic variable */
+  // private boolean _enableSmtVariable;    // Inherited from the parent class
+  // private String _configVarPrefix;       // Inherited from the parent class
+
+  @Override
+  public void initSmtVariable(Context context, Solver solver, String configVarPrefix) {
+    // TODO: implement me when needed
+    throw new BatfishException("VarLong.initSmtVariable: not implemented yet.");
+  }
+
+  /** Add get literal long value for configVarPrefix */
+  @Override
+  public String getLiteralLongString() {
+    // TODO: implement ne when needed
+    throw new BatfishException("VarLong.getLiteralLongString: not implemented yet.");
   }
 }

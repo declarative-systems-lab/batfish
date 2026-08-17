@@ -11,6 +11,11 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import org.batfish.common.BatfishException;
 
+import com.microsoft.z3.Context;
+import com.microsoft.z3.Solver;
+import com.microsoft.z3.BoolExpr;
+import com.microsoft.z3.ArithExpr;
+
 /** A closed interval of integers. */
 public final class SubRange implements Serializable, Comparable<SubRange> {
 
@@ -25,6 +30,9 @@ public final class SubRange implements Serializable, Comparable<SubRange> {
   public SubRange(int start, int end) throws IllegalArgumentException {
     _start = start;
     _end = end;
+
+    // initialize enable smt variable flag to false
+    _enableSmtVariable = false;
   }
 
   /** Create a new {@link SubRange} containing exactly the given value. */
@@ -60,6 +68,9 @@ public final class SubRange implements Serializable, Comparable<SubRange> {
       throw new BatfishException(
           "Cannot create SubRange from input object of type: " + o.getClass().getCanonicalName());
     }
+
+    // initialize enable smt variable flag to false
+    _enableSmtVariable = false;
   }
 
   public IntStream asStream() {
@@ -142,5 +153,50 @@ public final class SubRange implements Serializable, Comparable<SubRange> {
   @Override
   public String toString() {
     return "[" + _start + "," + _end + "]";
+  }
+
+  /** Add configuration constant - SMT symbolic variable */
+  private boolean _enableSmtVariable;
+  private String _configVarPrefix;
+
+  private transient ArithExpr _configVarStart;
+  private transient ArithExpr _configVarEnd;
+
+  public void initSmtVariable(Context context, Solver solver, String configVarPrefix) {
+    // assert that the sub range is not shared
+    if (_enableSmtVariable) {
+      throw new BatfishException("SubRange.initSmtVariable: shared object.\n" +
+          "Previous configVarPrefix: " + _configVarPrefix + "\n" +
+          "Current  configVarPrefix: " + configVarPrefix);
+    }
+
+    _configVarStart = context.mkIntConst(configVarPrefix + "prefix_range_start");
+    _configVarEnd = context.mkIntConst(configVarPrefix + "prefix_range_end");
+
+    // add configuration constant constraints
+    BoolExpr configVarStartConstraint = context.mkEq(_configVarStart, context.mkInt(_start));
+    BoolExpr configVarEndConstraint = context.mkEq(_configVarEnd, context.mkInt(_end));
+    solver.add(configVarStartConstraint);
+    solver.add(configVarEndConstraint);
+
+    // configure the smt variable enable flag to true
+    _enableSmtVariable = true;
+    _configVarPrefix = configVarPrefix;
+  }
+
+  public boolean getEnableSmtVariable() {
+    return _enableSmtVariable;
+  }
+
+  public String getConfigVarPrefix() {
+    return _configVarPrefix;
+  }
+
+  public ArithExpr getConfigVarStart() {
+    return _configVarStart;
+  }
+
+  public ArithExpr getConfigVarEnd() {
+    return _configVarEnd;
   }
 }

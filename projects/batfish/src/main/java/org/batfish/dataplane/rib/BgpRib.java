@@ -7,6 +7,7 @@ import com.google.common.collect.ImmutableSet;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
@@ -147,8 +148,34 @@ public abstract class BgpRib<R extends BgpRoute<?, ?>> extends AbstractRib<R> {
     }
     if (!delta.isEmpty()) {
       delta.getPrefixes().forEach(this::selectBestPath);
+    } else {
+      // New route was not installed (same or worse preference than incumbent). If the incumbent
+      // is from the same peer (same receivedFromIp), prefer the new route as the peer's current
+      // advertisement (replace old with new).
+      Optional<R> incumbent =
+          getBestPathRoutes().stream()
+              .filter(r -> r.getNetwork().equals(route.getNetwork()))
+              .findFirst();
+      if (incumbent.isPresent() && samePeer(incumbent.get(), route)) {
+        RibDelta<R> removeDelta = super.removeRouteGetDelta(incumbent.get(), Reason.REPLACE);
+        removeDelta.getPrefixes().forEach(this::selectBestPath);
+        delta = super.mergeRouteGetDelta(route);
+        if (_tieBreaker == BgpTieBreaker.ARRIVAL_ORDER) {
+          _logicalArrivalTime.put(route, _logicalClock);
+          _logicalClock++;
+        }
+        if (!delta.isEmpty()) {
+          delta.getPrefixes().forEach(this::selectBestPath);
+        }
+        delta = RibDelta.<R>builder().from(removeDelta).from(delta).build();
+      }
     }
     return delta;
+  }
+
+  /** True if both routes were received from the same BGP peer (same receivedFromIp). */
+  private static boolean samePeer(BgpRoute<?, ?> r1, BgpRoute<?, ?> r2) {
+    return Objects.equals(r1.getReceivedFromIp(), r2.getReceivedFromIp());
   }
 
   @Nonnull
@@ -225,19 +252,20 @@ public abstract class BgpRib<R extends BgpRoute<?, ?>> extends AbstractRib<R> {
    */
   @VisibleForTesting
   int bestPathComparator(R lhs, R rhs) {
+    // NOTE: Skip the arrival order tie breaker and directly proceed routerID comparison
     // Skip arrival order unless requested, only applies if both routes are eBGP.
-    if (_tieBreaker == BgpTieBreaker.ARRIVAL_ORDER
-        && lhs.getProtocol() == RoutingProtocol.BGP
-        && rhs.getProtocol() == RoutingProtocol.BGP) {
-      int result =
-          Comparator.<R, Long>comparing(
-                  r -> _logicalArrivalTime.getOrDefault(r, _logicalClock),
-                  Comparator.reverseOrder())
-              .compare(lhs, rhs);
-      if (result != 0) {
-        return result;
-      }
-    }
+    // if (_tieBreaker == BgpTieBreaker.ARRIVAL_ORDER
+    //     && lhs.getProtocol() == RoutingProtocol.BGP
+    //     && rhs.getProtocol() == RoutingProtocol.BGP) {
+    //   int result =
+    //       Comparator.<R, Long>comparing(
+    //               r -> _logicalArrivalTime.getOrDefault(r, _logicalClock),
+    //               Comparator.reverseOrder())
+    //           .compare(lhs, rhs);
+    //   if (result != 0) {
+    //     return result;
+    //   }
+    // }
 
     // Continue with remaining tie breakers
     return

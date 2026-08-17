@@ -49,11 +49,14 @@ public class HeaderLocationQuestion extends HeaderQuestion {
 
   private boolean _negate;
 
+
   private String _finalNodeRegex;
 
   private String _finalIfaceRegex;
 
+
   private String _ingressNodeRegex;
+
 
   private String _failNode1Regex;
 
@@ -61,17 +64,20 @@ public class HeaderLocationQuestion extends HeaderQuestion {
 
   private String _failNodeRegex;
 
+
   private String _notFinalNodeRegex;
 
   private String _notFinalIfaceRegex;
 
   private String _notIngressNodeRegex;
 
+
   private String _notFailNode1Regex;
 
   private String _notFailNode2Regex;
 
   private String _notFailNodeRegex;
+
 
   public HeaderLocationQuestion() {
     super();

@@ -19,6 +19,10 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import org.batfish.common.BatfishException;
 
+import com.microsoft.z3.Context;
+import com.microsoft.z3.Solver;
+import org.batfish.common.util.SymbolicUtil;
+
 /**
  * Filter list for IPV4 routes. Performs filtering on IPv4 prefixes with access-list-like behavior
  * (match in order, with an implicit "deny all" at the end).
@@ -149,5 +153,59 @@ public class RouteFilterList implements Serializable {
   /** Set the list of lines against which to match a route's prefix. */
   public void setLines(@Nonnull List<RouteFilterLine> lines) {
     _lines = lines;
+  }
+
+  /** Add configuration constant - SMT symbolic variable */
+  private boolean _enableSmtVariable;
+  private String _configVarPrefix;
+
+  public void initSmtVariable(Context context, Solver solver, String configVarPrefix) {
+    // assert that the route filter list is not shared
+    if (_enableSmtVariable) {
+      throw new BatfishException("RouteFilterList.initSmtVariable: shared object.\n" +
+              "Previous configVarPrefix: " + _configVarPrefix + "\n" +
+              "Current  configVarPrefix: " + configVarPrefix);
+    }
+
+    for (int i = 0; i < _lines.size(); ++i) {
+      // check and avoid shared object
+      if (_lines.get(i).getEnableSmtVariable()) {
+        System.out.println("WARNING: RouteFilterList.initSmtVariable: " +
+                "found shared RouteFilterLine, cloning it.");
+
+        RouteFilterLine lineBackup = _lines.get(i);
+        RouteFilterLine line =
+                new RouteFilterLine(lineBackup.getAction(), lineBackup.getIpWildcard(), lineBackup.getLengthRange());
+        _lines.set(i, line);
+
+        // add additional assert for using shared object
+        if (lineBackup.getEnableSmtVariable() == _lines.get(i).getEnableSmtVariable()) {
+          throw new BatfishException(
+                  "RouteFilterList.initSmtVariable: cloning failed for shared object");
+        }
+      }
+
+      long prefixIp = _lines.get(i).getIpWildcard().getIp().asLong();
+      String prefixIpStr = SymbolicUtil.longToIpString(prefixIp);
+
+      int lineIndex = i + 1;
+      String configVarPrefixUpdated =
+              configVarPrefix + "_Line" + lineIndex + "__" + SymbolicUtil.format(prefixIpStr) + "__";
+
+      // init smt variable for route filter line
+      _lines.get(i).initSmtVariable(context, solver, configVarPrefixUpdated);
+    }
+
+    // configure the smt variable enable flag to true
+    _enableSmtVariable = true;
+    _configVarPrefix = configVarPrefix;
+  }
+
+  public boolean getEnableSmtVariable() {
+    return _enableSmtVariable;
+  }
+
+  public String getConfigVarPrefix() {
+    return _configVarPrefix;
   }
 }

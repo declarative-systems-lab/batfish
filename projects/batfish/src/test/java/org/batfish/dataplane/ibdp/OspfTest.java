@@ -11,10 +11,13 @@ import static org.batfish.datamodel.ospf.OspfAreaSummary.SummaryRouteBehavior.NO
 import static org.batfish.datamodel.ospf.OspfTopologyUtils.computeOspfTopology;
 import static org.batfish.dataplane.ibdp.TestUtils.assertNoRoute;
 import static org.batfish.dataplane.ibdp.TestUtils.assertRoute;
+import static org.junit.Assert.assertTrue;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSortedMap;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -30,6 +33,7 @@ import org.batfish.datamodel.Ip;
 import org.batfish.datamodel.LineAction;
 import org.batfish.datamodel.NetworkConfigurations;
 import org.batfish.datamodel.NetworkFactory;
+import org.batfish.datamodel.OspfRoute;
 import org.batfish.datamodel.Prefix;
 import org.batfish.datamodel.PrefixRange;
 import org.batfish.datamodel.PrefixSpace;
@@ -1285,9 +1289,23 @@ public class OspfTest {
                 .setConfigurationFiles("org/batfish/dataplane/ibdp/ospf-edge", "A1", "A2", "FWL")
                 .build(),
             _folder);
-    batfish.computeDataPlane(batfish.getSnapshot());
+    StringWriter bgpOutput = new StringWriter();
+    StringWriter ospfOutput = new StringWriter();
+    batfish.computeDataPlane(
+        batfish.getSnapshot(), new PrintWriter(bgpOutput), new PrintWriter(ospfOutput));
     IncrementalDataPlane dataplane =
         (IncrementalDataPlane) batfish.loadDataPlane(batfish.getSnapshot());
+    Set<OspfRoute> fwlOspfRoutes = dataplane.getOspfRoutes().get("fwl", "default");
+    assertTrue(
+        fwlOspfRoutes.stream()
+            .anyMatch(
+                route ->
+                    route.getNetwork().equals(Prefix.parse("11.1.1.0/31"))
+                        && route.getNextHopIp().equals(Ip.parse("10.1.1.1"))));
+    assertTrue(ospfOutput.toString().contains("NextHop"));
+    assertTrue(ospfOutput.toString().contains("11.1.1.0/31"));
+    assertTrue(ospfOutput.toString().contains("10.1.1.1"));
+
     SortedMap<String, SortedMap<String, Set<AbstractRoute>>> routes =
         IncrementalBdpEngine.getRoutes(dataplane);
     assertRoute(routes, OSPF_E2, "a1", Prefix.ZERO, 1, Ip.parse("10.1.1.4"));

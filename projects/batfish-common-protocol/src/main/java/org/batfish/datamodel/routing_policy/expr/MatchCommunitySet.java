@@ -4,12 +4,21 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.collect.ImmutableMap;
 import java.util.Objects;
 import java.util.Set;
+import org.batfish.common.BatfishException;
 import org.batfish.datamodel.BgpRoute;
+import org.batfish.datamodel.RegexCommunitySet;
 import org.batfish.datamodel.bgp.community.Community;
 import org.batfish.datamodel.routing_policy.Environment;
 import org.batfish.datamodel.routing_policy.Result;
+
+import org.batfish.datamodel.CommunityList;
+
+import com.microsoft.z3.Context;
+import com.microsoft.z3.Solver;
+import com.microsoft.z3.BoolExpr;
 
 /**
  * Boolean expression that tests whether an {@link Environment} contains a BGP route with a
@@ -75,4 +84,51 @@ public final class MatchCommunitySet extends BooleanExpr {
   public int hashCode() {
     return Objects.hashCode(_expr);
   }
+
+  /** Add configuration constant - SMT symbolic variable */
+  private boolean _enableSmtVariable;
+  private String _configVarPrefix;
+
+  // private transient BoolExpr _configLineEnable;
+
+  public void initSmtVariable(
+      Context context, Solver solver, String configVarPrefix,
+      ImmutableMap<Community, Integer> commsIndex, int commsWidth) {
+    // assert that the community list line is not shared
+    if (_enableSmtVariable) {
+      throw new BatfishException("MatchCommunitySet.initSmtVariable: shared object.\n" +
+          "Previous configVarPrefix: " + _configVarPrefix + "\n" +
+          "Current  configVarPrefix: " + configVarPrefix);
+    }
+
+    // TODO: handle shared object case properly, now is just throw exception
+    if (_expr.getEnableSmtVariable()) {
+      throw new BatfishException(
+          "MatchCommunitySet.initSmtVariable: shared object CommunitySetExpr.");
+    }
+
+    // init smt variable for community set configuration
+    _expr.initSmtVariable(context, solver, configVarPrefix, commsIndex, commsWidth);
+
+    // add the line enable flag, and default configure to true
+    // _configLineEnable = context.mkBoolConst(configVarPrefix + "enable");
+    // BoolExpr configLineEnableConstraint = context.mkEq(_configLineEnable, context.mkTrue());
+    // solver.add(configLineEnableConstraint);
+
+    // configure the smt variable enable flag to true
+    _enableSmtVariable = true;
+    _configVarPrefix = configVarPrefix;
+  }
+
+  public boolean getEnableSmtVariable() {
+    return _enableSmtVariable;
+  }
+
+  public String getConfigVarPrefix() {
+    return _configVarPrefix;
+  }
+
+  // public BoolExpr getConfigLineEnable() {
+  //   return _configLineEnable;
+  // }
 }

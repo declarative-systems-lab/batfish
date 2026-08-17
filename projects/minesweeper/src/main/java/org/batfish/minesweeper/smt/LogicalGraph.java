@@ -27,7 +27,7 @@ class LogicalGraph {
 
   private Table2<String, Protocol, Set<Protocol>> _redistributedProtocols;
 
-  private Map<LogicalEdge, SymbolicRoute> _environmentVars;
+  private Map<LogicalEdge, SymbolicRouteBV> _environmentVars;
 
   LogicalGraph(Graph g) {
     _graph = g;
@@ -41,7 +41,7 @@ class LogicalGraph {
    * Find the variables for the opposite edge of a
    * logical edge.
    */
-  SymbolicRoute findOtherVars(LogicalEdge e) {
+  SymbolicRouteBV findOtherVars(LogicalEdge e) {
     LogicalEdge other = _otherEnd.get(e);
     if (other != null) {
       return other.getSymbolicRecord();
@@ -69,7 +69,7 @@ class LogicalGraph {
     return _otherEnd;
   }
 
-  Map<LogicalEdge, SymbolicRoute> getEnvironmentVars() {
+  Map<LogicalEdge, SymbolicRouteBV> getEnvironmentVars() {
     return _environmentVars;
   }
 

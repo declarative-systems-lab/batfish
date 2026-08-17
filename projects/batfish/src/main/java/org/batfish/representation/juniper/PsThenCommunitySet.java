@@ -5,8 +5,8 @@ import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
 import org.batfish.common.Warnings;
 import org.batfish.datamodel.Configuration;
-import org.batfish.datamodel.routing_policy.communities.CommunitySetReference;
-import org.batfish.datamodel.routing_policy.communities.SetCommunities;
+import org.batfish.datamodel.routing_policy.expr.NamedCommunitySet;
+import org.batfish.datamodel.routing_policy.statement.SetCommunity;
 import org.batfish.datamodel.routing_policy.statement.Statement;
 
 @ParametersAreNonnullByDefault
@@ -28,7 +28,7 @@ public final class PsThenCommunitySet extends PsThen {
       return;
     }
     _configuration.getOrCreateNamedCommunitiesUsedForSet().add(_name);
-    statements.add(new SetCommunities(new CommunitySetReference(_name)));
+    statements.add(new SetCommunity(new NamedCommunitySet(_name)));
   }
 
   public @Nonnull String getName() {

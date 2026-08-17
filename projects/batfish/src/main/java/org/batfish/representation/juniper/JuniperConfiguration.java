@@ -65,6 +65,9 @@ import org.batfish.datamodel.BgpPassivePeerConfig;
 import org.batfish.datamodel.BgpPeerConfig.Builder;
 import org.batfish.datamodel.BgpProcess;
 import org.batfish.datamodel.ConcreteInterfaceAddress;
+import org.batfish.datamodel.CommunityList;
+import org.batfish.datamodel.CommunityListLine;
+import org.batfish.datamodel.RegexCommunitySet;
 import org.batfish.datamodel.Configuration;
 import org.batfish.datamodel.ConfigurationFormat;
 import org.batfish.datamodel.DeviceModel;
@@ -146,8 +149,11 @@ import org.batfish.datamodel.routing_policy.communities.CommunitySetMatchAll;
 import org.batfish.datamodel.routing_policy.communities.CommunitySetMatchExpr;
 import org.batfish.datamodel.routing_policy.communities.CommunitySetNot;
 import org.batfish.datamodel.routing_policy.communities.HasCommunity;
-import org.batfish.datamodel.routing_policy.communities.LiteralCommunitySet;
-import org.batfish.datamodel.routing_policy.communities.SetCommunities;
+import org.batfish.datamodel.routing_policy.expr.CommunitySetExpr;
+import org.batfish.datamodel.routing_policy.expr.LiteralCommunity;
+import org.batfish.datamodel.routing_policy.expr.MatchCommunitySet;
+import org.batfish.datamodel.routing_policy.expr.Not;
+import org.batfish.datamodel.routing_policy.statement.SetCommunity;
 import org.batfish.datamodel.routing_policy.expr.BooleanExpr;
 import org.batfish.datamodel.routing_policy.expr.BooleanExprs;
 import org.batfish.datamodel.routing_policy.expr.CallExpr;
@@ -753,8 +759,9 @@ public final class JuniperConfiguration extends VendorConfiguration {
               return new If(
                   new Conjunction(ImmutableList.of(matchStatic, networkMatcher)),
                   ImmutableList.of(
-                      new SetCommunities(
-                          new LiteralCommunitySet(CommunitySet.of(route.getCommunities())))));
+                      new SetCommunity(
+                          new org.batfish.datamodel.routing_policy.expr.LiteralCommunitySet(
+                              route.getCommunities()))));
             })
         .collect(ImmutableList.toImmutableList());
   }
@@ -769,6 +776,9 @@ public final class JuniperConfiguration extends VendorConfiguration {
      * - CommunitySet for setting
      * - CommunityMatchExpr for deleting
      * - CommunitySetMatchExpr for matching
+     *
+     * Additionally, populate legacy CommunityList structures for minesweeper / symbolic
+     * configuration compatibility (MatchCommunitySet, AddCommunity, etc.).
      */
     _masterLogicalSystem
         .getNamedCommunities()
@@ -781,7 +791,62 @@ public final class JuniperConfiguration extends VendorConfiguration {
               }
               _c.getCommunityMatchExprs().put(name, toCommunityMatchExpr(namedCommunity));
               _c.getCommunitySetMatchExprs().put(name, toCommunitySetMatchExpr(namedCommunity));
+              @Nullable CommunityList communityList = toLegacyCommunityList(namedCommunity);
+              if (communityList != null) {
+                _c.getCommunityLists().put(name, communityList);
+              }
             });
+  }
+
+  /**
+   * Converts a {@link NamedCommunity} to a legacy {@link CommunityList} for use with {@link
+   * MatchCommunitySet}, {@link org.batfish.datamodel.routing_policy.statement.AddCommunity}, etc.
+   */
+  static @Nullable CommunityList toLegacyCommunityList(NamedCommunity namedCommunity) {
+    ImmutableList.Builder<CommunityListLine> lines = ImmutableList.builder();
+    for (CommunityMember member : namedCommunity.getMembers()) {
+      @Nullable CommunitySetExpr matchCondition = toLegacyCommunitySetExpr(member);
+      if (matchCondition != null) {
+        lines.add(CommunityListLine.accepting(matchCondition));
+      }
+    }
+    ImmutableList<CommunityListLine> builtLines = lines.build();
+    if (builtLines.isEmpty()) {
+      return null;
+    }
+    return new CommunityList(namedCommunity.getName(), builtLines, namedCommunity.getInvertMatch());
+  }
+
+  /**
+   * Converts a {@link NamedCommunity} to a legacy {@link BooleanExpr} that matches routes whose
+   * communities satisfy all members of the named community (Juniper AND semantics).
+   */
+  static @Nonnull BooleanExpr toLegacyFromCommunityBooleanExpr(NamedCommunity namedCommunity) {
+    ImmutableList.Builder<BooleanExpr> conjuncts = ImmutableList.builder();
+    for (CommunityMember member : namedCommunity.getMembers()) {
+      @Nullable CommunitySetExpr matchCondition = toLegacyCommunitySetExpr(member);
+      if (matchCondition != null) {
+        conjuncts.add(new MatchCommunitySet(matchCondition));
+      }
+    }
+    ImmutableList<BooleanExpr> built = conjuncts.build();
+    if (built.isEmpty()) {
+      return BooleanExprs.FALSE;
+    }
+    BooleanExpr match =
+        built.size() == 1 ? built.get(0) : new Conjunction(built);
+    return namedCommunity.getInvertMatch() ? new Not(match) : match;
+  }
+
+  static @Nullable CommunitySetExpr toLegacyCommunitySetExpr(CommunityMember member) {
+    if (member instanceof LiteralCommunityMember) {
+      return new LiteralCommunity(((LiteralCommunityMember) member).getCommunity());
+    }
+    if (member instanceof RegexCommunityMember) {
+      return new RegexCommunitySet(
+          communityRegexToJavaRegex(((RegexCommunityMember) member).getRegex()));
+    }
+    return null;
   }
 
   private static class CommunityMemberToCommunity implements CommunityMemberVisitor<Community> {

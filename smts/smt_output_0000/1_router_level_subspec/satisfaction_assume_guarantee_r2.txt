@@ -1,0 +1,35 @@
+; SMT variables absent from the router-local encoding
+(declare-fun |0_CONTROL-FORWARDING_r1_GigabitEthernet0/0| () Bool)
+(declare-fun |0_CONTROL-FORWARDING_r3_GigabitEthernet1/0| () Bool)
+(declare-fun |0_isp2_OVERALL_BEST_None_adminDist| () Int)
+(declare-fun |0_isp2_OVERALL_BEST_None_med| () Int)
+
+; Satisfaction assume-guarantee
+
+; Boundary control-forwarding decisions are coupled with peer route cases
+
+; ********************************************************************
+; Assume: Peer Best Routes
+; ********************************************************************
+
+; Peer: isp2
+(assert (and (= |0_isp2_OVERALL_BEST_None_permitted| true) (= |0_isp2_OVERALL_BEST_None_prefixLength| 24) (= |0_isp2_OVERALL_BEST_None_adminDist| 1) (= |0_isp2_OVERALL_BEST_None_metric| 0) (= |0_isp2_OVERALL_BEST_None_med| 0) (= |0_isp2_OVERALL_BEST_None_history| #b1) (= |0_isp2_OVERALL_BEST_None_community| #b000000) (= |0_CONTROL-FORWARDING_isp2_GigabitEthernet0/0| false)))
+
+; Peer: r1
+(assert (and (= |0_r1_OVERALL_BEST_None_permitted| true) (= |0_r1_OVERALL_BEST_None_prefixLength| 24) (= |0_r1_OVERALL_BEST_None_metric| 2) (= |0_r1_OVERALL_BEST_None_community| #b000001) (= |0_CONTROL-FORWARDING_r1_GigabitEthernet0/0| true)))
+
+; Peer: r3
+(assert (or (and (= |0_r3_OVERALL_BEST_None_permitted| true) (= |0_r3_OVERALL_BEST_None_prefixLength| 24) (= |0_r3_OVERALL_BEST_None_metric| 3) (= |0_r3_OVERALL_BEST_None_community| #b000100) (= |0_CONTROL-FORWARDING_r3_GigabitEthernet1/0| true)) (and (= |0_r3_OVERALL_BEST_None_permitted| true) (= |0_r3_OVERALL_BEST_None_prefixLength| 24) (= |0_r3_OVERALL_BEST_None_metric| 3) (= |0_r3_OVERALL_BEST_None_community| #b000001) (= |0_CONTROL-FORWARDING_r3_GigabitEthernet1/0| true))))
+
+; ********************************************************************
+; Guarantee: Local Best Route & Local Control-Forwarding Decisions
+; ********************************************************************
+
+(assert (= |0_r2_OVERALL_BEST_None_permitted| true))
+(assert (= |0_r2_OVERALL_BEST_None_prefixLength| 24))
+(assert (= |0_r2_OVERALL_BEST_None_metric| 1))
+(assert (= |0_r2_OVERALL_BEST_None_community| #b000100))
+
+(assert (= |0_CONTROL-FORWARDING_r2_GigabitEthernet0/0| false))
+(assert (= |0_CONTROL-FORWARDING_r2_GigabitEthernet1/0| false))
+(assert (= |0_CONTROL-FORWARDING_r2_GigabitEthernet2/0| true))

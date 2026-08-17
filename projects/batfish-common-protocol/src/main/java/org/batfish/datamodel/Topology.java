@@ -47,8 +47,11 @@ public final class Topology implements Serializable {
 
   private static Map<NodeInterfacePair, SortedSet<NodeInterfacePair>> computeInterfaceNeighbors(
       Iterable<Edge> edges) {
+    // Map<Pair<HostName, InterfaceName>, SortedSet<Pair<HostName, InterfaceName>>>
     Map<NodeInterfacePair, ImmutableSortedSet.Builder<NodeInterfacePair>> builders =
         new HashMap<>();
+    // computeIfAbsent(...) ensures that for each unique edge.getTail(), there is an 
+    // ImmutableSortedSet.Builder<NodeInterfacePair>
     edges.forEach(
         edge ->
             builders
@@ -59,11 +62,11 @@ public final class Topology implements Serializable {
   }
 
   private static Map<String, SortedSet<Edge>> computeNodeEdges(Iterable<Edge> edges) {
+    // Map<HostName, SortedSet<Edge>>
     Map<String, ImmutableSortedSet.Builder<Edge>> builders = new HashMap<>();
     for (Edge edge : edges) {
       String node1 = edge.getNode1();
       String node2 = edge.getNode2();
-
       builders.computeIfAbsent(node1, k -> ImmutableSortedSet.naturalOrder()).add(edge);
       builders.computeIfAbsent(node2, k -> ImmutableSortedSet.naturalOrder()).add(edge);
     }

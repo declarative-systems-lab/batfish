@@ -45,12 +45,14 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.Objects;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.batfish.common.BatfishException;
 import org.batfish.datamodel.AbstractRoute;
 import org.batfish.datamodel.AbstractRouteDecorator;
+import org.batfish.datamodel.BgpRoute;
 import org.batfish.datamodel.Bgpv4Route;
 import org.batfish.datamodel.EvpnRoute;
 import org.batfish.datamodel.GenericRib;
@@ -127,6 +129,32 @@ public class RoutesAnswererUtil {
     }
     // TODO: https://github.com/batfish/batfish/issues/1862 can try harder for multiple outs
     return null;
+  }
+
+  /**
+   * Resolve the node hostname for a route's next hop.
+   */
+  @VisibleForTesting
+  @Nullable
+  static String computeNextHopNodeForRoute(
+      AbstractRoute route, @Nullable Map<Ip, Set<String>> ipOwners) {
+    String nextHopNode = computeNextHopNode(route.getNextHopIp(), ipOwners);
+    if (nextHopNode != null) {
+      return nextHopNode;
+    }
+    if (!(route instanceof BgpRoute<?, ?>)) {
+      return null;
+    }
+    Ip receivedFromIp = ((BgpRoute<?, ?>) route).getReceivedFromIp();
+    if (receivedFromIp == null || receivedFromIp.equals(Ip.ZERO)) {
+      return null;
+    }
+    Ip routeNextHopIp = route.getNextHopIp();
+    if (routeNextHopIp == null || Objects.equals(receivedFromIp, routeNextHopIp)) {
+      // Next-hop was not rewritten by policy; keep the unresolved result.
+      return null;
+    }
+    return computeNextHopNode(receivedFromIp, ipOwners);
   }
 
   /**
@@ -279,7 +307,7 @@ public class RoutesAnswererUtil {
         .put(COL_NETWORK, abstractRoute.getNetwork())
         .put(COL_NEXT_HOP_IP, nextHopIp)
         .put(COL_NEXT_HOP_INTERFACE, abstractRoute.getNextHopInterface())
-        .put(COL_NEXT_HOP, computeNextHopNode(abstractRoute.getNextHopIp(), ipOwners))
+        .put(COL_NEXT_HOP, computeNextHopNodeForRoute(abstractRoute, ipOwners))
         .put(COL_PROTOCOL, abstractRoute.getProtocol())
         .put(
             COL_TAG,
@@ -619,7 +647,7 @@ public class RoutesAnswererUtil {
                                     .add(
                                         RouteRowAttribute.builder()
                                             .setNextHop(
-                                                computeNextHopNode(route.getNextHopIp(), ipOwners))
+                                                computeNextHopNodeForRoute(route, ipOwners))
                                             .setNextHopInterface(route.getNextHopInterface())
                                             .setAdminDistance(route.getAdministrativeCost())
                                             .setMetric(route.getMetric())

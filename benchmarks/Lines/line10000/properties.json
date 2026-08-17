@@ -1,0 +1,11 @@
+{
+  "properties": [
+    {
+      "description": "LINE 10000: Reachability",
+      "type": "reachability",
+      "ingressNodeRegex": ".*",
+      "finalNodeRegex": "isp1",
+      "dstIps": ["10.20.124.0/24"]
+    }
+  ]
+}

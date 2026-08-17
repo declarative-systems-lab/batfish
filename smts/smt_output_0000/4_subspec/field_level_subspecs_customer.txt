@@ -1,0 +1,58 @@
+Field-Level Subspecs
+====================
+
+Config Variable: Config_r2_RoutingPolicy_R2_OUT_TO_R1__Seq100__Line1__set_community_200_100__community
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r3_RouteFilterList_default_ips__Line1__0_0_0_0__action
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r3_RouteFilterList_default_ips__Line1__0_0_0_0__ip
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r3_RouteFilterList_default_ips__Line1__0_0_0_0__length
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r3_RouteFilterList_default_ips__Line1__0_0_0_0__prefix_range_end
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r3_RouteFilterList_default_ips__Line1__0_0_0_0__prefix_range_start
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__action
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__ip
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__length
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__prefix_range_end
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__prefix_range_start
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+

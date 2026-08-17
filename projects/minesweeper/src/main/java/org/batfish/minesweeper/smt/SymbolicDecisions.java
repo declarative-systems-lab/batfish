@@ -11,7 +11,7 @@ import org.batfish.minesweeper.collections.Table3;
 
 /**
  * Class for the symbolic variables used to represent the final forwarding decision in the network.
- * This includes both the control plane and data plane forwading decisions, as well as the
+ * This includes both the control plane and data plane forwarding decisions, as well as the
  * per-protocol and overall best choices.
  *
  * @author Ryan Beckett
@@ -19,11 +19,11 @@ import org.batfish.minesweeper.collections.Table3;
 class SymbolicDecisions {
 
   // control plane: best route for each protocol.
-  private Table2<String, Protocol, SymbolicRoute> _bestNeighborPerProtocol;
+  private Table2<String, Protocol, SymbolicRouteBV> _bestNeighborPerProtocol;
 
   // control plane: best route over all protocols. The one that will be used
   // to forward.
-  private Map<String, SymbolicRoute> _bestNeighbor;
+  private Map<String, SymbolicRouteBV> _bestNeighbor;
 
   // helper for encoding _controlForwarding
   // for each router (String), each protocol, each port, will the protocol running
@@ -44,11 +44,11 @@ class SymbolicDecisions {
     _dataForwarding = new Table2<>();
   }
 
-  Table2<String, Protocol, SymbolicRoute> getBestNeighborPerProtocol() {
+  Table2<String, Protocol, SymbolicRouteBV> getBestNeighborPerProtocol() {
     return _bestNeighborPerProtocol;
   }
 
-  Map<String, SymbolicRoute> getBestNeighbor() {
+  Map<String, SymbolicRouteBV> getBestNeighbor() {
     return _bestNeighbor;
   }
 
@@ -65,7 +65,7 @@ class SymbolicDecisions {
   }
 
   @Nullable
-  SymbolicRoute getBestVars(Optimizations opts, String router, Protocol proto) {
+  SymbolicRouteBV getBestVars(Optimizations opts, String router, Protocol proto) {
     if (opts.getSliceHasSingleProtocol().contains(router)) {
       return _bestNeighbor.get(router);
     } else {

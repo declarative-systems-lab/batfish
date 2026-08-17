@@ -12,6 +12,8 @@ import org.batfish.minesweeper.utils.MsPair;
  * currently being maintained. The BDD-based route analysis in {@link
  * org.batfish.minesweeper.bdd.TransferBDD} uses its own version of this class in the bdd package,
  * {@link org.batfish.minesweeper.bdd.TransferResult}.
+ * 
+ * TODO: annotated by yongzheng on 20250325
  *
  * @param <U> the type of the data that the analysis produces
  * @param <T> the type of the predicate used to track the internal state of the analysis

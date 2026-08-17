@@ -79,7 +79,7 @@ public class HeaderQuestion extends Question {
   private EnvironmentType _deltaEnvType;
 
   private boolean _modelOverflow;
-
+  // TODO: not understand, annotated by yongzheng in 20250314
   private boolean _useAbstraction;
 
   private boolean _stats;

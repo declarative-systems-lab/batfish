@@ -3,6 +3,7 @@ package org.batfish.minesweeper.smt;
 import static org.batfish.minesweeper.CommunityVarCollector.collectCommunityVars;
 import static org.batfish.minesweeper.bdd.CommunityVarConverter.toCommunityVar;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.microsoft.z3.ArithExpr;
 import com.microsoft.z3.BitVecExpr;
@@ -15,21 +16,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.batfish.common.BatfishException;
-import org.batfish.datamodel.BgpPeerConfig;
-import org.batfish.datamodel.CommunityList;
-import org.batfish.datamodel.CommunityListLine;
-import org.batfish.datamodel.Configuration;
-import org.batfish.datamodel.GeneratedRoute;
-import org.batfish.datamodel.Interface;
-import org.batfish.datamodel.LineAction;
-import org.batfish.datamodel.Prefix;
-import org.batfish.datamodel.PrefixRange;
-import org.batfish.datamodel.RouteFilterLine;
-import org.batfish.datamodel.RouteFilterList;
-import org.batfish.datamodel.RoutingProtocol;
-import org.batfish.datamodel.SubRange;
+import org.batfish.datamodel.*;
 import org.batfish.datamodel.ospf.OspfMetricType;
 import org.batfish.datamodel.routing_policy.RoutingPolicy;
 import org.batfish.datamodel.routing_policy.expr.AsPathListExpr;
@@ -37,6 +27,7 @@ import org.batfish.datamodel.routing_policy.expr.BooleanExpr;
 import org.batfish.datamodel.routing_policy.expr.BooleanExprs;
 import org.batfish.datamodel.routing_policy.expr.CallExpr;
 import org.batfish.datamodel.routing_policy.expr.CommunitySetExpr;
+import org.batfish.datamodel.routing_policy.expr.LiteralCommunity;
 import org.batfish.datamodel.routing_policy.expr.Conjunction;
 import org.batfish.datamodel.routing_policy.expr.ConjunctionChain;
 import org.batfish.datamodel.routing_policy.expr.DecrementLocalPreference;
@@ -77,6 +68,8 @@ import org.batfish.datamodel.routing_policy.statement.SetOrigin;
 import org.batfish.datamodel.routing_policy.statement.SetOspfMetricType;
 import org.batfish.datamodel.routing_policy.statement.Statement;
 import org.batfish.datamodel.routing_policy.statement.Statements.StaticStatement;
+import org.batfish.datamodel.routing_policy.communities.MatchCommunities;
+import org.batfish.datamodel.routing_policy.communities.SetCommunities;
 import org.batfish.minesweeper.CommunityVar;
 import org.batfish.minesweeper.CommunityVar.Type;
 import org.batfish.minesweeper.Graph;
@@ -95,7 +88,7 @@ import org.batfish.minesweeper.utils.MsPair;
  * <p>Batfish represents the AST much like vendors where there is a simple imperative language for
  * matching fields and making modifications to fields. Since this is not a good fit for a
  * declarative symbolic encoding of the network, we convert this stateful representation into a
- * stateless representation
+ * stateless representation.
  *
  * <p>The TransferSSA class makes policies stateless by converting the vendor-independent format to
  * a Static Single Assignment (SSA) form where all updates are reflected in new variables. Rather
@@ -111,7 +104,7 @@ import org.batfish.minesweeper.utils.MsPair;
  * the value of each variable modified based on the branch taken. For example:
  *
  * <p>c2' = (c1 ? true : c2) metric' = (c1 ? metric : metric + 2)
- *
+ RoutingPolicy.java *
  * <p>To model the return value of functions, we introduce three new variables: [fallthrough],
  * [returnValue] and [returnAssigned]. For example, if we have the following AST function in
  * Batfish:
@@ -142,9 +135,9 @@ class TransferSSA {
 
   private Configuration _conf;
 
-  private SymbolicRoute _current;
+  private SymbolicRouteBV _current;
 
-  private SymbolicRoute _other;
+  private SymbolicRouteBV _other;
 
   private Protocol _proto;
 
@@ -160,16 +153,19 @@ class TransferSSA {
 
   private boolean _isExport;
 
+  private ImmutableMap<CommunityVar, Integer> _commsIndex;
+
   TransferSSA(
       EncoderSlice encoderSlice,
       Configuration conf,
-      SymbolicRoute other,
-      SymbolicRoute current,
+      SymbolicRouteBV other,
+      SymbolicRouteBV current,
       Protocol proto,
       List<Statement> statements,
       Integer addedCost,
       GraphEdge ge,
-      boolean isExport) {
+      boolean isExport,
+      ImmutableMap<CommunityVar, Integer> commsIndex) {
     _enc = encoderSlice;
     _conf = conf;
     _current = current;
@@ -181,6 +177,7 @@ class TransferSSA {
     _iface = ge.getStart();
     _isExport = isExport;
     _aggregates = null;
+    _commsIndex = commsIndex;
   }
 
   /*
@@ -211,23 +208,47 @@ class TransferSSA {
   /*
    * Converts a route filter list to a boolean expression.
    */
-  private BoolExpr matchFilterList(RouteFilterList x, SymbolicRoute other) {
+  private BoolExpr matchFilterList(RouteFilterList x, SymbolicRouteBV other) {
     BoolExpr acc = _enc.mkFalse();
 
     List<RouteFilterLine> lines = new ArrayList<>(x.getLines());
     Collections.reverse(lines);
 
+    // both or neither enable SMT variable
+    boolean allEnableSmtVariable =
+        Iterables.all(lines, RouteFilterLine::getEnableSmtVariable);
+    boolean noneEnableSmtVariable =
+        Iterables.all(lines, r -> !r.getEnableSmtVariable());
+    if (!(allEnableSmtVariable || noneEnableSmtVariable)) {
+      throw new BatfishException(
+          "Inconsistent enableSmtVariable flags in List<RouteFilterLine>");
+    }
+
     for (RouteFilterLine line : lines) {
       if (!line.getIpWildcard().isPrefix()) {
         throw new BatfishException("non-prefix IpWildcards are unsupported");
       }
-      Prefix p = line.getIpWildcard().toPrefix();
-      SubRange r = line.getLengthRange();
-      PrefixRange range = new PrefixRange(p, r);
-      BoolExpr matches = _enc.isRelevantFor(other.getPrefixLength(), range);
-      BoolExpr action = _enc.mkBool(line.getAction() == LineAction.PERMIT);
-      acc = _enc.mkIf(matches, action, acc);
+
+      if (!line.getEnableSmtVariable())  {
+        Prefix p = line.getIpWildcard().toPrefix();
+        SubRange r = line.getLengthRange();
+        PrefixRange range = new PrefixRange(p, r);
+        BoolExpr matches = _enc.isRelevantFor(other.getPrefixLength(), range);
+        BoolExpr action = _enc.mkBool(line.getAction() == LineAction.PERMIT);
+        acc = _enc.mkIf(matches, action, acc);
+      } else {
+        Prefix p = line.getIpWildcard().toPrefixWithSymbolicVariables();
+        SubRange r = line.getLengthRange();
+        PrefixRange range = new PrefixRange(p, r);
+        BoolExpr matches = _enc.isRelevantFor(other.getPrefixLength(), range);
+        BoolExpr action = line.getConfigVarAction();
+        acc = _enc.mkIf(matches, action, acc);
+        // NOTE: symbolic encoding for the line enable
+        // BoolExpr lineEnable = line.getConfigLineEnable();
+        // acc = _enc.mkIf(_enc.mkAnd(lineEnable, matches), action, acc);
+      }
     }
+
     return acc;
   }
 
@@ -235,11 +256,14 @@ class TransferSSA {
    * Converts a prefix set to a boolean expression.
    */
   private TransferResult<BoolExpr, BoolExpr> matchPrefixSet(
-      Configuration conf, PrefixSetExpr e, SymbolicRoute other) {
+      Configuration conf, MatchPrefixSet mps, SymbolicRouteBV other) {
 
+    PrefixSetExpr e = mps.getPrefixSet();
     ArithExpr otherLen = other.getPrefixLength();
 
     TransferResult<BoolExpr, BoolExpr> result = new TransferResult<>();
+
+    // BoolExpr lineEnable = mps.getConfigLineEnable();
 
     if (e instanceof ExplicitPrefixSet) {
       ExplicitPrefixSet x = (ExplicitPrefixSet) e;
@@ -247,6 +271,16 @@ class TransferSSA {
       Set<PrefixRange> ranges = x.getPrefixSpace().getPrefixRanges();
       if (ranges.isEmpty()) {
         return result.setReturnValue(_enc.mkTrue());
+      }
+
+      // both or neither enable SMT variable
+      boolean allEnableSmtVariable =
+          Iterables.all(ranges, PrefixRange::getEnableSmtVariable);
+      boolean noneEnableSmtVariable =
+          Iterables.all(ranges, r -> !r.getEnableSmtVariable());
+      if (!(allEnableSmtVariable || noneEnableSmtVariable)) {
+        throw new BatfishException(
+            "Inconsistent enableSmtVariable flags in Set<PrefixRange>");
       }
 
       // This is a total hack to deal with the fact that
@@ -258,29 +292,52 @@ class TransferSSA {
           int start = r.getLengthRange().getStart();
           int end = r.getLengthRange().getEnd();
           Prefix pfx = r.getPrefix();
+
           if (start == end && start == pfx.getPrefixLength()) {
             String router = _conf.getHostname();
             Set<Prefix> origin = _enc.getOriginatedNetworks().get(router, Protocol.BGP);
+
             if (origin != null && origin.contains(pfx)) {
               // Compute static and connected routes
               Set<Prefix> ostatic = _enc.getOriginatedNetworks().get(router, Protocol.STATIC);
               Set<Prefix> oconn = _enc.getOriginatedNetworks().get(router, Protocol.CONNECTED);
               boolean hasStatic = ostatic != null && ostatic.contains(pfx);
               boolean hasConnected = oconn != null && oconn.contains(pfx);
-              ArithExpr originLength = _enc.mkInt(pfx.getPrefixLength());
+
+              ArithExpr originLength;
+              if (pfx.getEnableSmtVariable()) {
+                originLength = pfx.getConfigVarLength();
+              } else {
+                originLength = _enc.mkInt(pfx.getPrefixLength());
+              }
+
               if (hasStatic || hasConnected) {
                 BoolExpr directRoute = _enc.isRelevantFor(originLength, r);
                 ArithExpr newLength = _enc.mkIf(directRoute, originLength, otherLen);
                 result = result.addChangedVariable("PREFIX-LEN", newLength);
-                return result.setReturnValue(directRoute);
+                if (!mps.getEnableSmtVariable()) {
+                  return result.setReturnValue(directRoute);
+                } else {
+                  return result.setReturnValue(directRoute);
+                  // NOTE: symbolic encoding for the line enable
+                  // directRoute = _enc.mkIf(lineEnable, directRoute, _enc.mkTrue());
+                  // return result.setReturnValue(directRoute);
+                }
               } else {
                 // Also use network statement if OSPF has a route with the correct length
-                SymbolicRoute rec = _enc.getBestNeighborPerProtocol(router, Protocol.OSPF);
+                SymbolicRouteBV rec = _enc.getBestNeighborPerProtocol(router, Protocol.OSPF);
                 if (rec != null) {
                   BoolExpr ospfRelevant = _enc.isRelevantFor(rec.getPrefixLength(), r);
                   ArithExpr newLength = _enc.mkIf(ospfRelevant, originLength, otherLen);
                   result = result.addChangedVariable("PREFIX-LEN", newLength);
-                  return result.setReturnValue(ospfRelevant);
+                  if (!mps.getEnableSmtVariable()) {
+                    return result.setReturnValue(ospfRelevant);
+                  } else {
+                    return result.setReturnValue(ospfRelevant);
+                    // NOTE: symbolic encoding for the line enable
+                    // ospfRelevant = _enc.mkIf(lineEnable, ospfRelevant, _enc.mkTrue());
+                    // return result.setReturnValue(ospfRelevant);
+                  }
                 }
               }
             }
@@ -294,50 +351,244 @@ class TransferSSA {
         acc = _enc.mkOr(acc, _enc.isRelevantFor(otherLen, range));
       }
 
-      return result.setReturnValue(acc);
+      if (!mps.getEnableSmtVariable()) {
+        return result.setReturnValue(acc);
+      } else {
+        return result.setReturnValue(acc);
+        // NOTE: symbolic encoding for the line enable
+        // acc = _enc.mkIf(lineEnable, acc, _enc.mkTrue());
+        // return result.setReturnValue(acc);
+      }
 
     } else if (e instanceof NamedPrefixSet) {
       NamedPrefixSet x = (NamedPrefixSet) e;
       String name = x.getName();
       RouteFilterList fl = conf.getRouteFilterLists().get(name);
-      return result.setReturnValue(matchFilterList(fl, other));
+      if (!mps.getEnableSmtVariable()) {
+        return result.setReturnValue(matchFilterList(fl, other));
+      } else {
+        BoolExpr bgpRelevant = matchFilterList(fl, other);
+        return result.setReturnValue(bgpRelevant);
+        // NOTE: symbolic encoding for the line enable
+        // bgpRelevant = _enc.mkIf(lineEnable, bgpRelevant, _enc.mkTrue());
+        // return result.setReturnValue(bgpRelevant);
+      }
 
     } else {
       throw new BatfishException("TODO: match prefix set: " + e);
     }
   }
 
-  /*
+  private String regexToString(String r) {
+    char first = r.charAt(0);
+    int len = r.length();
+    char last = r.charAt(len - 1);
+    if ((first == '^') && (last == '$')) {
+      return r.substring(1,len-1);
+    }
+    return r;
+  }
+
+  // This code is copied and adapted from the `minesweeper-ibgp-new` branch of the Batfish repository:
+  // https://github.com/batfish/batfish
+  private BoolExpr matchCommunity(Map<CommunityVar, BoolExpr> comms, CommunityVar c) {
+    Type commType = c.getType();
+    String cstring = c.getRegex().toString();
+    /* Equality check between exact matches. */
+    BoolExpr cbool = comms.get(c);
+    if (cbool != null) {
+      return cbool;
+    }
+    // Regexp checking, if it's a regexp try to match it with a regexp or an exact.
+    Map<CommunityVar, BoolExpr> exact = new HashMap<>();
+    Map<CommunityVar, BoolExpr> regex = new HashMap<>();
+    Map<CommunityVar, BoolExpr> other = new HashMap<>();
+    for (Map.Entry<CommunityVar, BoolExpr> e : comms.entrySet()) {
+      switch (e.getKey().getType()) {
+        case EXACT:
+          exact.put(e.getKey(), e.getValue());
+          break;
+        case REGEX:
+          regex.put(e.getKey(), e.getValue());
+          break;
+        case OTHER:
+          other.put(e.getKey(), e.getValue());
+          break;
+      }
+    }
+
+    if (commType.equals(Type.EXACT)) {
+      // No point in checking the exact list, cbool would have caught it.
+      for (Map.Entry<CommunityVar, BoolExpr> e : regex.entrySet()) {
+        String ostring = regexToString(e.getKey().getRegex().toString());
+        if (Pattern.matches(ostring, cstring)) {
+          return e.getValue();
+        }
+      }
+      for (Map.Entry<CommunityVar, BoolExpr> e : other.entrySet()) {
+        String ostring = regexToString(e.getKey().getRegex().toString());
+        if (Pattern.matches(ostring, cstring)) {
+          return e.getValue();
+        }
+      }
+    } else {
+      // Other checking
+      for (Map.Entry<CommunityVar, BoolExpr> e : exact.entrySet()) {
+        String ostring = regexToString(e.getKey().getRegex().toString());
+        if (Pattern.matches(cstring, ostring)) {
+          return e.getValue();
+        }
+      }
+      for (Map.Entry<CommunityVar, BoolExpr> e : regex.entrySet()) {
+        String ostring = regexToString(e.getKey().getRegex().toString());
+        if (cstring.equals(ostring)) {
+          return e.getValue();
+        }
+      }
+      for (Map.Entry<CommunityVar, BoolExpr> e : other.entrySet()) {
+        String ostring = regexToString(e.getKey().getRegex().toString());
+        if (cstring.equals(ostring)) {
+          return e.getValue();
+        }
+      }
+    }
+    return null;
+  }
+
+  private BoolExpr matchCommunityExtend(SymbolicRouteBV other, CommunityVar cvar) {
+    BoolExpr c1 = other.getCommunities().get(cvar);
+    BoolExpr c2 = matchCommunity(other.getCommunities(), cvar);
+    if (null != c1) {
+      return c1;
+    } else if (null != c2) {
+      return c2;
+    } else {
+      throw new BatfishException(
+          "TransferSSA.matchCommunityExtend: cannot match community in SymbolicRouteBV.");
+    }
+  }
+
+  /**
    * Converts a community list to a boolean expression.
    */
-  private BoolExpr matchCommunityList(CommunityList cl, SymbolicRoute other) {
+  private BoolExpr matchCommunityList(CommunityList cl, SymbolicRouteBV other) {
+    // List<CommunityListLine> lines = new ArrayList<>(cl.getLines());
+    // Collections.reverse(lines);
+    // BoolExpr acc = _enc.mkFalse();
+    //
+    // if (!cl.getEnableSmtVariable()) {
+    //   for (CommunityListLine line : lines) {
+    //     CommunityVar cvar = toCommunityVar(line.getMatchCondition());
+    //     BoolExpr c = matchCommunityExtend(other, cvar);
+    //     boolean action = (line.getAction() == LineAction.PERMIT);
+    //     acc = _enc.mkIf(c, _enc.mkBool(action), acc);
+    //   }
+    // } else {
+    //   for (CommunityListLine line : lines) {
+    //     CommunityVar cvar = toCommunityVar(line.getMatchCondition());
+    //     BoolExpr c = matchCommunityExtend(other, cvar);
+    //
+    //     BoolExpr community = null;
+    //     CommunitySetExpr communitySetExpr = line.getMatchCondition();
+    //     if (communitySetExpr instanceof RegexCommunitySet) {
+    //       RegexCommunitySet rcs = (RegexCommunitySet) communitySetExpr;
+    //       community = rcs.getConfigVarCommunity();
+    //     } else if (communitySetExpr instanceof LiteralCommunity) {
+    //       LiteralCommunity lc = (LiteralCommunity) communitySetExpr;
+    //       community = lc.getConfigVarCommunity();
+    //     } else {
+    //       throw new BatfishException("Unimplemented community condition: " + communitySetExpr);
+    //     }
+    //     BoolExpr matchCommunityLine = _enc.mkEq(community, c);
+    //     BoolExpr action = line.getConfigVarAction();
+    //     // acc = _enc.mkIf(matchCommunityLine, action, acc);
+    //     // NOTE: symbolic encoding for the line enable
+    //     BoolExpr lineEnable = line.getConfigLineEnable();
+    //     acc = _enc.mkIf(_enc.mkAnd(lineEnable, matchCommunityLine), action, acc);
+    //   }
+    // }
+    //
+    // return acc;
+
+    // NOTE: modified match community list (BoolExpr -> BitVecExpr communities)
+
     List<CommunityListLine> lines = new ArrayList<>(cl.getLines());
     Collections.reverse(lines);
     BoolExpr acc = _enc.mkFalse();
+
     for (CommunityListLine line : lines) {
-      boolean action = (line.getAction() == LineAction.PERMIT);
       CommunityVar cvar = toCommunityVar(line.getMatchCondition());
-      BoolExpr c = other.getCommunities().get(cvar);
-      acc = _enc.mkIf(c, _enc.mkBool(action), acc);
+      List<CommunityVar> comms = new ArrayList<>();
+      if (Type.REGEX == cvar.getType()) {
+        comms = _enc.getGraph().getCommunityDependencies(cvar);
+      } else {
+        comms.add(cvar);
+      }
+
+      if (!cl.getEnableSmtVariable()) {
+        BitVecExpr commsMask = SymbolicRouteBV.communitiesMask(_enc.getCtx(), _commsIndex, comms);
+        BitVecExpr commsMatch = _enc.getCtx().mkBVAND(other.getCommunitiesBitVec(), commsMask);
+        BoolExpr c = SymbolicRouteBV.communitiesMatch(_enc.getCtx(), commsMatch, _commsIndex.size());
+        boolean action = (line.getAction() == LineAction.PERMIT);
+        acc = _enc.mkIf(c, _enc.mkBool(action), acc);
+
+      } else {
+        BitVecExpr commsMask = null;
+        for (CommunityVar ccvar : comms) {
+          if (!ccvar.getLiteralValue().getEnableSmtVariable() ||
+              null == ccvar.getLiteralValue().getConfigVarCommunity()) {
+            throw new BatfishException("matchCommunityList: " +
+                "does not have a config variable for communities");
+          }
+          // TODO: modify constraint (or X1 (or X2 (or X3 X4))) to (or X1 X2 X3 X4)
+          BitVecExpr commMask = ccvar.getLiteralValue().getConfigVarCommunity();
+          if (null == commsMask)  commsMask = commMask;
+          else                    commsMask = _enc.getCtx().mkBVOR(commsMask, commMask);
+        }
+
+        BitVecExpr commsMatch = _enc.getCtx().mkBVAND(other.getCommunitiesBitVec(), commsMask);
+
+        BoolExpr c = SymbolicRouteBV.communitiesMatch(_enc.getCtx(), commsMatch, _commsIndex.size());
+        BoolExpr action = line.getConfigVarAction();
+        acc = _enc.mkIf(c, action, acc);
+        // NOTE: symbolic encoding for the line enable
+        // BoolExpr lineEnable = line.getConfigLineEnable();
+        // acc = _enc.mkIf(_enc.mkAnd(lineEnable, c), action, acc);
+      }
     }
+
     return acc;
   }
 
-  /*
+  /**
    * Converts a community set to a boolean expression
    */
-  private BoolExpr matchCommunitySet(Configuration conf, CommunitySetExpr e, SymbolicRoute other) {
+  private BoolExpr matchCommunitySet(Configuration conf, CommunitySetExpr e, SymbolicRouteBV other) {
+    // if (e instanceof CommunityList) {
+    //   Set<CommunityVar> comms = collectCommunityVars(conf, e);
+    //   BoolExpr acc = _enc.mkTrue();
+    //   for (CommunityVar comm : comms) {
+    //     BoolExpr c = other.getCommunities().get(comm);
+    //     if (c == null) {
+    //       throw new BatfishException("matchCommunitySet: should not be null");
+    //     }
+    //     acc = _enc.mkAnd(acc, c);
+    //   }
+    //   return acc;
+    // }
+    //
+    // if (e instanceof NamedCommunitySet) {
+    //   NamedCommunitySet x = (NamedCommunitySet) e;
+    //   CommunityList cl = conf.getCommunityLists().get(x.getName());
+    //   return matchCommunityList(cl, other);
+    // }
+    //
+    // throw new BatfishException("TODO: match community set");
+
+    // NOTE: modified match community set (BoolExpr -> BitVec communities)
+
     if (e instanceof CommunityList) {
-      Set<CommunityVar> comms = collectCommunityVars(conf, e);
-      BoolExpr acc = _enc.mkTrue();
-      for (CommunityVar comm : comms) {
-        BoolExpr c = other.getCommunities().get(comm);
-        if (c == null) {
-          throw new BatfishException("matchCommunitySet: should not be null");
-        }
-        acc = _enc.mkAnd(acc, c);
-      }
-      return acc;
+      return matchCommunityList((CommunityList) e, other);
     }
 
     if (e instanceof NamedCommunitySet) {
@@ -346,7 +597,144 @@ class TransferSSA {
       return matchCommunityList(cl, other);
     }
 
+    if (e instanceof LiteralCommunity) {
+      LiteralCommunity x = (LiteralCommunity) e;
+      CommunityVar cvar = toCommunityVar(x);
+      List<CommunityVar> comms = new ArrayList<>();
+      if (Type.REGEX == cvar.getType()) {
+        comms = _enc.getGraph().getCommunityDependencies(cvar);
+      } else {
+        comms.add(cvar);
+      }
+      if (!e.getEnableSmtVariable()) {
+        // FIXME: unimplemented
+        return _enc.mkTrue();
+      } else {
+        BitVecExpr commsMask = SymbolicRouteBV.communitiesMask(_enc.getCtx(), _commsIndex, comms);
+        BitVecExpr commsMatch = _enc.getCtx().mkBVAND(other.getCommunitiesBitVec(), commsMask);
+        return SymbolicRouteBV.communitiesMatch(_enc.getCtx(), commsMatch, _commsIndex.size());
+      }
+    }
+
     throw new BatfishException("TODO: match community set");
+  }
+
+  /**
+   * Expand community variables for add/set/delete community statements.
+   */
+  private Set<CommunityVar> resolveConfigurationCommunityVars(Set<CommunityVar> comms, String configVarPrefix) {
+    Set<CommunityVar> resolved = new HashSet<>();
+    for (CommunityVar cvar : comms) {
+      if (cvar.getType() != CommunityVar.Type.REGEX) {
+        if (CommunityVar.Type.OTHER == cvar.getType()) {
+          continue;   // skip OTHER type community variables
+        }
+        resolved.add(cvar);
+        continue;
+      }
+
+      List<CommunityVar> dependencies = _enc.getGraph().getCommunityDependencies(cvar);
+      for (CommunityVar dep : dependencies) {
+        if (dep.getType() == CommunityVar.Type.OTHER) {
+          continue;   // skip OTHER type community variables
+        }
+        if (dep.getLiteralValue().getEnableSmtVariable()) {
+          dep.cloneCommunity();
+        }
+        // symbolic configuration for community (regex dependencies)
+        Encoder.initConfigurationConstantsComm(_enc.getEncoder(), dep, configVarPrefix);
+        resolved.add(dep);
+      }
+    }
+    return resolved;
+  }
+
+  /**
+   * Configure communities (AddCommunity, SetCommunity, and DeleteCommunity)
+   */
+  private BitVecExpr configCommunities(
+      TransferParam<SymbolicRouteBV> curP, TransferResult<BoolExpr, BoolExpr> curResult,
+      boolean enableSmtVariable, BoolExpr lineEnable, Set<CommunityVar> comms,
+      String configVarPrefix, String stmtName) {
+    // resolve configuration and initConfigurationConstants
+    comms = resolveConfigurationCommunityVars(comms, configVarPrefix);
+
+    for (CommunityVar cvar : comms) {
+      if (cvar.getType() == CommunityVar.Type.REGEX) {
+        throw new BatfishException("configCommunities: " +
+            stmtName + "does not support regex community " +
+            "(dependencies already resolved to exact / other communities)");
+      }
+    }
+
+    BitVecExpr commsMask = null;
+
+    if (!enableSmtVariable) {
+      commsMask = SymbolicRouteBV.communitiesMask(_enc.getCtx(), _commsIndex, comms);
+
+    } else {
+      for (CommunityVar cvar : comms) {
+        if (!cvar.getLiteralValue().getEnableSmtVariable() ||
+            null == cvar.getLiteralValue().getConfigVarCommunity()) {
+          throw new BatfishException("configCommunities: " +
+              stmtName + " does not have a config variable for communities");
+        }
+        // TODO: modify constraint (or X1 (or X2 (or X3 X4))) to (or X1 X2 X3 X4)
+        BitVecExpr commMask = cvar.getLiteralValue().getConfigVarCommunity();
+        if (null == commsMask)  commsMask = commMask;
+        else                    commsMask = _enc.getCtx().mkBVOR(commsMask, commMask);
+      }
+    }
+
+    if (null == commsMask) {
+      throw new BatfishException("configCommunities: " + stmtName + "communities mask is null");
+    }
+
+    BitVecExpr commsBv = curP.getData().getCommunitiesBitVec();
+    BitVecExpr commsBvUpdated = null;
+
+    if (AddCommunity.class.getName().equals(stmtName)) {
+      // commsBv OR commsMask will set the bits in commsMask and keep the rest unchanged.
+      commsBvUpdated = _enc.getCtx().mkBVOR(commsBv, commsMask);
+
+    } else if (SetCommunity.class.getName().equals(stmtName)) {
+      // commsBV = commsMask will set the bits in commsMask and clear the rest.
+      commsBvUpdated = commsMask;
+
+    } else if (DeleteCommunity.class.getName().equals(stmtName)) {
+      // commsBV AND (NOT commsMask) will clear the bits in commsMask and keep the rest unchanged.
+      commsBvUpdated = _enc.getCtx().mkBVAND(commsBv, _enc.getCtx().mkBVNot(commsMask));
+
+    } else {
+      throw new BatfishException("configCommunities: " +
+          "stmtName should be AddCommunity, SetCommunity, or DeleteCommunity");
+    }
+
+    BitVecExpr commsBvNew;
+    if (AddCommunity.class.getName().equals(stmtName)) {
+      // BUGFIX: gate AddCommunity on current If-term guard, not returnAssigned from prior terms
+      BoolExpr applyGuard =
+          curP.getTermGuard() != null ? curP.getTermGuard() : _enc.mkTrue();
+      commsBvNew = _enc.mkIf(applyGuard, commsBvUpdated, commsBv);
+    } else {
+      commsBvNew = _enc.mkIf(curResult.getReturnAssignedValue(), commsBv, commsBvUpdated);
+    }
+    BitVecExpr x = null;
+    if (!enableSmtVariable) {
+      x = createBitVecVariableWith(curP, "COMMUNITIES", _commsIndex.size(), commsBvNew);
+    } else {
+      // if (null == lineEnable) {
+      //   throw new BatfishException("configCommunities: " +
+      //       stmtName + " enable SMT variable but line enable flag is null");
+      // }
+      BitVecExpr newX = createBitVecVariableWith(curP, "COMMUNITIES", _commsIndex.size(), commsBvNew);
+      BitVecExpr oldX = curP.getData().getCommunitiesBitVec();
+      x = newX;
+      // NOTE: symbolic encoding for the line enable
+      // x = _enc.mkIf(lineEnable, newX, oldX);
+    }
+
+    return x;
   }
 
   /*
@@ -370,8 +758,8 @@ class TransferSSA {
    * by performing inlining of stateful side effects.
    */
   private TransferResult<BoolExpr, BoolExpr> compute(
-      BooleanExpr expr, TransferParam<SymbolicRoute> p) {
-    TransferParam<SymbolicRoute> pCur = p;
+      BooleanExpr expr, TransferParam<SymbolicRouteBV> p) {
+    TransferParam<SymbolicRouteBV> pCur = p;
     // TODO: right now everything is IPV4
     if (expr instanceof MatchIpv4) {
       pCur.debug("MatchIpv4");
@@ -425,7 +813,7 @@ class TransferSSA {
         BoolExpr acc = _enc.mkFalse();
         for (int i = conjuncts.size() - 1; i >= 0; i--) {
           BooleanExpr conjunct = conjuncts.get(i);
-          TransferParam<SymbolicRoute> param =
+          TransferParam<SymbolicRouteBV> param =
               pCur.setDefaultPolicy(null).setChainContext(TransferParam.ChainContext.CONJUNCTION);
           TransferResult<BoolExpr, BoolExpr> r = compute(conjunct, param);
           result = result.addChangedVariables(r);
@@ -449,15 +837,28 @@ class TransferSSA {
         throw new BatfishException("Default policy is not set");
       }
       TransferResult<BoolExpr, BoolExpr> result = new TransferResult<>();
+      // BUGFIX: thread route state through chain like TransferBDD, not reuse initial pCur
+      TransferParam<SymbolicRouteBV> record = pCur;
       BoolExpr acc = _enc.mkFalse();
       for (int i = chainPolicies.size() - 1; i >= 0; i--) {
         BooleanExpr policyMatcher = chainPolicies.get(i);
-        TransferParam<SymbolicRoute> param =
-            pCur.setDefaultPolicy(null).setChainContext(TransferParam.ChainContext.CONJUNCTION);
+        TransferParam<SymbolicRouteBV> param =
+            record
+                .setDefaultPolicy(null)
+                .setChainContext(TransferParam.ChainContext.CONJUNCTION)
+                .indent();
         TransferResult<BoolExpr, BoolExpr> r = compute(policyMatcher, param);
-        result = result.addChangedVariables(r);
+        record = param;
+        for (MsPair<String, Expr> changed : r.getChangedVariables()) {
+          if (!changed.getFirst().equals("COMMUNITIES")) {
+            result = result.addChangedVariable(changed.getFirst(), changed.getSecond());
+          }
+        }
         acc = _enc.mkIf(r.getFallthroughValue(), acc, r.getReturnValue());
       }
+      // BUGFIX: accumulate community side effects along fallthrough chain, not last step only
+      result =
+          result.addChangedVariable("COMMUNITIES", record.getData().getCommunitiesBitVec());
       pCur.debug("FirstMatchChain Result: " + acc);
       return result.setReturnValue(acc);
     }
@@ -470,6 +871,7 @@ class TransferSSA {
     }
 
     if (expr instanceof MatchProtocol) {
+      pCur.debug("MatchProtocol");
       MatchProtocol mp = (MatchProtocol) expr;
       Set<RoutingProtocol> rps = mp.getProtocols();
       if (rps.size() > 1) {
@@ -495,13 +897,17 @@ class TransferSSA {
 
     if (expr instanceof MatchPrefixSet) {
       pCur.debug("MatchPrefixSet");
-      MatchPrefixSet m = (MatchPrefixSet) expr;
+      MatchPrefixSet mps = (MatchPrefixSet) expr;
       // For BGP, may change prefix length
-      TransferResult<BoolExpr, BoolExpr> result =
-          matchPrefixSet(_conf, m.getPrefixSet(), pCur.getData());
-      return result.setReturnAssignedValue(_enc.mkTrue());
+      if (!mps.getEnableSmtVariable()) {
+        TransferResult<BoolExpr, BoolExpr> result = matchPrefixSet(_conf, mps, pCur.getData());
+        return result.setReturnAssignedValue(_enc.mkTrue());
+      } else {
+        // callee matchPrefixSet handle the line enable flag
+        TransferResult<BoolExpr, BoolExpr> result = matchPrefixSet(_conf, mps, pCur.getData());
+        return result.setReturnAssignedValue(_enc.mkTrue());
+      }
 
-      // TODO: implement me
     } else if (expr instanceof MatchPrefix6Set) {
       pCur.debug("MatchPrefix6Set");
       return fromExpr(_enc.mkFalse());
@@ -529,7 +935,16 @@ class TransferSSA {
     } else if (expr instanceof MatchCommunitySet) {
       pCur.debug("MatchCommunitySet");
       MatchCommunitySet mcs = (MatchCommunitySet) expr;
-      return fromExpr(matchCommunitySet(_conf, mcs.getExpr(), pCur.getData()));
+      if (!mcs.getEnableSmtVariable()) {
+        return fromExpr(matchCommunitySet(_conf, mcs.getExpr(), pCur.getData()));
+      } else {
+        BoolExpr x = matchCommunitySet(_conf, mcs.getExpr(), pCur.getData());
+        return fromExpr(x);
+        // NOTE: symbolic encoding for the line enable
+        // BoolExpr lineEnable = mcs.getConfigLineEnable();
+        // x = _enc.mkIf(lineEnable, x, _enc.mkTrue());
+        // return fromExpr(x);
+      }
 
     } else if (expr instanceof BooleanExprs.StaticBooleanExpr) {
       BooleanExprs.StaticBooleanExpr b = (BooleanExprs.StaticBooleanExpr) expr;
@@ -552,9 +967,15 @@ class TransferSSA {
           throw new BatfishException(
               "Unhandled " + BooleanExprs.class.getCanonicalName() + ": " + b.getType());
       }
+
     } else if (expr instanceof MatchAsPath) {
       pCur.debug("MatchAsPath");
-      System.out.println("Warning: use of unimplemented feature MatchAsPath");
+      pCur.debug("Warning: use of unimplemented feature MatchAsPath");
+      return fromExpr(_enc.mkFalse());
+
+    } else if (expr instanceof MatchCommunities) {
+      pCur.debug("MatchCommunities");
+      pCur.debug("Warning: use of unimplemented feature MatchCommunities");
       return fromExpr(_enc.mkFalse());
     }
 
@@ -583,23 +1004,43 @@ class TransferSSA {
   private ArithExpr applyLongExprModification(ArithExpr x, LongExpr e) {
     if (e instanceof LiteralLong) {
       LiteralLong z = (LiteralLong) e;
-      return _enc.mkInt(z.getValue());
+      if (z.getEnableSmtVariable()) {
+        return z.getConfigVarLocalpreference();
+      } else {
+        return _enc.mkInt(z.getValue());
+      }
     }
     if (e instanceof DecrementMetric) {
       DecrementMetric z = (DecrementMetric) e;
-      return _enc.mkSub(x, _enc.mkInt(z.getSubtrahend()));
+      if (z.getEnableSmtVariable()) {
+        return z.getConfigVarLocalpreference();
+      } else {
+        return _enc.mkSub(x, _enc.mkInt(z.getSubtrahend()));
+      }
     }
     if (e instanceof IncrementMetric) {
       IncrementMetric z = (IncrementMetric) e;
-      return _enc.mkSum(x, _enc.mkInt(z.getAddend()));
+      if (z.getEnableSmtVariable()) {
+        return z.getConfigVarLocalpreference();
+      } else {
+        return _enc.mkSum(x, _enc.mkInt(z.getAddend()));
+      }
     }
     if (e instanceof IncrementLocalPreference) {
       IncrementLocalPreference z = (IncrementLocalPreference) e;
-      return _enc.mkSum(x, _enc.mkInt(z.getAddend()));
+      if (z.getEnableSmtVariable()) {
+        return z.getConfigVarLocalpreference();
+      } else {
+        return _enc.mkSum(x, _enc.mkInt(z.getAddend()));
+      }
     }
     if (e instanceof DecrementLocalPreference) {
       DecrementLocalPreference z = (DecrementLocalPreference) e;
-      return _enc.mkSub(x, _enc.mkInt(z.getSubtrahend()));
+      if (z.getEnableSmtVariable()) {
+        return z.getConfigVarLocalpreference();
+      } else {
+        return _enc.mkSub(x, _enc.mkInt(z.getSubtrahend()));
+      }
     }
     throw new BatfishException("int expr transfer function: " + e);
   }
@@ -644,6 +1085,13 @@ class TransferSSA {
     throw new BatfishException("Error[prependLength]: unreachable");
   }
 
+  private ArithExpr prependLengthVar (AsPathListExpr expr) {
+    if (!expr.getEnableSmtVariable()) {
+      throw new BatfishException("Encoding[prependLengthVar]: unreachable");
+    }
+    return expr.getConfigVarPrepend();
+  }
+
   /*
    * Get the BgpPeerConfig object given the current
    * graph edge and protocol information
@@ -677,7 +1125,7 @@ class TransferSSA {
    * Relate the symbolic control plane route variables
    */
   private BoolExpr relateVariables(
-      TransferParam<SymbolicRoute> p, TransferResult<BoolExpr, BoolExpr> result) {
+      TransferParam<SymbolicRouteBV> p, TransferResult<BoolExpr, BoolExpr> result) {
 
     ArithExpr defaultLen = _enc.mkInt(_enc.defaultLength());
     ArithExpr defaultAd = _enc.defaultAdminDistance(_conf, _proto, p.getData());
@@ -726,7 +1174,7 @@ class TransferSSA {
       // Case where it is a non client, we lookup the next-hop
       if (isNonClient) {
         EncoderSlice s = _enc.getEncoder().getSlice(peer);
-        SymbolicRoute r = s.getSymbolicDecisions().getBestNeighbor().get(router);
+        SymbolicRouteBV r = s.getSymbolicDecisions().getBestNeighbor().get(router);
         igpMet = _enc.mkEq(_current.getIgpMetric(), r.getMetric());
       }
 
@@ -738,7 +1186,7 @@ class TransferSSA {
           Integer clientId = entry.getValue();
           if (!r.equals(router)) {
             EncoderSlice s = _enc.getEncoder().getSlice(r);
-            SymbolicRoute record = s.getSymbolicDecisions().getBestNeighbor().get(r);
+            SymbolicRouteBV record = s.getSymbolicDecisions().getBestNeighbor().get(r);
             BoolExpr eq = _enc.mkEq(_current.getIgpMetric(), record.getMetric());
             acc =
                 _enc.mkAnd(
@@ -774,21 +1222,7 @@ class TransferSSA {
       }
     }
 
-    BoolExpr comms = _enc.mkTrue();
-    // update all community values
-    for (Map.Entry<CommunityVar, BoolExpr> entry : _current.getCommunities().entrySet()) {
-      CommunityVar cvar = entry.getKey();
-      BoolExpr e = entry.getValue();
-      BoolExpr eOther = p.getData().getCommunities().get(cvar);
-      // Update the communities if they should be sent
-      if (sendCommunity()) {
-        if (cvar.getType() != CommunityVar.Type.REGEX) {
-          comms = _enc.mkAnd(comms, _enc.mkEq(e, eOther));
-        }
-      } else {
-        comms = _enc.mkAnd(comms, _enc.mkNot(e));
-      }
-    }
+    BoolExpr comms = _enc.safeEq(_current.getCommunitiesBitVec(), p.getData().getCommunitiesBitVec());
 
     ArithExpr otherAd =
         (p.getData().getAdminDist() == null ? defaultAd : p.getData().getAdminDist());
@@ -835,7 +1269,7 @@ class TransferSSA {
    * Create a new variable reflecting the final return value of the function
    */
   private TransferResult<BoolExpr, BoolExpr> returnValue(
-      TransferParam<SymbolicRoute> p, TransferResult<BoolExpr, BoolExpr> r, boolean val) {
+      TransferParam<SymbolicRouteBV> p, TransferResult<BoolExpr, BoolExpr> r, boolean val) {
     BoolExpr b = _enc.mkIf(r.getReturnAssignedValue(), r.getReturnValue(), _enc.mkBool(val));
     BoolExpr newRet = createBoolVariableWith(p, "RETURN", b);
     return r.setReturnValue(newRet)
@@ -844,7 +1278,7 @@ class TransferSSA {
   }
 
   private TransferResult<BoolExpr, BoolExpr> fallthrough(
-      TransferParam<SymbolicRoute> p, TransferResult<BoolExpr, BoolExpr> r) {
+      TransferParam<SymbolicRouteBV> p, TransferResult<BoolExpr, BoolExpr> r) {
     BoolExpr b = _enc.mkIf(r.getReturnAssignedValue(), r.getFallthroughValue(), _enc.mkTrue());
     BoolExpr newFallthrough = createBoolVariableWith(p, "FALLTHROUGH", b);
     return r.setFallthroughValue(newFallthrough)
@@ -852,10 +1286,52 @@ class TransferSSA {
         .addChangedVariable("FALLTHROUGH", newFallthrough);
   }
 
-  private void updateSingleValue(TransferParam<SymbolicRoute> p, String variableName, Expr expr) {
+  // private void collectMatchLineEnables(BooleanExpr expr, List<BoolExpr> enables) {
+  //   if (expr instanceof MatchPrefixSet) {
+  //     MatchPrefixSet mps = (MatchPrefixSet) expr;
+  //     if (mps.getEnableSmtVariable() && mps.getConfigLineEnable() != null) {
+  //       enables.add(mps.getConfigLineEnable());
+  //     }
+  //   } else if (expr instanceof MatchCommunitySet) {
+  //     MatchCommunitySet mcs = (MatchCommunitySet) expr;
+  //     if (mcs.getEnableSmtVariable() && mcs.getConfigLineEnable() != null) {
+  //       enables.add(mcs.getConfigLineEnable());
+  //     }
+  //   } else if (expr instanceof Conjunction) {
+  //     for (BooleanExpr conjunct : ((Conjunction) expr).getConjuncts()) {
+  //       collectMatchLineEnables(conjunct, enables);
+  //     }
+  //   } else if (expr instanceof Disjunction) {
+  //     for (BooleanExpr disjunct : ((Disjunction) expr).getDisjuncts()) {
+  //       collectMatchLineEnables(disjunct, enables);
+  //     }
+  //   } else if (expr instanceof Not) {
+  //     collectMatchLineEnables(((Not) expr).getExpr(), enables);
+  //   } else if (expr instanceof WithEnvironmentExpr) {
+  //     collectMatchLineEnables(((WithEnvironmentExpr) expr).getExpr(), enables);
+  //   }
+  // }
+
+  // private BoolExpr applyEntryEnable(BooleanExpr guardExpr, BoolExpr guard) {
+  //   List<BoolExpr> matchEnables = new ArrayList<>();
+  //   collectMatchLineEnables(guardExpr, matchEnables);
+  //   if (matchEnables.isEmpty()) {
+  //     return guard;
+  //   }
+  //   BoolExpr anyEnabled = _enc.mkFalse();
+  //   for (BoolExpr enable : matchEnables) {
+  //     anyEnabled = _enc.mkOr(anyEnabled, enable);
+  //   }
+  //   return _enc.mkAnd(guard, anyEnabled);
+  // }
+
+  private void updateSingleValue(TransferParam<SymbolicRouteBV> p, String variableName, Expr expr) {
     switch (variableName) {
       case "METRIC":
         p.getData().setMetric((ArithExpr) expr);
+        break;
+      case "MED":
+        p.getData().setMed((ArithExpr) expr);
         break;
       case "PREFIX-LEN":
         p.getData().setPrefixLength((ArithExpr) expr);
@@ -869,16 +1345,22 @@ class TransferSSA {
       case "OSPF-TYPE":
         p.getData().getOspfType().setBitVec((BitVecExpr) expr);
         break;
+      case "COMMUNITIES":
+        // NOTE: modified update community value (BoolExpr -> BitVecExpr communities)
+        p.getData().setCommunitiesBitVec((BitVecExpr) expr);
+        break;
       case "RETURN":
         break;
+      case "FALLTHROUGH":
+        break;
       default:
-        for (Map.Entry<CommunityVar, BoolExpr> entry : p.getData().getCommunities().entrySet()) {
-          CommunityVar cvar = entry.getKey();
-          if (variableName.equals(cvar.getRegex())) {
-            p.getData().getCommunities().put(cvar, (BoolExpr) expr);
-            return;
-          }
-        }
+        // for (Map.Entry<CommunityVar, BoolExpr> entry : p.getData().getCommunities().entrySet()) {
+        //   CommunityVar cvar = entry.getKey();
+        //   if (variableName.equals(cvar.getRegex())) {
+        //     p.getData().getCommunities().put(cvar, (BoolExpr) expr);
+        //     return;
+        //   }
+        // }
 
         throw new BatfishException("Unimplemented: update for " + variableName);
     }
@@ -889,7 +1371,7 @@ class TransferSSA {
    * different branches of an If statement.
    */
   private MsPair<Expr, Expr> joinPoint(
-      TransferParam<SymbolicRoute> p,
+      TransferParam<SymbolicRouteBV> p,
       TransferResult<BoolExpr, BoolExpr> r,
       BoolExpr guard,
       MsPair<String, MsPair<Expr, Expr>> values) {
@@ -952,6 +1434,15 @@ class TransferSSA {
       p.getData().setMetric(ret);
       return new MsPair<>(ret, null);
     }
+    if (variableName.equals("MED")) {
+      Expr t = (trueBranch == null ? p.getData().getMed() : trueBranch);
+      Expr f = (falseBranch == null ? p.getData().getMed() : falseBranch);
+      ArithExpr newValue = _enc.mkIf(guard, (ArithExpr) t, (ArithExpr) f);
+      newValue = _enc.mkIf(r.getReturnAssignedValue(), p.getData().getMed(), newValue);
+      ArithExpr ret = createArithVariableWith(p, "METRIC", newValue);
+      p.getData().setMed(ret);
+      return new MsPair<>(ret, null);
+    }
     if (variableName.equals("OSPF-TYPE")) {
       Expr t = (trueBranch == null ? p.getData().getOspfType().getBitVec() : trueBranch);
       Expr f = (falseBranch == null ? p.getData().getOspfType().getBitVec() : falseBranch);
@@ -963,18 +1454,32 @@ class TransferSSA {
       return new MsPair<>(ret, null);
     }
 
-    for (Map.Entry<CommunityVar, BoolExpr> entry : p.getData().getCommunities().entrySet()) {
-      CommunityVar cvar = entry.getKey();
-      if (variableName.equals(cvar.getRegex())) {
-        Expr t = (trueBranch == null ? p.getData().getCommunities().get(cvar) : trueBranch);
-        Expr f = (falseBranch == null ? p.getData().getCommunities().get(cvar) : falseBranch);
-        BoolExpr newValue = _enc.mkIf(guard, (BoolExpr) t, (BoolExpr) f);
-        newValue =
-            _enc.mkIf(r.getReturnAssignedValue(), p.getData().getCommunities().get(cvar), newValue);
-        BoolExpr ret = createBoolVariableWith(p, cvar.getRegex(), newValue);
-        p.getData().getCommunities().put(cvar, ret);
-        return new MsPair<>(ret, null);
-      }
+    // TODO: Improve this to avoid looping over all communities.
+    // for (Map.Entry<CommunityVar, BoolExpr> entry : p.getData().getCommunities().entrySet()) {
+    //   CommunityVar cvar = entry.getKey();
+    //   if (variableName.equals(cvar.getRegex())) {
+    //     Expr t = (trueBranch == null ? p.getData().getCommunities().get(cvar) : trueBranch);
+    //     Expr f = (falseBranch == null ? p.getData().getCommunities().get(cvar) : falseBranch);
+    //     BoolExpr newValue = _enc.mkIf(guard, (BoolExpr) t, (BoolExpr) f);
+    //     newValue =
+    //         _enc.mkIf(r.getReturnAssignedValue(), p.getData().getCommunities().get(cvar), newValue);
+    //     BoolExpr ret = createBoolVariableWith(p, cvar.getRegex(), newValue);
+    //     p.getData().getCommunities().put(cvar, ret);
+    //     return new MsPair<>(ret, null);
+    //   }
+    // }
+
+    // NOTE: modified join point for communities (BoolExpr -> BitVecExpr communities)
+    if (variableName.equals("COMMUNITIES")) {
+      Expr t = (trueBranch == null ? p.getData().getCommunitiesBitVec() : trueBranch);
+      Expr f = (falseBranch == null ? p.getData().getCommunitiesBitVec() : falseBranch);
+      BitVecExpr newValue = _enc.mkIf(guard, (BitVecExpr) t, (BitVecExpr) f);
+      newValue =
+          _enc.mkIf(r.getReturnAssignedValue(), p.getData().getCommunitiesBitVec(), newValue);
+      BitVecExpr ret =
+          createBitVecVariableWith(p, "COMMUNITIES", _commsIndex.size(), newValue);
+      p.getData().setCommunitiesBitVec(ret);
+      return new MsPair<>(ret, null);
     }
 
     throw new BatfishException("[joinPoint]: unhandled case for " + variableName);
@@ -985,9 +1490,9 @@ class TransferSSA {
    */
   private TransferResult<BoolExpr, BoolExpr> compute(
       List<Statement> statements,
-      TransferParam<SymbolicRoute> p,
+      TransferParam<SymbolicRouteBV> p,
       TransferResult<BoolExpr, BoolExpr> result) {
-    TransferParam<SymbolicRoute> curP = p;
+    TransferParam<SymbolicRouteBV> curP = p;
     TransferResult<BoolExpr, BoolExpr> curResult = result;
     boolean doesReturn = false;
 
@@ -1003,9 +1508,9 @@ class TransferSSA {
             curResult = returnValue(curP, curResult, true);
             break;
 
-            // TODO: implement proper unsuppression of routes covered by aggregates
           case Unsuppress:
           case ReturnTrue:
+            // TODO: implement proper unsuppression of routes covered by aggregates
             doesReturn = true;
             curP.debug("ReturnTrue");
             curResult = returnValue(curP, curResult, true);
@@ -1017,9 +1522,9 @@ class TransferSSA {
             curResult = returnValue(curP, curResult, false);
             break;
 
-            // TODO: implement proper suppression of routes covered by aggregates
           case Suppress:
           case ReturnFalse:
+            // TODO: implement proper suppression of routes covered by aggregates
             doesReturn = true;
             curP.debug("ReturnFalse");
             curResult = returnValue(curP, curResult, false);
@@ -1067,7 +1572,7 @@ class TransferSSA {
 
           case RemovePrivateAs:
             curP.debug("RemovePrivateAs");
-            System.out.println("Warning: use of unimplemented feature RemovePrivateAs");
+            curP.debug("Warning: use of unimplemented feature RemovePrivateAs");
             break;
 
           default:
@@ -1079,7 +1584,10 @@ class TransferSSA {
         If i = (If) stmt;
         TransferResult<BoolExpr, BoolExpr> r = compute(i.getGuard(), curP);
         curResult = curResult.addChangedVariables(r);
-        BoolExpr guard = (BoolExpr) r.getReturnValue().simplify();
+        BoolExpr guard = (BoolExpr) r.getReturnValue();
+        // entryEnable: all match lineEnables false -> skip entry (else branch)
+        // guard = applyEntryEnable(i.getGuard(), guard);
+        guard = (BoolExpr) guard.simplify();
         String str = guard.toString();
 
         // If there are updates in the guard, add them to the parameter p before entering branches
@@ -1093,17 +1601,23 @@ class TransferSSA {
         switch (str) {
           case "true":
             curP.debug("True Branch");
-            curResult = compute(i.getTrueStatements(), curP.indent(), curResult);
+            // BUGFIX: propagate If guard to AddCommunity in this term
+            curResult =
+                compute(
+                    i.getTrueStatements(), curP.indent().setTermGuard(_enc.mkTrue()), curResult);
             break;
           case "false":
             curP.debug("False Branch");
-            compute(i.getFalseStatements(), curP.indent(), curResult);
+            compute(
+                i.getFalseStatements(), curP.indent().setTermGuard(_enc.mkFalse()), curResult);
             break;
           default:
             curP.debug("True Branch");
             // clear changed variables before proceeding
-            TransferParam<SymbolicRoute> p1 = curP.indent().setData(curP.getData().copy());
-            TransferParam<SymbolicRoute> p2 = curP.indent().setData(curP.getData().copy());
+            TransferParam<SymbolicRouteBV> p1 =
+                curP.indent().setData(curP.getData().copy()).setTermGuard(guard);
+            TransferParam<SymbolicRouteBV> p2 =
+                curP.indent().setData(curP.getData().copy()).setTermGuard(_enc.mkNot(guard));
 
             TransferResult<BoolExpr, BoolExpr> trueBranch =
                 compute(i.getTrueStatements(), p1, initialResult());
@@ -1152,15 +1666,25 @@ class TransferSSA {
       } else if (stmt instanceof SetMetric) {
         curP.debug("SetMetric");
         // TODO: what is the semantics for BGP? Is this MED?
+        // NOTE: SetMetric meaning set MED in BGP route-map.
         if (!_current.getProto().isBgp()) {
           SetMetric sm = (SetMetric) stmt;
           LongExpr ie = sm.getMetric();
           ArithExpr newValue = applyLongExprModification(curP.getData().getMetric(), ie);
-          newValue =
-              _enc.mkIf(curResult.getReturnAssignedValue(), curP.getData().getMetric(), newValue);
+          newValue = _enc.mkIf(curResult.getReturnAssignedValue(), curP.getData().getMetric(), newValue);
           ArithExpr x = createArithVariableWith(curP, "METRIC", newValue);
           curP.getData().setMetric(x);
           curResult = curResult.addChangedVariable("METRIC", x);
+        } else {
+          SetMetric sm = (SetMetric) stmt;
+          LongExpr ie = sm.getMetric();
+          ArithExpr newValue = applyLongExprModification(curP.getData().getMed(), ie);
+          newValue = _enc.mkIf(curResult.getReturnAssignedValue(), curP.getData().getMed(), newValue);
+          ArithExpr x = createArithVariableWith(curP, "MED", newValue);
+          curP.getData().setMed(x);
+          curResult = curResult.addChangedVariable("MED", x);
+
+          // TODO: symbolic encoding for the configuration and the line enable
         }
 
       } else if (stmt instanceof SetOspfMetricType) {
@@ -1187,86 +1711,272 @@ class TransferSSA {
         curP.debug("SetLocalPreference");
         SetLocalPreference slp = (SetLocalPreference) stmt;
         LongExpr ie = slp.getLocalPreference();
-        ArithExpr newValue = applyLongExprModification(curP.getData().getLocalPref(), ie);
-        newValue =
-            _enc.mkIf(curResult.getReturnAssignedValue(), curP.getData().getLocalPref(), newValue);
-        ArithExpr x = createArithVariableWith(curP, "LOCAL-PREF", newValue);
-        curP.getData().setLocalPref(x);
-        curResult = curResult.addChangedVariable("LOCAL-PREF", x);
+        if (!slp.getEnableSmtVariable()) {
+          ArithExpr newValue = applyLongExprModification(curP.getData().getLocalPref(), ie);
+          newValue = _enc.mkIf(curResult.getReturnAssignedValue(), curP.getData().getLocalPref(), newValue);
+          ArithExpr x = createArithVariableWith(curP, "LOCAL-PREF", newValue);
+          curP.getData().setLocalPref(x);
+          curResult = curResult.addChangedVariable("LOCAL-PREF", x);
+        } else {
+          // TODO: symbolic encoding for the configuration and the line enable
+          ArithExpr newValue = applyLongExprModification(curP.getData().getLocalPref(), ie);
+          newValue = _enc.mkIf(curResult.getReturnAssignedValue(), curP.getData().getLocalPref(), newValue);
+          ArithExpr x = createArithVariableWith(curP, "LOCAL-PREF", newValue);
+          curP.getData().setLocalPref(x);
+          curResult = curResult.addChangedVariable("LOCAL-PREF", x);
+        }
 
       } else if (stmt instanceof AddCommunity) {
+        // curP.debug("AddCommunity");
+        // AddCommunity ac = (AddCommunity) stmt;
+        // Set<CommunityVar> comms = collectCommunityVars(_conf, ac.getExpr());
+        //
+        // BoolExpr lineEnable = ac.getConfigLineEnable();
+        //
+        // if (!ac.getEnableSmtVariable()) {
+        //   for (CommunityVar cvar : comms) {
+        //     BoolExpr newValue =
+        //         _enc.mkIf(
+        //             curResult.getReturnAssignedValue(),
+        //             curP.getData().getCommunities().get(cvar),
+        //             _enc.mkTrue());
+        //     BoolExpr x = createBoolVariableWith(curP, cvar.getRegex(), newValue);
+        //     curP.getData().getCommunities().put(cvar, x);
+        //     curResult = curResult.addChangedVariable(cvar.getRegex(), x);
+        //   }
+        // } else {
+        //   for (CommunityVar cvar : comms) {
+        //     BoolExpr community = cvar.getLiteralValue().getConfigVarCommunity();
+        //     BoolExpr community_origin = curP.getData().getCommunities().get(cvar);
+        //     BoolExpr communityEqual = _enc.mkEq(community, community_origin);
+        //     BoolExpr newValue =
+        //         _enc.mkIf(
+        //             // curResult.getReturnAssignedValue(),
+        //             // communityEqual,
+        //             // _enc.mkTrue());
+        //             curResult.getReturnAssignedValue(),
+        //             curP.getData().getCommunities().get(cvar),
+        //             community);
+        //     BoolExpr newX = createBoolVariableWith(curP, cvar.getRegex(), newValue);
+        //     BoolExpr oldX = curP.getData().getCommunities().get(cvar);
+        //     // BoolExpr x = newX;
+        //     // curP.getData().getCommunities().put(cvar, x);
+        //     // curResult = curResult.addChangedVariable(cvar.getRegex(), x);
+        //     // NOTE: symbolic encoding for the line enable
+        //     BoolExpr x = _enc.mkIf(lineEnable, newX, oldX);
+        //     curP.getData().getCommunities().put(cvar, x);
+        //     curResult = curResult.addChangedVariable(cvar.getRegex(), x);
+        //   }
+        // }
+
         curP.debug("AddCommunity");
         AddCommunity ac = (AddCommunity) stmt;
         Set<CommunityVar> comms = collectCommunityVars(_conf, ac.getExpr());
-        for (CommunityVar cvar : comms) {
-          BoolExpr newValue =
-              _enc.mkIf(
-                  curResult.getReturnAssignedValue(),
-                  curP.getData().getCommunities().get(cvar),
-                  _enc.mkTrue());
-          BoolExpr x = createBoolVariableWith(curP, cvar.getRegex(), newValue);
-          curP.getData().getCommunities().put(cvar, x);
-          curResult = curResult.addChangedVariable(cvar.getRegex(), x);
-        }
+
+        BitVecExpr x = configCommunities(
+            curP, curResult, ac.getEnableSmtVariable(), null, // ac.getConfigLineEnable(),
+            comms, ac.getConfigVarPrefix(), ac.getClass().getName());
+        curP.getData().setCommunitiesBitVec(x);
+        curResult = curResult.addChangedVariable("COMMUNITIES", x);
 
       } else if (stmt instanceof SetCommunity) {
+        // curP.debug("SetCommunity");
+        // SetCommunity sc = (SetCommunity) stmt;
+        // Set<CommunityVar> comms = collectCommunityVars(_conf, sc.getExpr());
+        //
+        // BoolExpr lineEnable = sc.getConfigLineEnable();
+        //
+        // if (!sc.getEnableSmtVariable()) {
+        //   for (CommunityVar cvar : comms) {
+        //     BoolExpr newValue =
+        //         _enc.mkIf(
+        //             curResult.getReturnAssignedValue(),
+        //             curP.getData().getCommunities().get(cvar),
+        //             _enc.mkTrue());
+        //
+        //     BoolExpr x = createBoolVariableWith(curP, cvar.getRegex(), newValue);
+        //     curP.getData().getCommunities().put(cvar, x);
+        //     curResult = curResult.addChangedVariable(cvar.getRegex(), x);
+        //   }
+        // } else {
+        //   for (CommunityVar cvar : comms) {
+        //     BoolExpr community = cvar.getLiteralValue().getConfigVarCommunity();
+        //     BoolExpr community_origin = curP.getData().getCommunities().get(cvar);
+        //     BoolExpr communityEqual = _enc.mkEq(community, community_origin);
+        //     BoolExpr newValue =
+        //         _enc.mkIf(
+        //             // curResult.getReturnAssignedValue(),
+        //             // communityEqual,
+        //             // _enc.mkTrue());
+        //             curResult.getReturnAssignedValue(),
+        //             curP.getData().getCommunities().get(cvar),
+        //             community);
+        //     BoolExpr newX = createBoolVariableWith(curP, cvar.getRegex(), newValue);
+        //     BoolExpr oldX = curP.getData().getCommunities().get(cvar);
+        //     // BoolExpr x = newX;
+        //     // curP.getData().getCommunities().put(cvar, x);
+        //     // curResult = curResult.addChangedVariable(cvar.getRegex(), x);
+        //     // NOTE: symbolic encoding for the enable line
+        //     BoolExpr x = _enc.mkIf(lineEnable, newX, oldX);
+        //     curP.getData().getCommunities().put(cvar, x);
+        //     curResult = curResult.addChangedVariable(cvar.getRegex(), x);
+        //   }
+        // }
+        //
+        // // BUGFIX: set community to false for other community variables
+        // for (CommunityVar cvar_other : curP.getData().getCommunities().keySet()) {
+        //   // Skip those communities that are set by this statement
+        //   if (comms.contains(cvar_other)) {
+        //     continue;
+        //   }
+        //   // Skip regex community variables
+        //   if (cvar_other.getType() == Type.REGEX) {
+        //     continue;
+        //   }
+        //
+        //   // Set other community variables to false
+        //   BoolExpr newValue_other =
+        //       _enc.mkIf(
+        //           curResult.getReturnAssignedValue(),
+        //           curP.getData().getCommunities().get(cvar_other),
+        //           _enc.mkFalse());
+        //   BoolExpr newX_other = createBoolVariableWith(curP, cvar_other.getRegex(), newValue_other);
+        //   BoolExpr oldX_other = curP.getData().getCommunities().get(cvar_other);
+        //   // BoolExpr x_other = newX_other;
+        //   // curP.getData().getCommunities().put(cvar_other, x_other);
+        //   // curResult = curResult.addChangedVariable(cvar_other.getRegex(), x_other);
+        //   // NOTE: symbolic encoding for the enable line
+        //   BoolExpr x_other = _enc.mkIf(lineEnable, newX_other, oldX_other);
+        //   curP.getData().getCommunities().put(cvar_other, x_other);
+        //   curResult = curResult.addChangedVariable(cvar_other.getRegex(), x_other);
+        // }
+
         curP.debug("SetCommunity");
         SetCommunity sc = (SetCommunity) stmt;
         Set<CommunityVar> comms = collectCommunityVars(_conf, sc.getExpr());
-        for (CommunityVar cvar : comms) {
-          BoolExpr newValue =
-              _enc.mkIf(
-                  curResult.getReturnAssignedValue(),
-                  curP.getData().getCommunities().get(cvar),
-                  _enc.mkTrue());
-          BoolExpr x = createBoolVariableWith(curP, cvar.getRegex(), newValue);
-          curP.getData().getCommunities().put(cvar, x);
-          curResult = curResult.addChangedVariable(cvar.getRegex(), x);
-        }
+
+        BitVecExpr x = configCommunities(
+            curP, curResult, sc.getEnableSmtVariable(), null, // sc.getConfigLineEnable(),
+            comms, sc.getConfigVarPrefix(), sc.getClass().getName());
+        curP.getData().setCommunitiesBitVec(x);
+        curResult = curResult.addChangedVariable("COMMUNITIES", x);
 
       } else if (stmt instanceof DeleteCommunity) {
+        // curP.debug("DeleteCommunity");
+        // DeleteCommunity dc = (DeleteCommunity) stmt;
+        // Set<CommunityVar> comms = collectCommunityVars(_conf, dc.getExpr());
+        // Set<CommunityVar> toDelete = new HashSet<>();
+        //
+        // // Find communities to delete
+        // for (CommunityVar cvar : comms) {
+        //   if (cvar.getType() == Type.REGEX) {
+        //     toDelete.addAll(_enc.getCommunityDependencies().get(cvar));
+        //   } else {
+        //     toDelete.add(cvar);
+        //   }
+        // }
+        //
+        // BoolExpr lineEnable = dc.getConfigLineEnable();
+        //
+        // if (!dc.getEnableSmtVariable()) {
+        //   for (CommunityVar cvar : toDelete) {
+        //     BoolExpr newValue =
+        //         _enc.mkIf(
+        //             curResult.getReturnAssignedValue(),
+        //             curP.getData().getCommunities().get(cvar),
+        //             _enc.mkFalse());
+        //     BoolExpr x = createBoolVariableWith(curP, cvar.getRegex(), newValue);
+        //     curP.getData().getCommunities().put(cvar, x);
+        //     curResult = curResult.addChangedVariable(cvar.getRegex(), x);
+        //   }
+        // } else {
+        //   for (CommunityVar cvar : toDelete) {
+        //     BoolExpr community = cvar.getLiteralValue().getConfigVarCommunity();
+        //     BoolExpr community_origin = curP.getData().getCommunities().get(cvar);
+        //     BoolExpr communityEqual = _enc.mkEq(community, community_origin);
+        //     BoolExpr newValue =
+        //         _enc.mkIf(
+        //             // curResult.getReturnAssignedValue(),
+        //             // communityEqual,
+        //             // _enc.mkFalse());
+        //             curResult.getReturnAssignedValue(),
+        //             curP.getData().getCommunities().get(cvar),
+        //             _enc.mkNot(community));
+        //     BoolExpr newX = createBoolVariableWith(curP, cvar.getRegex(), newValue);
+        //     BoolExpr oldX = curP.getData().getCommunities().get(cvar);
+        //     // BoolExpr x = newX;
+        //     // curP.getData().getCommunities().put(cvar, x);
+        //     // curResult = curResult.addChangedVariable(cvar.getRegex(), x);
+        //     // NOTE: symbolic encoding for the enable line
+        //     BoolExpr x = _enc.mkIf(lineEnable, newX, oldX);
+        //     curP.getData().getCommunities().put(cvar, x);
+        //     curResult = curResult.addChangedVariable(cvar.getRegex(), x);
+        //   }
+        // }
+
         curP.debug("DeleteCommunity");
-        DeleteCommunity ac = (DeleteCommunity) stmt;
-        Set<CommunityVar> comms = collectCommunityVars(_conf, ac.getExpr());
+        DeleteCommunity dc = (DeleteCommunity) stmt;
+        Set<CommunityVar> comms = collectCommunityVars(_conf, dc.getExpr());
         Set<CommunityVar> toDelete = new HashSet<>();
-        // Find comms to delete
+
         for (CommunityVar cvar : comms) {
           if (cvar.getType() == Type.REGEX) {
-            toDelete.addAll(_enc.getCommunityDependencies().get(cvar));
+            List<CommunityVar> deps = _enc.getCommunityDependencies().get(cvar);
+            if (deps != null) {
+              toDelete.addAll(deps);
+            }
           } else {
             toDelete.add(cvar);
           }
         }
-        // Delete each community
-        for (CommunityVar cvar : toDelete) {
-          BoolExpr newValue =
-              _enc.mkIf(
-                  curResult.getReturnAssignedValue(),
-                  curP.getData().getCommunities().get(cvar),
-                  _enc.mkFalse());
-          BoolExpr x = createBoolVariableWith(curP, cvar.getRegex(), newValue);
-          curP.getData().getCommunities().put(cvar, x);
-          curResult = curResult.addChangedVariable(cvar.getRegex(), x);
-        }
+
+        BitVecExpr x = configCommunities(
+            curP, curResult, dc.getEnableSmtVariable(), null, // dc.getConfigLineEnable(),
+            toDelete, dc.getConfigVarPrefix(), dc.getClass().getName());
+        curP.getData().setCommunitiesBitVec(x);
+        curResult = curResult.addChangedVariable("COMMUNITIES", x);
 
       } else if (stmt instanceof PrependAsPath) {
+        // TODO: modify metric to aspathLength.
         curP.debug("PrependAsPath");
         PrependAsPath pap = (PrependAsPath) stmt;
-        int prependCost = prependLength(pap.getExpr());
-        ArithExpr newValue = _enc.mkSum(curP.getData().getMetric(), _enc.mkInt(prependCost));
-        newValue =
-            _enc.mkIf(curResult.getReturnAssignedValue(), curP.getData().getMetric(), newValue);
-        ArithExpr x = createArithVariableWith(curP, "METRIC", newValue);
-        curP.getData().setMetric(x);
-        curResult = curResult.addChangedVariable("METRIC", x);
+
+        ArithExpr newValue = null;
+        if (!pap.getEnableSmtVariable()) {
+          int prependCost = prependLength(pap.getExpr());
+          newValue = _enc.mkSum(curP.getData().getMetric(), _enc.mkInt(prependCost));
+          newValue = _enc.mkIf(curResult.getReturnAssignedValue(), curP.getData().getMetric(), newValue);
+          ArithExpr x = createArithVariableWith(curP, "METRIC", newValue);
+          curP.getData().setMetric(x);
+          curResult = curResult.addChangedVariable("METRIC", x);
+        } else {
+          ArithExpr prependCost = prependLengthVar(pap.getExpr());
+          newValue = _enc.mkSum(curP.getData().getMetric(), prependCost);
+          newValue = _enc.mkIf(curResult.getReturnAssignedValue(), curP.getData().getMetric(), newValue);
+          ArithExpr x = createArithVariableWith(curP, "METRIC", newValue);
+          curP.getData().setMetric(x);
+          curResult = curResult.addChangedVariable("METRIC", x);
+          // NOTE: symbolic encoding for the line enable
+          // ArithExpr newX = createArithVariableWith(curP, "METRIC", newValue);
+          // ArithExpr oldX = curP.getData().getMetric();
+          // BoolExpr lineEnable = pap.getConfigLineEnable();
+          // ArithExpr x = _enc.mkIf(lineEnable, newX, oldX);
+          // curP.getData().setMetric(x);
+          // curResult = curResult.addChangedVariable("METRIC", x);
+        }
+
 
       } else if (stmt instanceof SetOrigin) {
         curP.debug("SetOrigin");
-        System.out.println("Warning: use of unimplemented feature SetOrigin");
+        curP.debug("Warning: use of unimplemented feature SetOrigin");
 
       } else if (stmt instanceof SetNextHop) {
         curP.debug("SetNextHop");
-        System.out.println("Warning: use of unimplemented feature SetNextHop");
+        curP.debug("Warning: use of unimplemented feature SetNextHop");
+
+      } else if (stmt instanceof SetCommunities) {
+        curP.debug("SetCommunities");
+        curP.debug("Warning: use of unimplemented feature SetCommunities");
 
       } else {
 
@@ -1320,7 +2030,7 @@ class TransferSSA {
    * while also simultaneously setting their value based on an old value.
    */
   private ArithExpr createArithVariableWith(
-      TransferParam<SymbolicRoute> p, String name, ArithExpr e) {
+      TransferParam<SymbolicRouteBV> p, String name, ArithExpr e) {
     ArithExpr eSimple = (ArithExpr) e.simplify();
     if (canInline(eSimple)) {
       p.debug(name + "=" + eSimple);
@@ -1335,7 +2045,7 @@ class TransferSSA {
     return x;
   }
 
-  private BoolExpr createBoolVariableWith(TransferParam<SymbolicRoute> p, String name, BoolExpr e) {
+  private BoolExpr createBoolVariableWith(TransferParam<SymbolicRouteBV> p, String name, BoolExpr e) {
     BoolExpr simpleE = (BoolExpr) e.simplify();
     if (canInline(simpleE)) {
       p.debug(name + "=" + simpleE);
@@ -1351,8 +2061,9 @@ class TransferSSA {
   }
 
   private BitVecExpr createBitVecVariableWith(
-      TransferParam<SymbolicRoute> p, String name, int size, BitVecExpr e) {
-    BitVecExpr simpleE = (BitVecExpr) e.simplify();
+      TransferParam<SymbolicRouteBV> p, String name, int size, BitVecExpr e) {
+    // BitVecExpr simpleE = (BitVecExpr) e.simplify();
+    BitVecExpr simpleE = (BitVecExpr) e;
     if (canInline(simpleE)) {
       p.debug(name + "=" + simpleE);
       return simpleE;
@@ -1370,7 +2081,7 @@ class TransferSSA {
    * Create a new variable representing the new prefix length after
    * applying the effect of aggregation.
    */
-  private void computeIntermediatePrefixLen(TransferParam<SymbolicRoute> param) {
+  private void computeIntermediatePrefixLen(TransferParam<SymbolicRouteBV> param) {
     ArithExpr prefixLen = param.getData().getPrefixLength();
     if (_isExport && _proto.isBgp()) {
       _aggregates = aggregateRoutes();
@@ -1378,6 +2089,7 @@ class TransferSSA {
         for (Map.Entry<Prefix, Boolean> entry : _aggregates.entrySet()) {
           Prefix p = entry.getKey();
           Boolean isSuppressed = entry.getValue();
+          // TODO: Configuration GeneratedRoute -> SMT symbolic variables
           ArithExpr len = _enc.mkInt(p.getPrefixLength());
           BoolExpr relevantPfx = _enc.isRelevantFor(p, _enc.getSymbolicPacket().getDstIp());
           BoolExpr relevantLen = _enc.mkGt(param.getData().getPrefixLength(), len);
@@ -1390,9 +2102,9 @@ class TransferSSA {
     }
   }
 
-  private void applyMetricUpdate(TransferParam<SymbolicRoute> p) {
-    boolean updateOspf = (!_isExport && _proto.isOspf());
-    boolean updateBgp = (_isExport && _proto.isBgp());
+  private void applyMetricUpdate(TransferParam<SymbolicRouteBV> p) {
+    boolean updateOspf = (!_isExport && _proto.isOspf());  // import && OSPF, update metric ?
+    boolean updateBgp = (_isExport && _proto.isBgp());     // export && BGP, update metric ?
     boolean updateMetric = updateOspf || updateBgp;
     if (updateMetric) {
       // If it is a BGP route learned from IGP, then we use metric 0
@@ -1412,26 +2124,54 @@ class TransferSSA {
           isBGP = _enc.mkFalse();
         }
         newValue = _enc.mkIf(isBGP, sum, cost);
-      } else {
+      } else {  // _proto.isOspf()
         newValue = sum;
       }
       p.getData().setMetric(newValue);
     }
   }
 
-  private void setDefaultLocalPref(TransferParam<SymbolicRoute> p) {
+  private void setDefaultLocalPref(TransferParam<SymbolicRouteBV> p, boolean isEbgp) {
     // must be the case that it is an environment variable
     if (p.getData().getLocalPref() == null) {
-      p.getData().setLocalPref(_enc.mkInt(100));
+      p.getData().setLocalPref(_enc.mkInt(_enc.defaultLocalPref()));
+    }
+    if (isEbgp) {
+      p.getData().setLocalPref(_enc.mkInt(_enc.defaultLocalPref()));
+    }
+  }
+
+  private void setDefaultMed(TransferParam<SymbolicRouteBV> p, boolean isEbgp) {
+    if (p.getData().getMed() == null) {
+      p.getData().setMed(_enc.mkInt(_enc.defaultMed()));
+    }
+    if (isEbgp) {
+      p.getData().setMed(_enc.mkInt(_enc.defaultMed()));
     }
   }
 
   public BoolExpr compute() {
-    SymbolicRoute o = new SymbolicRoute(_other);
-    TransferParam<SymbolicRoute> p = new TransferParam<>(o, Encoder.ENABLE_DEBUGGING);
+    return compute(false);
+  }
+
+  public BoolExpr compute(boolean isEbgp) {
+    SymbolicRouteBV o = new SymbolicRouteBV(_other);
+    TransferParam<SymbolicRouteBV> p = new TransferParam<>(o, Encoder.ENABLE_DEBUGGING);
+
+    // compute aggregate route with suppress aggregate
     computeIntermediatePrefixLen(p);
+
+    // update metric
+    //   + export & OSPF, originalMetric + addedCost
+    //   + export & BGP, learned from BGP -> originalMetric + addedCost
+    //                   learned from IGP -> 0 + addedCost
     applyMetricUpdate(p);
-    setDefaultLocalPref(p);
+
+    // set default local prefence to 100
+    setDefaultLocalPref(p, isEbgp);
+    // set default med to 0
+    setDefaultMed(p, isEbgp);
+
     TransferResult<BoolExpr, BoolExpr> result = compute(_statements, p, initialResult());
     return result.getReturnValue();
   }

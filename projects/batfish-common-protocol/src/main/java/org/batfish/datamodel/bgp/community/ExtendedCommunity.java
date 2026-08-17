@@ -14,7 +14,12 @@ import java.util.Set;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
+import org.batfish.common.BatfishException;
 import org.batfish.datamodel.Ip;
+
+import com.microsoft.z3.Context;
+import com.microsoft.z3.Solver;
+import com.microsoft.z3.BoolExpr;
 
 /**
  * Represents an extended BGP community, as described in <a
@@ -48,6 +53,9 @@ public final class ExtendedCommunity extends Community {
     _subType = subType;
     _globalAdministrator = globalAdministrator;
     _localAdministrator = localAdministrator;
+
+    // initialize enable smt variable flag to false
+    _enableSmtVariable = false;
   }
 
   @JsonCreator
@@ -216,6 +224,10 @@ public final class ExtendedCommunity extends Community {
     return (_type == 0x00 || _type == 0x01) && _subType == 0x10;
   }
 
+  public byte getSubType() {
+    return _subType;
+  }
+
   /**
    * Return the global administrator value.
    *
@@ -291,5 +303,11 @@ public final class ExtendedCommunity extends Community {
         .or(BigInteger.valueOf(_subType).shiftLeft(48))
         .or(BigInteger.valueOf(_globalAdministrator).shiftLeft(gaOffset))
         .or(BigInteger.valueOf(_localAdministrator));
+  }
+
+  /** Add get community string for configVarPrefix */
+  @Override
+  public String getCommunityString() {
+    return _globalAdministrator + ":" + _localAdministrator;
   }
 }

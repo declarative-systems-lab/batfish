@@ -10,7 +10,12 @@ import java.util.Objects;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
+
+import org.batfish.common.BatfishException;
 import org.batfish.datamodel.bgp.community.Community;
+import org.batfish.datamodel.bgp.community.ExtendedCommunity;
+import org.batfish.datamodel.bgp.community.LargeCommunity;
+import org.batfish.datamodel.bgp.community.StandardCommunity;
 
 /**
  * Representation of a community variable for the symbolic encoding. Configuration languages allow
@@ -45,7 +50,7 @@ public final class CommunityVar extends SymbolicRegex implements Comparable<Comm
   }
 
   @Nonnull private final Type _type;
-  @Nullable private final Community _literalValue;
+  @Nullable private /* final */ Community _literalValue;
 
   @Nonnull private static final String NUM_REGEX = "(0|[1-9][0-9]*)";
 
@@ -170,5 +175,28 @@ public final class CommunityVar extends SymbolicRegex implements Comparable<Comm
   @Override
   public int compareTo(CommunityVar that) {
     return COMPARATOR.compare(this, that);
+  }
+
+  public void cloneCommunity() {
+    Community literalValueBackup = _literalValue;
+    if (_literalValue instanceof ExtendedCommunity) {
+      ExtendedCommunity e = (ExtendedCommunity) _literalValue;
+      _literalValue = ExtendedCommunity.of(e.getSubType(), e.getGlobalAdministrator(), e.getLocalAdministrator());
+    } else if (_literalValue instanceof StandardCommunity) {
+      StandardCommunity s = (StandardCommunity) _literalValue;
+      _literalValue = StandardCommunity.of(s.asLong());
+    } else if (_literalValue instanceof LargeCommunity) {
+      LargeCommunity l = (LargeCommunity) _literalValue;
+      _literalValue =  LargeCommunity.of(l.getGlobalAdministrator(), l.getLocalData1(), l.getLocalData2());
+    } else {
+      // only has three subclasses of Community
+      throw new BatfishException(
+          "CommunityVar.cloneCommunity: unknown community type: " + _literalValue.getClass().getName());
+    }
+
+    if (literalValueBackup.getEnableSmtVariable() == _literalValue.getEnableSmtVariable()) {
+      throw new BatfishException("CommunityVar.cloneCommunity: " +
+          "cloning failed for shared object.");
+    }
   }
 }

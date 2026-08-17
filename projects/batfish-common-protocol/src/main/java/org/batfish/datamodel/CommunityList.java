@@ -12,6 +12,7 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.UncheckedExecutionException;
 import java.io.Serializable;
 import java.util.Collection;
@@ -22,6 +23,11 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+
+import com.microsoft.z3.BoolExpr;
+import com.microsoft.z3.Context;
+import com.microsoft.z3.Solver;
+import org.batfish.common.BatfishException;
 import org.batfish.datamodel.bgp.community.Community;
 import org.batfish.datamodel.routing_policy.Environment;
 import org.batfish.datamodel.routing_policy.expr.CommunitySetExpr;
@@ -90,6 +96,9 @@ public class CommunityList extends CommunitySetExpr {
     _lines = lines;
     _invertMatch = invertMatch;
     _communityCache = Suppliers.memoize(new CommunityCacheSupplier());
+
+    // initialize enable smt variable flag to false
+    _enableSmtVariable = false;
   }
 
   @Override
@@ -250,5 +259,57 @@ public class CommunityList extends CommunitySetExpr {
         .add(PROP_NAME, _name)
         .add(PROP_LINES, _lines)
         .toString();
+  }
+
+  /** Add configuration constant - SMT symbolic variable */
+  // private boolean _enableSmtVariable;    // Inherited from the parent class
+  // private String _configVarPrefix;       // Inherited from the parent class
+
+  @Override
+  public void initSmtVariable(
+      Context context, Solver solver, String configVarPrefix, boolean isTrue,
+      ImmutableMap<Community, Integer> commsIndex, int commsWidth) {
+    // assert that the community list is not shared
+    if (_enableSmtVariable) {
+      throw new BatfishException("CommunityList.initSmtVariable: shared object.\n" +
+          "Previous configVarPrefix: " + _configVarPrefix + "\n" +
+          "Current  configVarPrefix: " + configVarPrefix);
+    }
+
+    for (int i = 0; i < _lines.size(); ++i) {
+      // check and avoid shared object
+      if (_lines.get(i).getEnableSmtVariable()) {
+        System.out.println("WARNING: CommunityList.initSmtVariable: " +
+            "found shared CommunityListLine, cloning it.");
+
+        CommunityListLine lineBackup = _lines.get(i);
+        CommunityListLine line =
+            new CommunityListLine(lineBackup.getAction(), lineBackup.getMatchCondition());
+        _lines.set(i, line);
+
+        // add additional assert for using shared object
+        if (lineBackup.getEnableSmtVariable() == _lines.get(i).getEnableSmtVariable()) {
+          throw new BatfishException(
+              "CommunityList.initSmtVariable: cloning failed for shared object");
+        }
+      }
+
+      int lineIndex = i + 1;
+      String configVarPrefixUpdated = configVarPrefix + "_Line" + lineIndex + "__";
+
+      // init smt variable for community list line
+      _lines.get(i).initSmtVariable(context, solver, configVarPrefixUpdated, isTrue, commsIndex, commsWidth);
+    }
+
+    // configure the smt variable enable flag to true
+    _enableSmtVariable = true;
+    _configVarPrefix = configVarPrefix;
+  }
+
+  @Override
+  public void initSmtVariable(
+      Context context, Solver solver, String configVarPrefix,
+      ImmutableMap<Community, Integer> commsIndex, int commsWidth) {
+    initSmtVariable(context, solver, configVarPrefix, true, commsIndex, commsWidth);
   }
 }

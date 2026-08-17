@@ -57,6 +57,7 @@ import org.batfish.datamodel.Ip;
 import org.batfish.datamodel.IsisRoute;
 import org.batfish.datamodel.LocalRoute;
 import org.batfish.datamodel.NetworkConfigurations;
+import org.batfish.datamodel.OspfRoute;
 import org.batfish.datamodel.Prefix;
 import org.batfish.datamodel.RipInternalRoute;
 import org.batfish.datamodel.RipProcess;
@@ -1186,6 +1187,18 @@ public final class VirtualRouter {
   /** Get current BGP routes. To be used during dataplane computation only */
   Set<Bgpv4Route> getBgpRoutes() {
     return _bgpRoutingProcess == null ? ImmutableSet.of() : _bgpRoutingProcess.getV4Routes();
+  }
+
+  /** Get all BGP routes (received + local). */
+  Set<Bgpv4Route> getAllBgpRoutes() {
+    return _bgpRoutingProcess == null ? ImmutableSet.of() : _bgpRoutingProcess.getAllV4Routes();
+  }
+
+  /** Get routes selected by all OSPF processes in this VRF. */
+  Set<OspfRoute> getOspfRoutes() {
+    return _ospfProcesses.values().stream()
+        .flatMap(process -> process.getRoutes().stream())
+        .collect(ImmutableSet.toImmutableSet());
   }
 
   /** Get the number of best-path BGP routes. To be used during dataplane computation only */

@@ -1,0 +1,43 @@
+Line-Level Subspecs
+==================
+
+Line Group: Config_r1_CommunityList_200100__Line1
+Subspecs (1):
+  1. (not (= ((_ extract 0 0) Config_r1_CommunityList_200100__Line1__200_100__community) #b0)) AND (= Config_r1_CommunityList_200100__Line1__action true) [from r3]
+--------------------------------------------------
+
+Line Group: Config_r1_CommunityList_400100__Line1
+Subspecs (1):
+  1. (not (and (not (= ((_ extract 0 0) Config_r1_CommunityList_400100__Line1__400_100__community) #b0)) Config_r1_CommunityList_400100__Line1__action)) [from r3]
+--------------------------------------------------
+
+Line Group: Config_r2_RoutingPolicy_R2_OUT_TO_R1__Seq100__Line1
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Line Group: Config_r3_CommunityList_400100__Line1
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Line Group: Config_r3_CommunityList_500200__Line1
+Subspecs (1):
+  1. (not (= ((_ extract 2 2) Config_r3_CommunityList_500200__Line1__500_200__community) #b0)) AND (= Config_r3_CommunityList_500200__Line1__action true) [from r3]
+--------------------------------------------------
+
+Line Group: Config_r3_RouteFilterList_default_ips__Line1
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Line Group: Config_r3_RouteFilterList_private_ips__Line1
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Line Group: Config_r3_RoutingPolicy_R3_IN_FROM_R2__Seq20__Line2
+Subspecs (1):
+  1. (= Config_r3_RoutingPolicy_R3_IN_FROM_R2__Seq20__Line2__prepend_aspath_cost 1) [from r3]
+--------------------------------------------------
+

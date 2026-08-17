@@ -12,8 +12,14 @@ import static org.junit.Assert.assertThat;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.testing.EqualsTester;
+import com.google.common.collect.ImmutableMap;
 import java.util.Set;
 import javax.annotation.Nonnull;
+
+import com.microsoft.z3.BoolExpr;
+import com.microsoft.z3.Context;
+import com.microsoft.z3.Solver;
+import org.batfish.common.BatfishException;
 import org.batfish.datamodel.CommunityList;
 import org.batfish.datamodel.CommunityListLine;
 import org.batfish.datamodel.LineAction;
@@ -22,6 +28,7 @@ import org.batfish.datamodel.bgp.community.StandardCommunity;
 import org.batfish.datamodel.routing_policy.Environment;
 import org.batfish.datamodel.visitors.CommunitySetExprVisitor;
 import org.batfish.datamodel.visitors.VoidCommunitySetExprVisitor;
+
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -76,6 +83,25 @@ public final class CommunityListTest {
     @Override
     public boolean reducible() {
       throw new UnsupportedOperationException();
+    }
+
+    /** Add configuration constant - SMT symbolic variable */
+    // private boolean _enableSmtVariable;    // Inherited from the parent class
+    // private String _configVarPrefix;       // Inherited from the parent class
+
+    @Override
+    public void initSmtVariable(
+        Context context, Solver solver, String configVarPrefix, boolean isTrue,
+        ImmutableMap<Community, Integer> commsIndex, int commsWidth) {
+      // TODO: implement me when needed
+      throw new BatfishException("UnsupportedCommunitySetExpr.initSmtVariable: not implemented yet.");
+    }
+
+    @Override
+    public void initSmtVariable(
+        Context context, Solver solver, String configVarPrefix,
+        ImmutableMap<Community, Integer> commsIndex, int commsWidth) {
+      initSmtVariable(context, solver, configVarPrefix, true, commsIndex, commsWidth);
     }
   }
 

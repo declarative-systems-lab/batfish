@@ -10,6 +10,12 @@ import java.math.BigInteger;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
+import org.batfish.common.BatfishException;
+
+import com.microsoft.z3.Context;
+import com.microsoft.z3.Solver;
+import com.microsoft.z3.BoolExpr;
+import com.microsoft.z3.BitVecExpr;
 
 /**
  * Represents a BGP community value, which could be <a
@@ -100,4 +106,49 @@ public abstract class Community implements Serializable, Comparable<Community> {
   public int compareTo(Community o) {
     return asBigInt().compareTo(o.asBigInt());
   }
+
+  /** Add configuration constant - SMT symbolic variable */
+  protected boolean _enableSmtVariable;
+  protected String _configVarPrefix;
+
+  protected transient BitVecExpr _configVarCommunity;
+
+  public void initSmtVariable(
+      Context context, Solver solver, String configVarPrefix, boolean isTrue,
+      BitVecExpr commValue, int commsWidth) {
+    // assert that the community is not shared
+    if (_enableSmtVariable) {
+      throw new BatfishException("Community.initSmtVariable: shared object.\n" +
+          "Previous configVarPrefix: " + _configVarPrefix +
+          "Current  configVarPrefix: " + configVarPrefix);
+    }
+
+    // add relevant configuration constant constraint
+    _configVarCommunity = context.mkBVConst(configVarPrefix + "_community", commsWidth);
+    BoolExpr configVarCommConstraint = context.mkEq(_configVarCommunity, commValue);
+    solver.add(configVarCommConstraint);
+
+    // configure the smt variable enable flag to true
+    _enableSmtVariable = true;
+    _configVarPrefix = configVarPrefix;
+  }
+  public void initSmtVariable(
+      Context context, Solver solver, String configVarPrefix, BitVecExpr commValue) {
+    initSmtVariable(context, solver, configVarPrefix, true, commValue, 0);
+  }
+
+  public boolean getEnableSmtVariable() {
+    return _enableSmtVariable;
+  }
+
+  public String getConfigVarPrefix() {
+    return _configVarPrefix;
+  }
+
+  public BitVecExpr getConfigVarCommunity() {
+    return _configVarCommunity;
+  }
+
+  /** Add get community string for configVarPrefix */
+  public abstract String getCommunityString();
 }

@@ -1,0 +1,11 @@
+{
+  "properties": [
+    {
+      "description": "USER STUDY TASK 3: Customer Reachability",
+      "type": "reachability",
+      "ingressNodeRegex": "customer",
+      "finalNodeRegex": "isp1",
+      "dstIps": ["198.51.100.0/24"]
+    }
+  ]
+}

@@ -21,6 +21,7 @@ import org.batfish.datamodel.Fib;
 import org.batfish.datamodel.ForwardingAnalysis;
 import org.batfish.datamodel.ForwardingAnalysisImpl;
 import org.batfish.datamodel.GenericRib;
+import org.batfish.datamodel.OspfRoute;
 import org.batfish.datamodel.Topology;
 import org.batfish.datamodel.vxlan.Layer2Vni;
 
@@ -73,6 +74,30 @@ public final class DataplaneUtil {
                     vr -> {
                       table.put(hostname, vr.getName(), vr.getBgpRoutes());
                     }));
+    return table.build();
+  }
+
+  @Nonnull
+  static Table<String, String, Set<Bgpv4Route>> computeAllBgpRoutes(Map<String, Node> nodes) {
+    ImmutableTable.Builder<String, String, Set<Bgpv4Route>> table = ImmutableTable.builder();
+
+    nodes.forEach(
+        (hostname, node) ->
+            node.getVirtualRouters()
+                .forEach(
+                    vr -> {
+                      table.put(hostname, vr.getName(), vr.getAllBgpRoutes());
+                    }));
+    return table.build();
+  }
+
+  @Nonnull
+  static Table<String, String, Set<OspfRoute>> computeOspfRoutes(Map<String, Node> nodes) {
+    ImmutableTable.Builder<String, String, Set<OspfRoute>> table = ImmutableTable.builder();
+    nodes.forEach(
+        (hostname, node) ->
+            node.getVirtualRouters()
+                .forEach(vr -> table.put(hostname, vr.getName(), vr.getOspfRoutes())));
     return table.build();
   }
 

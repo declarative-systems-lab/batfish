@@ -1,0 +1,74 @@
+{
+  "properties": [
+    {
+      "description": "Internet2 reachability to wiscr for 100.64.10.0/24",
+      "type": "reachability",
+      "ingressNodeRegex": "chic-re1",
+      "finalNodeRegex": "wiscr",
+      "dstIps": ["100.64.10.0/24"]
+    },
+    {
+      "description": "Internet2 reachability to wiscr for 205.213.200.0/24",
+      "type": "reachability",
+      "ingressNodeRegex": "chic-re1",
+      "finalNodeRegex": "wiscr",
+      "dstIps": ["205.213.200.0/24"]
+    },
+    {
+      "description": "Internet2 reachability to wiscr for 128.10.50.0/24",
+      "type": "reachability",
+      "ingressNodeRegex": "chic-re1",
+      "finalNodeRegex": "wiscr",
+      "dstIps": ["128.10.50.0/24"]
+    },
+    {
+      "description": "Internet2 reachability to wiscr for 128.2.100.0/24",
+      "type": "reachability",
+      "ingressNodeRegex": "chic-re1",
+      "finalNodeRegex": "wiscr",
+      "dstIps": ["128.2.100.0/24"]
+    },
+    {
+      "description": "Internet2 reachability to wiscr for 128.206.50.0/24",
+      "type": "reachability",
+      "ingressNodeRegex": "chic-re1",
+      "finalNodeRegex": "wiscr",
+      "dstIps": ["128.206.50.0/24"]
+    },
+    {
+      "description": "Internet2 reachability to wiscr for 128.101.10.0/24",
+      "type": "reachability",
+      "ingressNodeRegex": "chic-re1",
+      "finalNodeRegex": "wiscr",
+      "dstIps": ["128.101.10.0/24"]
+    },
+    {
+      "description": "Internet2 reachability to wiscr for 63.193.200.0/24",
+      "type": "reachability",
+      "ingressNodeRegex": "chic-re1",
+      "finalNodeRegex": "wiscr",
+      "dstIps": ["63.193.200.0/24"]
+    },
+    {
+      "description": "Internet2 reachability to wiscr for 198.48.92.0/24",
+      "type": "reachability",
+      "ingressNodeRegex": "chic-re1",
+      "finalNodeRegex": "wiscr",
+      "dstIps": ["198.48.92.0/24"]
+    },
+    {
+      "description": "Internet2 reachability to wiscr for 74.115.8.0/24",
+      "type": "reachability",
+      "ingressNodeRegex": "chic-re1",
+      "finalNodeRegex": "wiscr",
+      "dstIps": ["74.115.8.0/24"]
+    },
+    {
+      "description": "Internet2 reachability to wiscr for 63.164.11.0/24",
+      "type": "reachability",
+      "ingressNodeRegex": "chic-re1",
+      "finalNodeRegex": "wiscr",
+      "dstIps": ["63.164.11.0/24"]
+    }
+  ]
+}

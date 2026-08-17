@@ -53,7 +53,7 @@ class Optimizations {
   private static final String AGGREGATION_SUPPRESS_NAME = "MATCH_SUPPRESSED_SUMMARY_ONLY";
 
   private EncoderSlice _encoderSlice;
-
+  // <HostName, List<Protocol>>, Protocol is enum that involving OSPF, BGP, STATIC, and CONNECTED
   private Map<String, List<Protocol>> _protocols;
 
   private Map<String, Set<Prefix>> _suppressedAggregates;
@@ -98,18 +98,41 @@ class Optimizations {
   }
 
   void computeOptimizations() {
+    // if routing policies have a statement `SetLocalPreference`, set true
     _keepLocalPref = computeKeepLocalPref();
+    // if routing policies have a statement `SetOspfMetricType`, set true
     _keepAdminDist = computeKeepAdminDistance();
+    // FIXME: also check if med never set
+    // if ENABLE_SLICING_OPTIMIZATION is true, set false; otherwise, set true
     _keepMed = computeKeepMed();
+    // if routing policies have a statement `SetOspfMetricType`, set true
+    // or there are multiple ospf areas, set true
     _keepOspfType = computeKeepOspfType();
+
+    // just model BGP in main slice
+    // initialize Map<String, List<Protocol>> _protocols according to configuration
     initProtocols();
+
+    // initialize Set<String> _needBgpInternal according to Graph _ibgpneighbors
     computeBgpInternalNeeded();
+    // initialize Set<String> _sliceHasSingleProtocol according to Graph _configurations
     computeCanUseSingleBest();
+    // initialize Table2<String, Protocol, Boolean> _sliceCanKeepSingleExportVar
+    //   + STATIC and CONNECTED: noFailures and ENABLE_EXPORT_MERGE_OPTIMIZATION
+    //   + OSPF: noFailures, allInterfaceActive, singleArea and ENABLE_EXPORT_MERGE_OPT...
+    //   + BGP: noFailures, useIbgp, isDefaultBgpExport and ENABLE_EXPORT_MERGE_OPT...
     computeCanMergeExportVars();
+    // initialize Table2<string, Protocol, List<GraphEdge>> _sliceCanCombineImportExportVars
+    // TODO: annotated by yongzheng on 20250324
     computeCanMergeImportExportVars();
+    // initialize Map<String, List<GeneratedRoute>> _relevantAggregates
     computeRelevantAggregates();
+    // initialize Map<String, Set<Prefix>> _suppressedAggregates
     computeSuppressedAggregates();
+    // initialize Set<String> _needBgpInternal
     computeNeedClientIds();
+    // initialize Set<String> _needRouterId
+    // use IBGP and no use IBGP multipath, use EBGP and no use EBGP multipath
     computeRouterIdNeeded();
   }
 
@@ -187,11 +210,14 @@ class Optimizations {
   }
 
   // TODO: also check if med never set
+  // FIXME: annotated by yongzheng on 20250324
   /*
    * Check if we need to keep around the BGP Med attribute.
    */
   private boolean computeKeepMed() {
-    return !Optimizations.ENABLE_SLICING_OPTIMIZATION;
+    // NOTE: Always enable MED.
+    // return !Optimizations.ENABLE_SLICING_OPTIMIZATION;
+    return true;
     /* if (!PolicyQuotient.ENABLE_SLICING_OPTIMIZATION) {
         return true;
     }
@@ -505,6 +531,8 @@ class Optimizations {
               _relevantAggregates.put(router, routes);
               for (GeneratedRoute gr : conf.getDefaultVrf().getGeneratedRoutes()) {
                 Prefix p = gr.getNetwork();
+                // TODO: I have not understand this part of code yet.
+                //       annotated by yongzheng on 20250329
                 if (_encoderSlice.relevantPrefix(p)) {
                   routes.add(gr);
                 }

@@ -1,0 +1,21 @@
+; SMT variables absent from the router-local encoding
+(declare-fun |0_CONTROL-FORWARDING_r2_GigabitEthernet2/0| () Bool)
+
+; Violation assume-guarantee
+
+; Boundary control-forwarding decisions are coupled with peer route cases
+
+; ********************************************************************
+; Assume: Peer Best Routes
+; ********************************************************************
+
+; Peer: r2
+(assert (and (= |0_r2_OVERALL_BEST_None_permitted| true) (= |0_r2_OVERALL_BEST_None_prefixLength| 24) (= |0_r2_OVERALL_BEST_None_metric| 1) (= |0_r2_OVERALL_BEST_None_community| #b000100) (= |0_CONTROL-FORWARDING_r2_GigabitEthernet2/0| true)))
+
+; ********************************************************************
+; Guarantee: Local Best Route & Local Control-Forwarding Decisions
+; ********************************************************************
+
+(assert (or (or (not (= |0_CONTROL-FORWARDING_isp2_GigabitEthernet0/0| false)) (not (= |0_CONTROL-FORWARDING_isp2_null_interface| true))) (and (and (= |0_CONTROL-FORWARDING_isp2_GigabitEthernet0/0| false) (= |0_CONTROL-FORWARDING_isp2_null_interface| true)) (or (not (= |0_isp2_OVERALL_BEST_None_prefixLength| 24)) (not (= |0_isp2_OVERALL_BEST_None_permitted| true)) (not (= |0_isp2_OVERALL_BEST_None_adminDist| 1)) (not (= |0_isp2_OVERALL_BEST_None_metric| 0)) (not (= |0_isp2_OVERALL_BEST_None_med| 0)) (not (= |0_isp2_OVERALL_BEST_None_history| #b1)) (not (= |0_isp2_OVERALL_BEST_None_community| #b000000))))))
+(assert (<= |0_isp2_OVERALL_BEST_None_prefixLength| 24))
+(assert (>= |0_isp2_OVERALL_BEST_None_prefixLength| 0))
