@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Explainable Network Verification via Subspecifications - User Study</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Times New Roman', Times, serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            font-size: 16px;
+            font-weight: 525;
+            line-height: 1.6;
+            color: #333;
+        }
+        
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+            text-align: center;
+            max-width: 1000px;
+            width: 100%;
+        }
+        
+        .title {
+            margin-bottom: 40px;
+        }
+        
+        .title h1 {
+            color: #333;
+            font-size: 24px;
+            margin-bottom: 4px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+        
+        .title h2 {
+            color: #666;
+            font-size: 24px;
+            font-weight: 500;
+            letter-spacing: -0.3px;
+            margin-bottom: 0;
+        }
+        
+        .form-table {
+            width: auto;
+            border-collapse: collapse;
+            margin: 0 auto 40px auto;
+        }
+        
+        .form-table tr {
+            height: 60px;
+        }
+        
+        .label-cell {
+            color: #333;
+            font-size: 18px;
+            font-weight: 600;
+            letter-spacing: -0.2px;
+            text-align: right;
+            padding-right: 20px;
+            width: 220px;
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+        
+        .content-cell {
+            padding-left: 10px;
+            vertical-align: middle;
+            text-align: left;
+        }
+        
+        .separator-row {
+            height: 20px;
+        }
+        
+        .separator-cell {
+            padding: 0;
+            text-align: center;
+        }
+        
+        .separator-line {
+            height: 2px;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            margin: 10px 0;
+        }
+        
+        .lang-buttons {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .lang-btn {
+            padding: 12px 25px;
+            font-size: 16px;
+            border: 2px solid #667eea;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+            color: #667eea;
+            font-weight: 500;
+        }
+        
+        .lang-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .lang-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        .lang-btn.active:hover {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .number-input {
+            width: 210px;
+            padding: 15px;
+            font-size: 18px;
+            border: 2px solid #ddd;
+            border-radius: 20px;
+            text-align: center;
+            transition: border-color 0.3s ease;
+        }
+        
+        .number-input::placeholder {
+            color: #bbb;
+            opacity: 0.7;
+        }
+        
+        .number-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .group-info {
+            color: #666;
+            font-size: 16px;
+            margin-bottom: 30px;
+            font-weight: 500;
+        }
+        
+        .button-container {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            align-items: center;
+        }
+        
+        .coursera-btn {
+            padding: 0;
+            font-size: 20px;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-block;
+            width: 210px;
+            height: 60px;
+            text-align: center;
+            line-height: 60px;
+        }
+        
+        .coursera-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+        
+        .start-btn {
+            padding: 0;
+            font-size: 20px;
+            border: 2px solid #667eea;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+            color: #667eea;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-block;
+            width: 210px;
+            height: 60px;
+            text-align: center;
+            line-height: 56px;
+        }
+        
+        .start-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+            background: #f0f4ff;
+        }
+        
+        .start-btn:disabled {
+            background: #f5f5f5;
+            border-color: #ccc;
+            color: #999;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+        
+        .modal-content {
+            background-color: white;
+            margin: 15% auto;
+            padding: 30px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 500px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        .modal h3 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+        
+        .modal p {
+            margin-bottom: 25px;
+            line-height: 1.6;
+        }
+        
+        .modal-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+        
+        .btn {
+            padding: 15px 30px;
+            font-size: 1.1em;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+            font-weight: bold;
+            min-width: 150px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+        }
+        
+        /* Browser-specific font size adjustments for better compatibility */
+        .browser-firefox {
+            font-size: 17px; /* Slightly larger for Firefox */
+        }
+        
+        .browser-safari {
+            font-size: 16px; /* Standard size for Safari */
+        }
+        
+        .browser-chrome,
+        .browser-other {
+            font-size: 16px; /* Standard size for Chrome/Edge/Other */
+        }
+
+        /* Mobile only — desktop layout unchanged */
+        @media (max-width: 600px) {
+            body {
+                padding: 12px;
+                align-items: flex-start;
+            }
+
+            .container {
+                padding: 20px 16px;
+            }
+
+            .title {
+                margin-bottom: 24px;
+            }
+
+            .title h1 {
+                font-size: 17px;
+                line-height: 1.35;
+            }
+
+            .title h2 {
+                font-size: 16px;
+                line-height: 1.35;
+            }
+
+            .form-table {
+                width: 100%;
+                margin-bottom: 24px;
+            }
+
+            .form-table tr {
+                display: block;
+                height: auto;
+                margin-bottom: 16px;
+            }
+
+            .label-cell,
+            .content-cell {
+                display: block;
+                width: 100%;
+                text-align: center;
+                padding: 0;
+            }
+
+            .label-cell {
+                font-size: 16px;
+                margin-bottom: 8px;
+                white-space: normal;
+            }
+
+            .lang-buttons {
+                justify-content: center;
+            }
+
+            .number-input {
+                display: block;
+                width: 100%;
+                max-width: 320px;
+                margin: 0 auto;
+                font-size: 16px;
+                box-sizing: border-box;
+            }
+
+            .button-container {
+                flex-direction: column;
+                align-items: center;
+                gap: 12px;
+            }
+
+            .coursera-btn,
+            .start-btn {
+                width: 100%;
+                max-width: 320px;
+            }
+
+            .modal-buttons {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .modal-buttons .btn {
+                min-width: unset;
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="title">
+            <h1>Explainable Network Verification via Subspecifications - User Study</h1>
+            <h2>基于子规约的可解释网络验证 - 用户研究</h2>
+        </div>
+        
+        <table class="form-table">
+            <tr>
+                <td class="label-cell" id="langTitle">Select language</td>
+                <td class="content-cell">
+                    <div class="lang-buttons">
+                        <button class="lang-btn active" onclick="selectLanguage('en')">English</button>
+                        <button class="lang-btn" onclick="selectLanguage('zh')">中文</button>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td class="label-cell" id="inputTitle">Enter 4-digit number</td>
+                <td class="content-cell">
+                    <input type="text" class="number-input" id="userNumber" maxlength="4" placeholder="1234">
+                </td>
+            </tr>
+            <tr class="separator-row">
+                <td colspan="2" class="separator-cell">
+                    <div class="separator-line"></div>
+                </td>
+            </tr>
+        </table>
+        
+        <div class="group-info" id="groupInfo">
+            <span id="groupText"></span>
+        </div>
+        
+        <div class="button-container">
+            <button class="coursera-btn" id="courseraBtn" onclick="goToCoursera()">
+                <span id="courseraText">Sample Questions</span>
+            </button>
+            <button class="start-btn" id="startBtn" onclick="showConfirmModal()" disabled>
+                <span id="startText">Start / 开始</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Validation Modal -->
+    <div id="validationModal" class="modal">
+        <div class="modal-content">
+            <h3 id="validation-title">⚠️ Selection Required</h3>
+            <p id="validation-text">Please enter a 4-digit number</p>
+            <div class="modal-buttons">
+                <button class="btn btn-primary" onclick="closeValidationModal()" id="validation-ok">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div id="confirmModal" class="modal">
+        <div class="modal-content">
+            <h3 id="confirm-title">Please watch the introduction videos</h3>
+            <p id="confirm-text">Please watch both introduction videos before starting the user study.</p>
+            <div class="modal-buttons">
+                <button class="btn btn-secondary" onclick="closeConfirmModal()" id="confirm-cancel">Cancel</button>
+                <button class="btn btn-primary" onclick="confirmStart()" id="confirm-confirm">Start Study</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedLanguage = 'en';
+        let userNumber = '';
+        
+        // Language texts
+        const texts = {
+            en: {
+                langTitle: 'Select language',
+                inputTitle: 'Enter the provided 4-digit number',
+                startText: 'Start',
+                courseraText: 'Sample Questions',
+                placeholder: '1234',
+                validationTitle: '⚠️ Selection Required',
+                validationText: 'Please enter a 4-digit number!',
+                validationOk: 'OK',
+                confirmTitle: 'Confirm to start',
+                confirmText: 'Are you ready to start the user study?',
+                confirmCancel: 'Cancel',
+                confirmStart: 'Start User Study'
+            },
+            zh: {
+                langTitle: '选择语言',
+                inputTitle: '输入您获得的4位数字',
+                startText: '开始',
+                courseraText: '示例问题',
+                placeholder: '1234',
+                validationTitle: '⚠️ 需要输入',
+                validationText: '请输入4位数字！',
+                validationOk: '确定',
+                confirmTitle: '确认开始',
+                confirmText: '您准备好开始用户研究了吗？',
+                confirmCancel: '取消',
+                confirmStart: '开始用户研究'
+            }
+        };
+        
+        
+        function selectLanguage(lang) {
+            selectedLanguage = lang;
+            
+            // Save to localStorage
+            localStorage.setItem('selectedLanguage', selectedLanguage);
+            
+            // Update button states
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Update texts
+            updateTexts();
+        }
+        
+        function updateTexts() {
+            const t = texts[selectedLanguage];
+            document.getElementById('langTitle').textContent = t.langTitle;
+            document.getElementById('inputTitle').textContent = t.inputTitle;
+            document.getElementById('startText').textContent = t.startText;
+            document.getElementById('courseraText').textContent = t.courseraText;
+            document.getElementById('userNumber').placeholder = t.placeholder;
+            document.getElementById('validation-title').textContent = t.validationTitle;
+            document.getElementById('validation-text').textContent = t.validationText;
+            document.getElementById('validation-ok').textContent = t.validationOk;
+            document.getElementById('confirm-title').textContent = t.confirmTitle;
+            document.getElementById('confirm-text').textContent = t.confirmText;
+            document.getElementById('confirm-cancel').textContent = t.confirmCancel;
+            document.getElementById('confirm-confirm').textContent = t.confirmStart;
+        }
+        
+        function goToCoursera() {
+            // Save current state to localStorage before navigating
+            localStorage.setItem('selectedLanguage', selectedLanguage);
+            localStorage.setItem('userNumber', userNumber);
+            
+            const courseraPage = selectedLanguage === 'zh' ? 'coursera_zh.html' : 'coursera_en.html';
+            window.location.href = courseraPage;
+        }
+        
+        
+        // Handle number input
+        document.getElementById('userNumber').addEventListener('input', function(e) {
+            // Only allow numbers
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length > 4) {
+                value = value.substring(0, 4);
+            }
+            e.target.value = value;
+            userNumber = value;
+            
+            // Save to localStorage
+            localStorage.setItem('userNumber', userNumber);
+            
+            // Update group info
+            updateGroupInfo();
+            
+            // Enable/disable start button
+            document.getElementById('startBtn').disabled = value.length !== 4;
+        });
+        
+        function updateGroupInfo() {
+            // Remove group assignment display - keep it simple
+            document.getElementById('groupText').textContent = '';
+        }
+        
+        function showConfirmModal() {
+            // Check if user number is valid
+            if (!userNumber || userNumber.length !== 4) {
+                showValidationModal();
+                return;
+            }
+            
+            // Check if language is selected
+            if (!selectedLanguage) {
+                showValidationModal();
+                return;
+            }
+            
+            // Show confirmation modal
+            document.getElementById('confirmModal').style.display = 'block';
+        }
+        
+        function showValidationModal() {
+            document.getElementById('validationModal').style.display = 'block';
+        }
+        
+        function closeValidationModal() {
+            document.getElementById('validationModal').style.display = 'none';
+        }
+        
+        function confirmStart() {
+            const lastDigit = parseInt(userNumber.slice(-1));
+            const isOdd = lastDigit % 2 === 1;
+            const group = isOdd ? 'A' : 'B';
+            
+            // Store language preference in localStorage
+            localStorage.setItem('selectedLanguage', selectedLanguage);
+            localStorage.setItem('userNumber', userNumber);
+            
+            // Close the modal before redirecting
+            closeConfirmModal();
+            
+            // Redirect to specific group and language file with userNumber as URL parameter
+            const targetPage = `group${group}_${selectedLanguage}.html?userNumber=${userNumber}`;
+            window.location.href = targetPage;
+        }
+        
+        function closeConfirmModal() {
+            document.getElementById('confirmModal').style.display = 'none';
+        }
+        
+        // Initialize - restore state from localStorage
+        function initializePage() {
+            // Restore language
+            const savedLanguage = localStorage.getItem('selectedLanguage');
+            if (savedLanguage && (savedLanguage === 'en' || savedLanguage === 'zh')) {
+                selectedLanguage = savedLanguage;
+                // Update button states
+                document.querySelectorAll('.lang-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                    if (btn.textContent.trim() === (savedLanguage === 'zh' ? '中文' : 'English')) {
+                        btn.classList.add('active');
+                    }
+                });
+            }
+            
+            // Restore user number
+            const savedUserNumber = localStorage.getItem('userNumber');
+            if (savedUserNumber) {
+                userNumber = savedUserNumber;
+                const inputElement = document.getElementById('userNumber');
+                inputElement.value = savedUserNumber;
+                // Enable/disable start button based on saved number
+                document.getElementById('startBtn').disabled = savedUserNumber.length !== 4;
+            }
+            
+            // Update texts
+            updateTexts();
+        }
+        
+        // Initialize on page load
+        initializePage();
+    </script>
+</body>
+</html>

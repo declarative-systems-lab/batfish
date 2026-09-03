@@ -1,0 +1,5 @@
+<span style="text-decoration: underline;"><b>Customer Reachability:</b> The Customer must be able to reach ISP1-advertised prefix 198.51.100.0/24.</span><br>
+<br>
+<em>Each edge in the topology represents an eBGP connection, with route-maps applied on selected sessions to control the advertised routes and their attributes, and to influence route selection decisions.</em><br>
+<em>All devices are configured to enable ECMP (Equal-Cost Multi-Path) routing and the multipath-relax option.</em><br>
+<em>Due to time and configuration complexity, interface and BGP session details are omitted, and only the complete route-map configurations are presented.</em>

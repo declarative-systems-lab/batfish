@@ -1,0 +1,16 @@
+Which routes can the Customer receive? <br><br>Please select <span style="color: red;">one option</span> from the options below.
+
+option1: [yes]
+```diff
+192.0.2.0/24
+```
+
+option2: [no]
+```diff
+198.51.100.0/24
+```
+
+option3: [no]
+```diff
+No route received.
+```

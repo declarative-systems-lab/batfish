@@ -1,0 +1,285 @@
+Field-Level Subspecs (Normalized)
+==================================
+
+Config Variable: Config_r1_CommunityList_200100__Line1__exact_community_200_100_200_100_community
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r1_CommunityList_200100__Line1__exact_community_200_100_action
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r1_CommunityList_400100__Line1__exact_community_400_100_400_100_community
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r1_CommunityList_400100__Line1__exact_community_400_100_action
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r1_CommunityList_500200__Line1__exact_community_500_200_500_200_community
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r1_CommunityList_500200__Line1__exact_community_500_200_action
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r1_RouteFilterList_default_ips__Line1__0_0_0_0__action
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r1_RouteFilterList_default_ips__Line1__0_0_0_0__ip
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r1_RouteFilterList_default_ips__Line1__0_0_0_0__length
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r1_RouteFilterList_default_ips__Line1__0_0_0_0__prefix_range_end
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r1_RouteFilterList_default_ips__Line1__0_0_0_0__prefix_range_start
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r1_RouteFilterList_isp1_network__Line1__198_51_96_0__action
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r1_RouteFilterList_isp1_network__Line1__198_51_96_0__ip
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r1_RouteFilterList_isp1_network__Line1__198_51_96_0__length
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r1_RouteFilterList_isp1_network__Line1__198_51_96_0__prefix_range_end
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r1_RouteFilterList_isp1_network__Line1__198_51_96_0__prefix_range_start
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r1_RouteFilterList_isp1_network__Line2__192_0_2_0__action
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r1_RouteFilterList_isp1_network__Line2__192_0_2_0__ip
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r1_RouteFilterList_isp1_network__Line2__192_0_2_0__length
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r1_RouteFilterList_isp1_network__Line2__192_0_2_0__prefix_range_end
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r1_RouteFilterList_isp1_network__Line2__192_0_2_0__prefix_range_start
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r1_RouteFilterList_isp1_network__Line3__198_51_100_0__action
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r1_RouteFilterList_isp1_network__Line3__198_51_100_0__ip
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r1_RouteFilterList_isp1_network__Line3__198_51_100_0__length
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r1_RouteFilterList_isp1_network__Line3__198_51_100_0__prefix_range_end
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r1_RouteFilterList_isp1_network__Line3__198_51_100_0__prefix_range_start
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r1_RoutingPolicy_R1_IN_FROM_ISP1__Line1__add_community_400_100_community
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r2_CommunityList_400100__Line1__exact_community_400_100_400_100_community
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r2_CommunityList_400100__Line1__exact_community_400_100_action
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r2_RouteFilterList_default_ips__Line1__0_0_0_0__action
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r2_RouteFilterList_default_ips__Line1__0_0_0_0__ip
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r2_RouteFilterList_default_ips__Line1__0_0_0_0__length
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r2_RouteFilterList_default_ips__Line1__0_0_0_0__prefix_range_end
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r2_RouteFilterList_default_ips__Line1__0_0_0_0__prefix_range_start
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r2_RouteFilterList_isp2_network__Line1__203_0_113_0__action
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r2_RouteFilterList_isp2_network__Line1__203_0_113_0__ip
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r2_RouteFilterList_isp2_network__Line1__203_0_113_0__length
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r2_RouteFilterList_isp2_network__Line1__203_0_113_0__prefix_range_end
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r2_RouteFilterList_isp2_network__Line1__203_0_113_0__prefix_range_start
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r2_RoutingPolicy_R2_IN_FROM_ISP2__Line1__add_community_500_200_community
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r2_RoutingPolicy_R2_OUT_TO_R1__Line0__set_community_200_100_community
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r3_CommunityList_400100__Line1__exact_community_400_100_400_100_community
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r3_CommunityList_400100__Line1__exact_community_400_100_action
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r3_CommunityList_500200__Line1__exact_community_500_200_500_200_community
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r3_CommunityList_500200__Line1__exact_community_500_200_action
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r3_RouteFilterList_default_ips__Line1__0_0_0_0__action
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r3_RouteFilterList_default_ips__Line1__0_0_0_0__ip
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r3_RouteFilterList_default_ips__Line1__0_0_0_0__length
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r3_RouteFilterList_default_ips__Line1__0_0_0_0__prefix_range_end
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r3_RouteFilterList_default_ips__Line1__0_0_0_0__prefix_range_start
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__action
+Subspecs (1):
+  1. (= Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__action true)
+--------------------------------------------------
+
+Config Variable: Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__ip
+Subspecs (1):
+  1. (= ((_ extract 31 8) |0_dst-ip|) #xc0a880) AND (= (bvand |0_dst-ip| Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__mask) (bvand Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__ip Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__mask))
+  1. (= ((_ extract 31 8) |0_dst-ip|) #xc0a881) AND (= (bvand |0_dst-ip| Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__mask) (bvand Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__ip Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__mask))
+  1. (or (= ((_ extract 31 8) |0_dst-ip|) #xc0a880) (= ((_ extract 31 8) |0_dst-ip|) #xc0a881)) AND (= (bvand |0_dst-ip| Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__mask) (bvand Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__ip Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__mask))
+--------------------------------------------------
+
+Config Variable: Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__length
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__prefix_range_end
+Subspecs (1):
+  1. (>= Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__prefix_range_end 24) AND (<= Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__prefix_range_end 32)
+--------------------------------------------------
+
+Config Variable: Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__prefix_range_start
+Subspecs (1):
+  1. (>= Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__prefix_range_start 16) AND (<= Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__prefix_range_start 24)
+--------------------------------------------------
+
+Config Variable: Config_r3_RoutingPolicy_R3_IN_FROM_R2__Line2__prepend_aspath_cost
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+

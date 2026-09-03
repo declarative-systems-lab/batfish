@@ -1,0 +1,90 @@
+Field-Level Subspecs
+====================
+
+Config Variable: Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__action
+Subspecs (1):
+  1. 与规约无关，无限制
+--------------------------------------------------
+
+Config Variable: Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__length
+Subspecs (1):
+  1. 与规约无关，无限制
+--------------------------------------------------
+
+Config Variable: Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__prefix_range_end
+Subspecs (1):
+  1. 与规约无关，无限制
+--------------------------------------------------
+
+Config Variable: Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__prefix_range_start
+Subspecs (1):
+  1. 与规约无关，无限制
+--------------------------------------------------
+
+Config Variable: Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__action
+Subspecs (1):
+  1. (= ((_ extract 31 20) |0_dst-ip|) #xac1) AND (or (= ((_ extract 31 24) |0_dst-ip|) #x0a) (ite (= ((_ extract 31 24) |0_dst-ip|) #xac) Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__action (= ((_ extract 31 16) |0_dst-ip|) #xc0a8))) AND (not (= ((_ extract 31 16) |0_dst-ip|) #xc0a8))
+  1. (= Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__action true)
+  1. Action = permit
+  1. Action 应配置为 permit
+--------------------------------------------------
+
+Config Variable: Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__length
+Subspecs (1):
+  1. 与规约无关，无限制
+--------------------------------------------------
+
+Config Variable: Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__prefix_range_end
+Subspecs (1):
+  1. (<= Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__prefix_range_end 32) AND (>= Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__prefix_range_end 8) AND (= ((_ extract 31 20) |0_dst-ip|) #xac1) AND (let ((a!1 (<= (ite (= ((_ extract 31 16) |0_dst-ip|) #xc0a8) 16 12) Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__prefix_range_end))) (let ((a!2 (or (not a!1) (not (= ((_ extract 31 24) |0_dst-ip|) #xac))))) (or (= ((_ extract 31 24) |0_dst-ip|) #x0a) (= ((_ extract 31 16) |0_dst-ip|) #xc0a8) (not a!2)))) AND (not (= ((_ extract 31 16) |0_dst-ip|) #xc0a8))
+  1. (<= Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__prefix_range_end 32) AND (>= Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__prefix_range_end 8) AND (<= 12 Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__prefix_range_end)
+  1. Prefix le range = 12~32
+  1. 最大 (le) 前缀长度范围为 12~32
+--------------------------------------------------
+
+Config Variable: Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__prefix_range_start
+Subspecs (1):
+  1. (<= Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__prefix_range_start 32) AND (>= Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__prefix_range_start 8) AND (= ((_ extract 31 20) |0_dst-ip|) #xac1) AND (let ((a!1 (>= (ite (= ((_ extract 31 16) |0_dst-ip|) #xc0a8) 16 12) Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__prefix_range_start))) (let ((a!2 (or (not (= ((_ extract 31 24) |0_dst-ip|) #xac)) (not a!1)))) (or (= ((_ extract 31 24) |0_dst-ip|) #x0a) (= ((_ extract 31 16) |0_dst-ip|) #xc0a8) (not a!2)))) AND (not (= ((_ extract 31 16) |0_dst-ip|) #xc0a8))
+  1. (>= Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__prefix_range_start 8) AND (>= 12 Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__prefix_range_start)
+  1. Preifx ge range = 8~12
+  1. 最小 (ge) 前缀长度范围为 8~12
+--------------------------------------------------
+
+Config Variable: Config_r1_RouteFilterList_private_ips__Line3__192_168_0_0__action
+Subspecs (1):
+  1. 与规约无关，无限制
+--------------------------------------------------
+
+Config Variable: Config_r1_RouteFilterList_private_ips__Line3__192_168_0_0__length
+Subspecs (1):
+  1. 与规约无关，无限制
+--------------------------------------------------
+
+Config Variable: Config_r1_RouteFilterList_private_ips__Line3__192_168_0_0__prefix_range_end
+Subspecs (1):
+  1. 与规约无关，无限制
+--------------------------------------------------
+
+Config Variable: Config_r1_RouteFilterList_private_ips__Line3__192_168_0_0__prefix_range_start
+Subspecs (1):
+  1. 与规约无关，无限制
+--------------------------------------------------
+
+Config Variable: Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__ip
+Subspecs (1):
+  1. 与规约无关，无限制
+--------------------------------------------------
+
+Config Variable: Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__ip
+Subspecs (1):
+  1. (= ((_ extract 31 20) |0_dst-ip|) #xac1) AND (let ((a!1 (= (bvnot (bvor (bvnot |0_dst-ip|) (bvnot Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__mask))) (bvnot (bvor (bvnot Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__ip) (bvnot Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__mask)))))) (or a!1 (= ((_ extract 31 24) |0_dst-ip|) #x0a) (= ((_ extract 31 16) |0_dst-ip|) #xc0a8))) AND (not (= ((_ extract 31 16) |0_dst-ip|) #xc0a8))
+  1. (= ((_ extract 31 20) |0_dst-ip|) #xac1) AND (= (bvnot (bvor (bvnot |0_dst-ip|) (bvnot Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__mask))) (bvnot (bvor (bvnot Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__ip) (bvnot Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__mask))))
+  1. Prefix covers 172.16.0.0/12
+  1. 基础网络前缀应包含 172.16.0.0/12
+--------------------------------------------------
+
+Config Variable: Config_r1_RouteFilterList_private_ips__Line3__192_168_0_0__ip
+Subspecs (1):
+  1. 与规约无关，无限制
+--------------------------------------------------
+

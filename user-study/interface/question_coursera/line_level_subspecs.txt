@@ -1,0 +1,18 @@
+Line-Level Subspecs (Normalized)
+=================================
+
+Line Group: Config_r1_RouteFilterList_private_ips__Line1
+Subspecs (1):
+  1. (>= Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__length 0) AND (<= Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__length 32) AND (>= Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__prefix_range_end 0) AND (<= Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__prefix_range_end 32) AND (>= Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__prefix_range_start 0) AND (<= Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__prefix_range_start 32) AND (>= Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__prefix_range_end Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__length) AND (>= Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__prefix_range_start Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__length) AND (= ((_ extract 31 20) |0_dst-ip|) #xac1) AND (not (and (= (bvand |0_dst-ip| Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__mask) (bvand Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__ip Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__mask)) (not Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__action) (>= Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__prefix_range_end 12) (<= Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__prefix_range_start 12)))
+--------------------------------------------------
+
+Line Group: Config_r1_RouteFilterList_private_ips__Line2
+Subspecs (1):
+  1. (>= Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__prefix_range_end Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__length) AND (>= Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__prefix_range_start Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__length) AND (= ((_ extract 31 20) |0_dst-ip|) #xac1) AND (= (bvand |0_dst-ip| Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__mask) (bvand Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__ip Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__mask)) AND (= Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__action true) AND (>= Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__length 0) AND (<= Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__length 32) AND (>= Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__prefix_range_end 12) AND (<= Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__prefix_range_end 32) AND (>= Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__prefix_range_start 0) AND (<= Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__prefix_range_start 12)
+--------------------------------------------------
+
+Line Group: Config_r1_RouteFilterList_private_ips__Line3
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+

@@ -1,0 +1,44 @@
+作为常规维护的一部分，网络运维人员可能会调整配置行以更精确地实现指定的网络规约。<br><br>请勾选下面选项中的 <span style="color: red;">任意数量的选项（可不选）</span>，如果该选项中的配置被修改，仍满足已验证的 <b>私有网络前缀过滤</b> 网络规约。
+
+```note
+<code style="font-family: Consolas, 'Courier New', monospace;">ip prefix-list network_10_0_0_0 seq 5 permit 10.0.0.0/8 <span style="color: red;">ge 16</span></code><br>该前缀列表会匹配所有属于 <code style="font-family: Consolas, 'Courier New', monospace;">10.0.0.0/8</code> 的子网，且前缀长度在 <code style="font-family: Consolas, 'Courier New', monospace;">/16</code> 到 <code style="font-family: Consolas, 'Courier New', monospace;">/32</code>之间。 <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<code style="font-family: Consolas, 'Courier New', monospace;">10.0.0.0/16, &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;10.0.0.0/17, &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;..., 10.0.0.0/32</code><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<code style="font-family: Consolas, 'Courier New', monospace;">10.1.0.0/16, &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;10.1.0.0/17, &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;..., 10.1.0.0/32</code><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<code style="font-family: Consolas, 'Courier New', monospace;">......</code><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<code style="font-family: Consolas, 'Courier New', monospace;">10.255.255.255/16, 10.255.255.255/17, ..., 10.255.255.255/32</code><br><br><code style="font-family: Consolas, 'Courier New', monospace;">ip prefix-list network_10_0_0_0 seq 5 permit 10.0.0.0/8 <span style="color: red;">le 24</span></code><br>该前缀列表会匹配所有属于 <code style="font-family: Consolas, 'Courier New', monospace;">10.0.0.0/8</code> 的子网，且前缀长度在 <code style="font-family: Consolas, 'Courier New', monospace;">/8</code> 到 <code style="font-family: Consolas, 'Courier New', monospace;">/24</code> 之间。
+```
+
+option1: [no]
+```
+  @@ R3 Configuration 9,10 @@
+- [ip prefix-list](Config_r3_RouteFilterList_private_ips__Line1) private_ips seq 5  \\
+-         [permit](Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__action) [[192.168.0.0/16](Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__ip)]   [ge 24](Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__prefix_range_start) [le 32](Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__prefix_range_end)
++ [ip prefix-list]<> private_ips seq 5  \\
++         [permit]<> [[192.168.128.0/24]<>] [ge 24]<> [le 32]<>
+<br>
+  @@ R3 Configuration 31,32 @@
+  route-map R3_IN_FROM_Customer deny 10
+    match ip address prefix-list private_ips
+```
+
+option2: [yes]
+```diff
+  @@ R3 Configuration 9,10 @@
+- [ip prefix-list](Config_r3_RouteFilterList_private_ips__Line1) private_ips seq 5  \\
+-         [permit](Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__action) [192.168.0.0/16](Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__ip) [ge 24](Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__prefix_range_start) [[le 32](Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__prefix_range_end)]
++ [ip prefix-list]<> private_ips seq 5  \\
++         [permit]<> [192.168.0.0/16]<> [ge 24]<> [[le 24]<>]
+<br>
+  @@ R3 Configuration 31,32 @@
+  route-map R3_IN_FROM_Customer deny 10
+    match ip address prefix-list private_ips
+```
+
+option3: [yes]
+```diff
+  @@ R3 Configuration 9,10 @@
+- [ip prefix-list](Config_r3_RouteFilterList_private_ips__Line1) private_ips seq 5  \\
+-         [permit](Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__action) [[192.168.0.0/16](Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__ip)]   [[ge 24](Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__prefix_range_start)] [[le 32](Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__prefix_range_end)]
++ [ip prefix-list]<> private_ips seq 5  \\
++         [permit]<> [[192.168.128.0/23]<>] [[ge 23]<>] [[le 28]<>]
+<br>
+  @@ R3 Configuration 31,32 @@
+  route-map R3_IN_FROM_Customer deny 10
+    match ip address prefix-list private_ips
+```

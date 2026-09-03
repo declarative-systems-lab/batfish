@@ -1,0 +1,245 @@
+question1:
+
+Based on the following configuration snippet, determine which of the following options are correct. Select all that apply (including possibly none).
+
+```config
+1 ip prefix-list network_192_0_2_0 seq 5 permit 192.0.2.0/24 ge 24
+2 !
+3 !
+4 route-map R1_IN_FROM_ISP1 permit 10
+5  match ip address prefix-list network_192_0_2_0
+6  set community 400:100 additive
+```
+
+```note
+<code style="font-family: Consolas, 'Courier New', monospace;">ip prefix-list network_10_0_0_0 seq 5 permit 10.0.0.0/8 <span style="color: red;">ge 16</span></code><br>The prefix-list will match all subnets of <code style="font-family: Consolas, 'Courier New', monospace;">10.0.0.0/8</code> with mask lengths from <code style="font-family: Consolas, 'Courier New', monospace;">/16</code> to <code style="font-family: Consolas, 'Courier New', monospace;">/32</code>. <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<code style="font-family: Consolas, 'Courier New', monospace;">10.0.0.0/16, &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;10.0.0.0/17, &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;..., 10.0.0.0/32</code><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<code style="font-family: Consolas, 'Courier New', monospace;">10.1.0.0/16, &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;10.1.0.0/17, &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;..., 10.1.0.0/32</code><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<code style="font-family: Consolas, 'Courier New', monospace;">......</code><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<code style="font-family: Consolas, 'Courier New', monospace;">10.255.255.255/16, 10.255.255.255/17, ..., 10.255.255.255/32</code><br><br><code style="font-family: Consolas, 'Courier New', monospace;">ip prefix-list network_10_0_0_0 seq 5 permit 10.0.0.0/8 <span style="color: red;">le 24</span></code><br>The prefix-list will match all subnets of <code style="font-family: Consolas, 'Courier New', monospace;">10.0.0.0/8</code> with mask lengths from <code style="font-family: Consolas, 'Courier New', monospace;">/8</code> to <code style="font-family: Consolas, 'Courier New', monospace;">/24</code>.
+```
+
+option1: [yes]
+```
+Allow routes with prefix 192.0.2.0/25 to pass.
+```
+
+option2: [no]
+```
+Deny routes with prefix 192.0.2.0/25.
+```
+
+option3: [yes]
+```
+Allow routes with prefix 192.0.2.0/24 to pass and add community 400:100.
+```
+
+question2:
+
+<span style="text-decoration: underline;">The verified network specification (i.e., the confirmed global routing policy) allows receiving the private prefix 172.16.0.0/12.</span><br>
+Based on the following configuration snippet and <span style="color: red;">field-level subspecs (highlighted in blue)</span>, determine which of the following options are correct when modifying a single configuration field and the modification maintains the previously verified network specification. Select all that apply (including possibly none).
+
+```config
+ 1 ip prefix-list default_ips seq 5 permit 0.0.0.0/0 le 32 
+ 2 !
+ 3 ip prefix-list private_ips seq  5 permit [10.0.0.0/8](Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__ip)     ge 8
+ 4 ip prefix-list private_ips seq 10 permit [172.16.0.0/8](Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__ip)   ge 8
+ 5 ip prefix-list private_ips seq 15 permit [192.168.0.0/16](Config_r1_RouteFilterList_private_ips__Line3__192_168_0_0__ip) ge 16
+ 6 !
+ 7 !
+ 8 route-map R1_IN_FROM_Customer permit 10
+ 9  match ip address prefix-list private_ips
+10 !
+11 route-map R1_IN_FROM_Customer deny 100
+12  match ip address prefix-list default_ips
+```
+
+option1: [yes]
+```diff
+  @@ Configuration 3,3 @@
+- ip prefix-list private_ips seq  5 permit [[10.0.0.0/8](Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__ip)]     ge 8
++ ip prefix-list private_ips seq  5 permit [[172.16.0.0/8]<>]   ge 8
+```
+
+option2: [yes]
+```diff
+  @@ Configuration 4,4 @@
+- ip prefix-list private_ips seq 10 permit [[172.16.0.0/8](Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__ip)]   ge 8
++ ip prefix-list private_ips seq 10 permit [[172.0.0.0/4]<>]    ge 8
+```
+
+option3: [yes]
+```diff
+  @@ Configuration 5,5 @@
+- ip prefix-list private_ips seq 15 permit [[192.168.0.0/16](Config_r1_RouteFilterList_private_ips__Line3__192_168_0_0__ip)] ge 16
++ ip prefix-list private_ips seq 15 permit [[172.16.0.0/12]<>]  ge 16
+```
+
+question3:
+
+<span style="text-decoration: underline;">The verified network specification (i.e., the confirmed global routing policy) allows receiving the private prefix 172.16.0.0/12.</span><br>
+Based on the following configuration snippet and <span style="color: red;">field-level subspecs (highlighted in blue)</span>, determine which of the following options are correct when modifying multiple single configuration fields or removing an entire configuration line and the modification maintains the previously verified network specification. Select all that apply (including possibly none).
+
+```config
+ 1 ip prefix-list default_ips seq 5 permit 0.0.0.0/0 le 32 
+ 2 !
+ 3 ip prefix-list private_ips seq  5 [permit](Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__action) [10.0.0.0/8](Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__ip)     [ge 8](Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__prefix_range_start)
+ 4 ip prefix-list private_ips seq 10 [permit](Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__action) [172.16.0.0/8](Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__ip)   [ge 8](Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__prefix_range_start)
+ 5 ip prefix-list private_ips seq 15 [permit](Config_r1_RouteFilterList_private_ips__Line3__192_168_0_0__action) [192.168.0.0/16](Config_r1_RouteFilterList_private_ips__Line3__192_168_0_0__ip) [ge 16](Config_r1_RouteFilterList_private_ips__Line3__192_168_0_0__prefix_range_start)
+ 6 !
+ 7 !
+ 8 route-map R1_IN_FROM_Customer permit 10
+ 9  match ip address prefix-list private_ips
+10 !
+11 route-map R1_IN_FROM_Customer deny 100
+12  match ip address prefix-list default_ips
+```
+
+```note
+Option 2 is technically correct. <br>However, to highlight that modifying multiple configuration fields or removing an entire configuration line requires considering the line-level subspec (shown in purple in the next question), we intentionally mark this option as incorrect here.
+```
+
+option1: [no]
+```diff
+  @@ Configuration 4,4 @@
+- ip prefix-list private_ips seq 10 [permit](Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__action) [[172.16.0.0/8](Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__ip)]   [[ge 8](Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__prefix_range_start)]
++ ip prefix-list private_ips seq 10 [permit]<> [[10.0.0.0/8]<>]     [[ge 16]<>]
+```
+
+option2: [no]
+```diff
+  @@ Configuration 5,5 @@
+- ip prefix-list private_ips seq 15 [[permit](Config_r1_RouteFilterList_private_ips__Line3__192_168_0_0__action)] [[192.168.0.0/16](Config_r1_RouteFilterList_private_ips__Line3__192_168_0_0__ip)] [ge 16](Config_r1_RouteFilterList_private_ips__Line3__192_168_0_0__prefix_range_start)
++ ip prefix-list private_ips seq 15 [[deny]<>]   [[172.16.0.0/12]<>]  [ge 16]<>
+```
+
+option3: [no]
+```diff
+  @@ Configuration 3,3 @@
+- ip prefix-list private_ips seq  5 [[permit](Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__action)] [[10.0.0.0/8](Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__ip)]     [[ge 8](Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__prefix_range_start)]
++ ip prefix-list private_ips seq  5 [[deny]<>]   [[172.0.0.0/8]<>]    [[ge 12]<>]
+```
+
+question4:
+
+<span style="text-decoration: underline;">The verified network specification (i.e., the confirmed global routing policy) allows receiving the private prefix 172.16.0.0/12.</span><br>
+Based on the following configuration snippet and <span style="color: red;">line-level subspecs (highlighted in purple)</span>, determine which of the following options are correct when modifying multiple single configuration fields or removing an entire configuration line and the modification maintains the previously verified network specification. Select all that apply (including possibly none).
+
+```config
+ 1 ip prefix-list default_ips seq 5 permit 0.0.0.0/0 le 32 
+ 2 !
+ 3 [ip prefix-list](Config_r1_RouteFilterList_private_ips__Line1) private_ips seq  5 permit 10.0.0.0/8     ge 8
+ 4 [ip prefix-list](Config_r1_RouteFilterList_private_ips__Line2) private_ips seq 10 permit 172.16.0.0/8   ge 8
+ 5 [ip prefix-list](Config_r1_RouteFilterList_private_ips__Line3) private_ips seq 15 permit 192.168.0.0/16 ge 16
+ 6 !
+ 7 !
+ 8 route-map R1_IN_FROM_Customer permit 10
+ 9  match ip address prefix-list private_ips
+10 !
+11 route-map R1_IN_FROM_Customer deny 100
+12  match ip address prefix-list default_ips
+```
+
+option1: [no]
+```diff
+  @@ Configuration 4,4 @@
+- [ip prefix-list](Config_r1_RouteFilterList_private_ips__Line2) private_ips seq 10 permit [172.16.0.0/8]   [ge 8]
++ [ip prefix-list]<> private_ips seq 10 permit [10.0.0.0/8]     [ge 16]
+```
+
+option2: [yes]
+```diff
+  @@ Configuration 5,5 @@
+- [ip prefix-list](Config_r1_RouteFilterList_private_ips__Line3) private_ips seq 15 [permit] [192.168.0.0/16] ge 16
++ [ip prefix-list]<> private_ips seq 15 [deny]   [172.16.0.0/12]  ge 16
+```
+
+option3: [no]
+```diff
+  @@ Configuration 3,3 @@
+- [ip prefix-list](Config_r1_RouteFilterList_private_ips__Line1) private_ips seq  5 [permit] [10.0.0.0/8]     [ge 8]
++ [ip prefix-list]<> private_ips seq  5 [deny]   [172.0.0.0/8]    [ge 12]
+```
+
+question5:
+
+<span style="text-decoration: underline;">The verified network specification (i.e., the confirmed global routing policy) allows receiving the private prefix 172.16.0.0/12.</span><br>
+Based on the following configuration snippet and <span style="color: red;">line-level subspecs (highlighted in purple)</span> and <span style="color: red;">field-level subspecs (hightlight in blue)</span>, determine which of the following options are correct when modifying or removing configuration and the modification maintains the previously verified network specification. Select all that apply (including possibly none).
+
+```config
+ 1 ip prefix-list default_ips seq 5 permit 0.0.0.0/0 le 32 
+ 2 !
+ 3 [ip prefix-list](Config_r1_RouteFilterList_private_ips__Line1) private_ips seq  5 [permit](Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__action) [10.0.0.0/8](Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__ip)     [ge 8](Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__prefix_range_start)
+ 4 [ip prefix-list](Config_r1_RouteFilterList_private_ips__Line2) private_ips seq 10 [permit](Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__action) [172.16.0.0/8](Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__ip)   [ge 8](Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__prefix_range_start)
+ 5 [ip prefix-list](Config_r1_RouteFilterList_private_ips__Line3) private_ips seq 15 [permit](Config_r1_RouteFilterList_private_ips__Line3__192_168_0_0__action) [192.168.0.0/16](Config_r1_RouteFilterList_private_ips__Line3__192_168_0_0__ip) [ge 16](Config_r1_RouteFilterList_private_ips__Line3__192_168_0_0__prefix_range_start)
+ 6 !
+ 7 !
+ 8 route-map R1_IN_FROM_Customer permit 10
+ 9  match ip address prefix-list private_ips
+10 !
+11 route-map R1_IN_FROM_Customer deny 100
+12  match ip address prefix-list default_ips
+```
+
+```note
+Line 4: The configuration line that directly matches the target prefix (and it is the only such line) must satisfy all field-level subspecifications.<br>Line 3: Any configuration lines that appear earlier must ensure that they do not simultaneously satisfy the following conditions:<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A conflicting match action (permit / deny).<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The ability to match the target prefix (i.e., the base network prefix covers the target prefix and the ge/le constraints allow the match).
+```
+
+option1: [no]
+```diff
+  @@ Configuration 4,4 @@
+- [ip prefix-list](Config_r1_RouteFilterList_private_ips__Line2) private_ips seq 10 [[permit](Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__action)] [172.16.0.0/8](Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__ip)   [ge 8](Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__prefix_range_start)
++ [ip prefix-list]<> private_ips seq 10 [[deny]<>]   [172.16.0.0/8]<>   [ge 8]<>
+```
+
+option2: [no]
+```diff
+  @@ Configuration 4,4 @@
+- [ip prefix-list](Config_r1_RouteFilterList_private_ips__Line2) private_ips seq 10 [permit](Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__action) [[172.16.0.0/8](Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__ip)]   [ge 8](Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__prefix_range_start)
++ [ip prefix-list]<> private_ips seq 10 [permit]<> [[10.0.0.0/8]<>]     [ge 8]<>
+```
+
+option3: [yes]
+```diff
+  @@ Configuration 3,3 @@
+- [ip prefix-list](Config_r1_RouteFilterList_private_ips__Line1) private_ips seq  5 [[permit](Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__action)] [10.0.0.0/8](Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__ip)     [ge 8](Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__prefix_range_start)
++ [ip prefix-list]<> private_ips seq  5 [[deny]<>]   [10.0.0.0/8]<>     [ge 8]<>
+```
+
+question6:
+
+<span style="text-decoration: underline;">The verified network specification (i.e., the confirmed global routing policy) allows receiving the private prefix 172.16.0.0/12.</span><br>
+Based on the following configuration snippet and <span style="color: red;">line-level subspecs (highlighted in purple)</span>, determine which of the following options are correct when removing an entire configuration line and the modification maintains the previously verified network specification. Select all that apply (including possibly none).
+
+```config
+ 1 ip prefix-list default_ips seq 5 permit 0.0.0.0/0 le 32 
+ 2 !
+ 3 [ip prefix-list](Config_r1_RouteFilterList_private_ips__Line1) private_ips seq  5 [permit](Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__action) [10.0.0.0/8](Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__ip)     [ge 8](Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__prefix_range_start)
+ 4 [ip prefix-list](Config_r1_RouteFilterList_private_ips__Line2) private_ips seq 10 [permit](Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__action) [172.16.0.0/8](Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__ip)   [ge 8](Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__prefix_range_start)
+ 5 [ip prefix-list](Config_r1_RouteFilterList_private_ips__Line3) private_ips seq 15 [permit](Config_r1_RouteFilterList_private_ips__Line3__192_168_0_0__action) [192.168.0.0/16](Config_r1_RouteFilterList_private_ips__Line3__192_168_0_0__ip) [ge 16](Config_r1_RouteFilterList_private_ips__Line3__192_168_0_0__prefix_range_start)
+ 6 !
+ 7 !
+ 8 route-map R1_IN_FROM_Customer permit 10
+ 9  match ip address prefix-list private_ips
+10 !
+11 route-map R1_IN_FROM_Customer permit 100
+12  match ip address prefix-list default_ips
+```
+
+```note
+When the line-level subspecification is empty, this indicates one of the following two cases: <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1. the configuration line is irrelevant to the specification (e.g., line3, line5); <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2. the configuration line is related to the specification but is redundant (e.g., line1, line4). <br><br>In both cases, the configuration line can be modified or removed without any restrictions.
+```
+
+option1: [yes]
+```diff
+  @@ Configuration 3,3 @@
+- [ip prefix-list](Config_r1_RouteFilterList_private_ips__Line1) private_ips seq  5 [permit](Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__action) [10.0.0.0/8](Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__ip)     [ge 8](Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__prefix_range_start)
+```
+
+option2: [yes]
+```diff
+  @@ Configuration 4,4 @@
+- [ip prefix-list](Config_r1_RouteFilterList_private_ips__Line2) private_ips seq 10 [permit](Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__action) [172.16.0.0/8](Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__ip)   [ge 8](Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__prefix_range_start)
+```
+
+option3: [yes]
+```diff
+  @@ Configuration 5,5 @@
+- [ip prefix-list](Config_r1_RouteFilterList_private_ips__Line3) private_ips seq 15 [permit](Config_r1_RouteFilterList_private_ips__Line3__192_168_0_0__action) [192.168.0.0/16](Config_r1_RouteFilterList_private_ips__Line3__192_168_0_0__ip) [ge 16](Config_r1_RouteFilterList_private_ips__Line3__192_168_0_0__prefix_range_start)
+```

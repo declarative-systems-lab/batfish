@@ -1,0 +1,78 @@
+Field-Level Subspecs (Normalized)
+==================================
+
+Config Variable: Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__action
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__ip
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__length
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__prefix_range_end
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__prefix_range_start
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__action
+Subspecs (1):
+  1. (= Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__action true)
+--------------------------------------------------
+
+Config Variable: Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__ip
+Subspecs (1):
+  1. (= ((_ extract 31 20) |0_dst-ip|) #xac1) AND (= (bvand |0_dst-ip| Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__mask) (bvand Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__ip Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__mask))
+--------------------------------------------------
+
+Config Variable: Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__length
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__prefix_range_end
+Subspecs (1):
+  1. (>= Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__prefix_range_end 12) AND (<= Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__prefix_range_end 32)
+--------------------------------------------------
+
+Config Variable: Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__prefix_range_start
+Subspecs (1):
+  1. (>= Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__prefix_range_start 8) AND (<= Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__prefix_range_start 12)
+--------------------------------------------------
+
+Config Variable: Config_r1_RouteFilterList_private_ips__Line3__192_168_0_0__action
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r1_RouteFilterList_private_ips__Line3__192_168_0_0__ip
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r1_RouteFilterList_private_ips__Line3__192_168_0_0__length
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r1_RouteFilterList_private_ips__Line3__192_168_0_0__prefix_range_end
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Config Variable: Config_r1_RouteFilterList_private_ips__Line3__192_168_0_0__prefix_range_start
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+

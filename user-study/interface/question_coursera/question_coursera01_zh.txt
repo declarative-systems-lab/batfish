@@ -1,0 +1,246 @@
+question1:
+
+依据以下网络配置片段，请判断下列哪些选项是正确的（可不选）：
+
+```config
+1 ip prefix-list network_192_0_2_0 seq 5 permit 192.0.2.0/24 ge 24
+2 !
+3 !
+4 route-map R1_IN_FROM_ISP1 permit 10
+5  match ip address prefix-list network_192_0_2_0
+6  set community 400:100 additive
+```
+
+```note
+<code style="font-family: Consolas, 'Courier New', monospace;">ip prefix-list network_10_0_0_0 seq 5 permit 10.0.0.0/8 <span style="color: red;">ge 16</span></code><br>该前缀列表会匹配所有属于 <code style="font-family: Consolas, 'Courier New', monospace;">10.0.0.0/8</code> 的子网，且前缀长度在 <code style="font-family: Consolas, 'Courier New', monospace;">/16</code> 到 <code style="font-family: Consolas, 'Courier New', monospace;">/32</code>之间。 <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<code style="font-family: Consolas, 'Courier New', monospace;">10.0.0.0/16, &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;10.0.0.0/17, &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;..., 10.0.0.0/32</code><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<code style="font-family: Consolas, 'Courier New', monospace;">10.1.0.0/16, &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;10.1.0.0/17, &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;..., 10.1.0.0/32</code><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<code style="font-family: Consolas, 'Courier New', monospace;">......</code><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<code style="font-family: Consolas, 'Courier New', monospace;">10.255.255.255/16, 10.255.255.255/17, ..., 10.255.255.255/32</code><br><br><code style="font-family: Consolas, 'Courier New', monospace;">ip prefix-list network_10_0_0_0 seq 5 permit 10.0.0.0/8 <span style="color: red;">le 24</span></code><br>该前缀列表会匹配所有属于 <code style="font-family: Consolas, 'Courier New', monospace;">10.0.0.0/8</code> 的子网，且前缀长度在 <code style="font-family: Consolas, 'Courier New', monospace;">/8</code> 到 <code style="font-family: Consolas, 'Courier New', monospace;">/24</code> 之间。
+```
+
+option1: [yes]
+```
+允许前缀为 192.0.2.0/25 的路由通过。
+```
+
+option2: [no]
+```
+拒绝前缀为 192.0.2.0/25 的路由。
+```
+
+option3: [yes]
+```
+允许前缀为 192.0.2.0/24 的路由通过并添加 community 400:100。
+```
+
+question2:
+
+
+<span style="text-decoration: underline;">已验证的网络规约（即已确认的全局路由策略）要求允许接收私有前缀 172.16.0.0/12。</span><br>
+依据以下网络配置片段及<span style="color: red;">配置域子规约（蓝色高亮部分）</span>，请判断在修改单个配置域的情况下，哪些（如果有）修改后的配置仍然满足先前已验证的网络规约，并选择所有正确的选项（可不选）：
+
+```config
+ 1 ip prefix-list default_ips seq 5 permit 0.0.0.0/0 le 32 
+ 2 !
+ 3 ip prefix-list private_ips seq  5 permit [10.0.0.0/8](Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__ip)     ge 8
+ 4 ip prefix-list private_ips seq 10 permit [172.16.0.0/8](Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__ip)   ge 8
+ 5 ip prefix-list private_ips seq 15 permit [192.168.0.0/16](Config_r1_RouteFilterList_private_ips__Line3__192_168_0_0__ip) ge 16
+ 6 !
+ 7 !
+ 8 route-map R1_IN_FROM_Customer permit 10
+ 9  match ip address prefix-list private_ips
+10 !
+11 route-map R1_IN_FROM_Customer deny 100
+12  match ip address prefix-list default_ips
+```
+
+option1: [yes]
+```diff
+  @@ Configuration 3,3 @@
+- ip prefix-list private_ips seq  5 permit [[10.0.0.0/8](Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__ip)]     ge 8
++ ip prefix-list private_ips seq  5 permit [[172.16.0.0/8]<>]   ge 8
+```
+
+option2: [yes]
+```diff
+  @@ Configuration 4,4 @@
+- ip prefix-list private_ips seq 10 permit [[172.16.0.0/8](Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__ip)]   ge 8
++ ip prefix-list private_ips seq 10 permit [[172.0.0.0/4]<>]    ge 8
+```
+
+option3: [yes]
+```diff
+  @@ Configuration 5,5 @@
+- ip prefix-list private_ips seq 15 permit [[192.168.0.0/16](Config_r1_RouteFilterList_private_ips__Line3__192_168_0_0__ip)] ge 16
++ ip prefix-list private_ips seq 15 permit [[172.16.0.0/12]<>]  ge 16
+```
+
+question3:
+
+<span style="text-decoration: underline;">已验证的网络规约（即已确认的全局路由策略）要求允许接收私有前缀 172.16.0.0/12。</span><br>
+依据以下网络配置片段及<span style="color: red;">配置域子规约（蓝色高亮部分）</span>，请判断在修改多个配置域，或删除整个配置行的情况下，哪些（如果有）修改后的配置仍然满足先前已验证的网络规约，并选择所有正确的选项（可不选）：
+
+```config
+ 1 ip prefix-list default_ips seq 5 permit 0.0.0.0/0 le 32 
+ 2 !
+ 3 ip prefix-list private_ips seq  5 [permit](Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__action) [10.0.0.0/8](Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__ip)     [ge 8](Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__prefix_range_start)
+ 4 ip prefix-list private_ips seq 10 [permit](Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__action) [172.16.0.0/8](Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__ip)   [ge 8](Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__prefix_range_start)
+ 5 ip prefix-list private_ips seq 15 [permit](Config_r1_RouteFilterList_private_ips__Line3__192_168_0_0__action) [192.168.0.0/16](Config_r1_RouteFilterList_private_ips__Line3__192_168_0_0__ip) [ge 16](Config_r1_RouteFilterList_private_ips__Line3__192_168_0_0__prefix_range_start)
+ 6 !
+ 7 !
+ 8 route-map R1_IN_FROM_Customer permit 10
+ 9  match ip address prefix-list private_ips
+10 !
+11 route-map R1_IN_FROM_Customer deny 100
+12  match ip address prefix-list default_ips
+```
+
+```note
+选项 2 是正确的！<br>但为了强调：修改多个配置域，或删除整个配置行的情况下，需要结合配置行子规约进行分析（下一题中紫色高亮部分），我们在本题中将该选项视为错误选项。
+```
+
+option1: [no]
+```diff
+  @@ Configuration 4,4 @@
+- ip prefix-list private_ips seq 10 [permit](Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__action) [[172.16.0.0/8](Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__ip)]   [[ge 8](Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__prefix_range_start)]
++ ip prefix-list private_ips seq 10 [permit]<> [[10.0.0.0/8]<>]     [[ge 16]<>]
+```
+
+option2: [no]
+```diff
+  @@ Configuration 5,5 @@
+- ip prefix-list private_ips seq 15 [[permit](Config_r1_RouteFilterList_private_ips__Line3__192_168_0_0__action)] [[192.168.0.0/16](Config_r1_RouteFilterList_private_ips__Line3__192_168_0_0__ip)] [ge 16](Config_r1_RouteFilterList_private_ips__Line3__192_168_0_0__prefix_range_start)
++ ip prefix-list private_ips seq 15 [[deny]<>]   [[172.16.0.0/12]<>]  [ge 16]<>
+```
+
+option3: [no]
+```diff
+  @@ Configuration 3,3 @@
+- ip prefix-list private_ips seq  5 [[permit](Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__action)] [[10.0.0.0/8](Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__ip)]     [[ge 8](Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__prefix_range_start)]
++ ip prefix-list private_ips seq  5 [[deny]<>]   [[172.0.0.0/8]<>]    [[ge 12]<>]
+```
+
+question4:
+
+<span style="text-decoration: underline;">已验证的网络规约（即已确认的全局路由策略）要求允许接收私有前缀 172.16.0.0/12。</span><br>
+依据以下网络配置片段及<span style="color: red;">配置行子规约（紫色高亮部分）</span>，请判断在修改多个配置域，或删除整个配置行的情况下，哪些（如果有）修改后的配置仍然满足先前已验证的网络规约，并选择所有正确的选项（可不选）：
+
+```config
+ 1 ip prefix-list default_ips seq 5 permit 0.0.0.0/0 le 32 
+ 2 !
+ 3 [ip prefix-list](Config_r1_RouteFilterList_private_ips__Line1) private_ips seq  5 permit 10.0.0.0/8     ge 8
+ 4 [ip prefix-list](Config_r1_RouteFilterList_private_ips__Line2) private_ips seq 10 permit 172.16.0.0/8   ge 8
+ 5 [ip prefix-list](Config_r1_RouteFilterList_private_ips__Line3) private_ips seq 15 permit 192.168.0.0/16 ge 16
+ 6 !
+ 7 !
+ 8 route-map R1_IN_FROM_Customer permit 10
+ 9  match ip address prefix-list private_ips
+10 !
+11 route-map R1_IN_FROM_Customer deny 100
+12  match ip address prefix-list default_ips
+```
+
+option1: [no]
+```diff
+  @@ Configuration 4,4 @@
+- [ip prefix-list](Config_r1_RouteFilterList_private_ips__Line2) private_ips seq 10 permit [172.16.0.0/8]   [ge 8]
++ [ip prefix-list]<> private_ips seq 10 permit [10.0.0.0/8]     [ge 16]
+```
+
+option2: [yes]
+```diff
+  @@ Configuration 5,5 @@
+- [ip prefix-list](Config_r1_RouteFilterList_private_ips__Line3) private_ips seq 15 [permit] [192.168.0.0/16] ge 16
++ [ip prefix-list]<> private_ips seq 15 [deny]   [172.16.0.0/12]  ge 16
+```
+
+option3: [no]
+```diff
+  @@ Configuration 3,3 @@
+- [ip prefix-list](Config_r1_RouteFilterList_private_ips__Line1) private_ips seq  5 [permit] [10.0.0.0/8]     [ge 8]
++ [ip prefix-list]<> private_ips seq  5 [deny]   [172.0.0.0/8]    [ge 12]
+```
+
+question5:
+
+<span style="text-decoration: underline;">已验证的网络规约（即已确认的全局路由策略）要求允许接收私有前缀 172.16.0.0/12。</span><br>
+依据以下网络配置片段及<span style="color: red;">配置行子规约（紫色高亮部分）</span>、<span style="color: red;">配置域子规约（蓝色高亮部分）</span>，请判断在修改或删除配置的情况下，哪些（如果有）修改后的配置仍然满足先前已验证的网络规约，并选择所有正确的选项（可不选）：
+
+```config
+ 1 ip prefix-list default_ips seq 5 permit 0.0.0.0/0 le 32 
+ 2 !
+ 3 [ip prefix-list](Config_r1_RouteFilterList_private_ips__Line1) private_ips seq  5 [permit](Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__action) [10.0.0.0/8](Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__ip)     [ge 8](Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__prefix_range_start)
+ 4 [ip prefix-list](Config_r1_RouteFilterList_private_ips__Line2) private_ips seq 10 [permit](Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__action) [172.16.0.0/8](Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__ip)   [ge 8](Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__prefix_range_start)
+ 5 [ip prefix-list](Config_r1_RouteFilterList_private_ips__Line3) private_ips seq 15 [permit](Config_r1_RouteFilterList_private_ips__Line3__192_168_0_0__action) [192.168.0.0/16](Config_r1_RouteFilterList_private_ips__Line3__192_168_0_0__ip) [ge 16](Config_r1_RouteFilterList_private_ips__Line3__192_168_0_0__prefix_range_start)
+ 6 !
+ 7 !
+ 8 route-map R1_IN_FROM_Customer permit 10
+ 9  match ip address prefix-list private_ips
+10 !
+11 route-map R1_IN_FROM_Customer deny 100
+12  match ip address prefix-list default_ips
+```
+
+```note
+第 4 行：直接匹配目标前缀的配置行（且只有这一行），其所有配置域都有一定的子规约限制。<br>第 3 行：优先级在前面的配置行，保证不会同时满足以下规则即可：<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;匹配动作（permit / deny）冲突<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;能够匹配到目标前缀（即基础网络前缀覆盖目标前缀，并且 ge/le 允许匹配）
+```
+
+option1: [no]
+```diff
+  @@ Configuration 4,4 @@
+- [ip prefix-list](Config_r1_RouteFilterList_private_ips__Line2) private_ips seq 10 [[permit](Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__action)] [172.16.0.0/8](Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__ip)   [ge 8](Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__prefix_range_start)
++ [ip prefix-list]<> private_ips seq 10 [[deny]<>]   [172.16.0.0/8]<>   [ge 8]<>
+```
+
+option2: [no]
+```diff
+  @@ Configuration 4,4 @@
+- [ip prefix-list](Config_r1_RouteFilterList_private_ips__Line2) private_ips seq 10 [permit](Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__action) [[172.16.0.0/8](Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__ip)]   [ge 8](Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__prefix_range_start)
++ [ip prefix-list]<> private_ips seq 10 [permit]<> [[10.0.0.0/8]<>]     [ge 8]<>
+```
+
+option3: [yes]
+```diff
+  @@ Configuration 3,3 @@
+- [ip prefix-list](Config_r1_RouteFilterList_private_ips__Line1) private_ips seq  5 [[permit](Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__action)] [10.0.0.0/8](Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__ip)     [ge 8](Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__prefix_range_start)
++ [ip prefix-list]<> private_ips seq  5 [[deny]<>]   [10.0.0.0/8]<>     [ge 8]<>
+```
+
+question6:
+
+<span style="text-decoration: underline;">已验证的网络规约（即已确认的全局路由策略）要求允许接收私有前缀 172.16.0.0/12。</span><br>
+依据以下网络配置片段及<span style="color: red;">配置行子规约（紫色高亮部分）</span>，请判断在删除整个配置行的情况下，哪些（如果有）修改后的配置仍然满足先前已验证的网络规约，并选择所有正确的选项（可不选）：
+
+```config
+ 1 ip prefix-list default_ips seq 5 permit 0.0.0.0/0 le 32 
+ 2 !
+ 3 [ip prefix-list](Config_r1_RouteFilterList_private_ips__Line1) private_ips seq  5 [permit](Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__action) [10.0.0.0/8](Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__ip)     [ge 8](Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__prefix_range_start)
+ 4 [ip prefix-list](Config_r1_RouteFilterList_private_ips__Line2) private_ips seq 10 [permit](Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__action) [172.16.0.0/8](Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__ip)   [ge 8](Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__prefix_range_start)
+ 5 [ip prefix-list](Config_r1_RouteFilterList_private_ips__Line3) private_ips seq 15 [permit](Config_r1_RouteFilterList_private_ips__Line3__192_168_0_0__action) [192.168.0.0/16](Config_r1_RouteFilterList_private_ips__Line3__192_168_0_0__ip) [ge 16](Config_r1_RouteFilterList_private_ips__Line3__192_168_0_0__prefix_range_start)
+ 6 !
+ 7 !
+ 8 route-map R1_IN_FROM_Customer permit 10
+ 9  match ip address prefix-list private_ips
+10 !
+11 route-map R1_IN_FROM_Customer permit 100
+12  match ip address prefix-list default_ips
+```
+
+```note
+当配置行子规约为空时，这表明属于以下两种情况之一： <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1. 该配置行与规约无关（例如：line3，line5）； <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2. 该配置行与规约相关，但属于冗余配置行（例如：line1，line4）。 <br><br>在这两种情况下，该配置行都可以不受限制地修改或删除。
+```
+
+option1: [yes]
+```diff
+  @@ Configuration 3,3 @@
+- [ip prefix-list](Config_r1_RouteFilterList_private_ips__Line1) private_ips seq  5 [permit](Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__action) [10.0.0.0/8](Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__ip)     [ge 8](Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__prefix_range_start)
+```
+
+option2: [yes]
+```diff
+  @@ Configuration 4,4 @@
+- [ip prefix-list](Config_r1_RouteFilterList_private_ips__Line2) private_ips seq 10 [permit](Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__action) [172.16.0.0/8](Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__ip)   [ge 8](Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__prefix_range_start)
+```
+
+option3: [yes]
+```diff
+  @@ Configuration 5,5 @@
+- [ip prefix-list](Config_r1_RouteFilterList_private_ips__Line3) private_ips seq 15 [permit](Config_r1_RouteFilterList_private_ips__Line3__192_168_0_0__action) [192.168.0.0/16](Config_r1_RouteFilterList_private_ips__Line3__192_168_0_0__ip) [ge 16](Config_r1_RouteFilterList_private_ips__Line3__192_168_0_0__prefix_range_start)
+```

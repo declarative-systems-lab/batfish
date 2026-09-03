@@ -1,0 +1,5 @@
+<span style="text-decoration: underline;"><b>No Transit:</b> The network must not carry any transit traffic between ISP1 and ISP2.</span><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="text-decoration: underline;">ISP2 must <span style="color: red; font-weight: bold;">not reach</span> ISP1-advertised prefixes 192.0.2.0/24 and 198.51.100.0/24, via this network.</span><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="text-decoration: underline;">ISP1 must <span style="color: red; font-weight: bold;">not reach</span> ISP2-advertised prefix 203.0.113.0/24, via this network.</span><br>
+<br>
+<em>Each edge in the topology represents an eBGP connection, with route-maps applied on selected sessions to control the advertised routes and their attributes, and to influence route selection decisions.</em><br>
+<em>All devices are configured to enable ECMP (Equal-Cost Multi-Path) routing and the multipath-relax option.</em><br>
+<em>Due to time and configuration complexity, interface and BGP session details are omitted, and only the complete route-map configurations are presented.</em>

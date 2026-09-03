@@ -1,0 +1,22 @@
+Line-Level Subspecs (Normalized)
+=================================
+
+Line Group: Config_r1_RouteFilterList_private_ips__Line1
+Subspecs (1):
+  1. (>= Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__length 0) AND (<= Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__length 32) AND (>= Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__prefix_range_end 0) AND (<= Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__prefix_range_end 32) AND (>= Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__prefix_range_start 0) AND (<= Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__prefix_range_start 32) AND (>= Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__prefix_range_end Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__length) AND (>= Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__prefix_range_start Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__length) AND (= ((_ extract 31 20) |0_dst-ip|) #xac1) AND (not (and (= (bvand |0_dst-ip| Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__mask) (bvand Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__ip Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__mask)) (not Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__action) (>= Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__prefix_range_end 12) (<= Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__prefix_range_start 12)))
+  1. <span style="color: red;"><b>Cannot be configured as (all others are allowed):</b></span> <br>Action = deny <b>AND</b> <br>Prefix covers 172.16.0.0/12 <b>AND</b> <br>Prefix ge range = 0~12 <b>AND</b> <br>Prefix le range = 12~32 <b>AND</b> <br>Prefix ge/le range >= Prefix length
+  1. <span style="color: red;"><b>禁止以下配置 (其余配置均允许):</b></span> <br>Action 配置为 deny <b>并且</b> <br>基础网络前缀包含 172.16.0.0/12 <b>并且</b> <br>最小 (ge) 前缀长度范围为 0~12 <b>并且</b> <br>最大 (le) 前缀长度范围为 12~32 <b>并且</b> <br>最小 (ge) 与最大 (le) 前缀长度 >= 基础网络前缀长度
+--------------------------------------------------
+
+Line Group: Config_r1_RouteFilterList_private_ips__Line2
+Subspecs (1):
+  1. (>= Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__prefix_range_end Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__length) AND (>= Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__prefix_range_start Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__length) AND (= ((_ extract 31 20) |0_dst-ip|) #xac1) AND (= (bvand |0_dst-ip| Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__mask) (bvand Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__ip Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__mask)) AND (= Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__action true) AND (>= Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__length 0) AND (<= Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__length 32) AND (>= Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__prefix_range_end 12) AND (<= Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__prefix_range_end 32) AND (>= Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__prefix_range_start 0) AND (<= Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__prefix_range_start 12)
+  1. Action = permit <b>AND</b> <br>Prefix covers 172.16.0.0/12 <b>AND</b> <br>Prefix ge range = 0~12 <b>AND</b> <br>Prefix le range = 12~32 <b>AND</b> <br>Prefix ge/le range >= Prefix length
+  1. Action 应配置为 permit <b>并且</b> <br>基础网络前缀应包含 172.16.0.0/12 <b>并且</b> <br>最小 (ge) 前缀长度范围为 0~12 <b>并且</b> <br>最大 (le) 前缀长度范围为 12~32 <b>并且</b> <br>最小 (ge) 与最大 (le) 前缀长度 >= 基础网络前缀长度
+--------------------------------------------------
+
+Line Group: Config_r1_RouteFilterList_private_ips__Line3
+Subspecs (1):
+  1. 与规约无关 / 冗余，无限制
+--------------------------------------------------
+

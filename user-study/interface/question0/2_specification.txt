@@ -1,0 +1,5 @@
+1. ISP1 advertises the routes 192.0.2.0/24 and 198.51.100.0/24 to its eBGP peer R1.<br>2. R1 applies the inbound route policy <b>R1_IN_FROM_ISP1</b> to control the received routes and their attributes.<br>3. R1 performs the BGP best path selection.<br>4. R1 applies the outbound route policy <b>R1_OUT_TO_Customer</b> to control the routes to be propagated and their attributes.<br>5. R1 propagates these routes to its eBGP peer Customer.<br>
+<br>
+<em>Each edge in the topology represents an eBGP connection, with route-maps applied on selected sessions to control the advertised routes and their attributes, and to influence route selection decisions.</em><br>
+<em>R1 is configured to enable ECMP (Equal-Cost Multi-Path) routing and the multipath-relax option.</em><br>
+<em>Due to time and configuration complexity, interface and BGP session details are omitted, and only the complete route-map configurations are presented.</em>

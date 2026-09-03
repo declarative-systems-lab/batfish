@@ -1,0 +1,35 @@
+ 1 !!! Summary of BGP policies on R3 !!!
+ 2 ! Import policies: R3_IN_FROM_R2    R3_IN_FROM_Customer
+ 3 ! Export policies: 
+ 4 !
+ 5 !
+ 6 !!! Prefix-list definitions on R3 !!!
+ 7 [ip prefix-list](Config_r3_RouteFilterList_default_ips__Line1) default_ips seq 5 [permit](Config_r3_RouteFilterList_default_ips__Line1__0_0_0_0__action) [0.0.0.0/0](Config_r3_RouteFilterList_default_ips__Line1__0_0_0_0__ip) [le 32](Config_r3_RouteFilterList_default_ips__Line1__0_0_0_0__prefix_range_end)
+ 8 !
+ 9 [ip prefix-list](Config_r3_RouteFilterList_private_ips__Line1) private_ips seq 5  \\
+10         [permit](Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__action) [192.168.0.0/16](Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__ip) [ge 24](Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__prefix_range_start) [le 32](Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__prefix_range_end)
+11 !
+12 !
+13 !!! Community-list definitions on R3 !!!
+14 [ip community-list](Config_r3_CommunityList_400100__Line1) 400100 [permit](Config_r3_CommunityList_400100__Line1__exact_community_400_100_action) [400:100](Config_r3_CommunityList_400100__Line1__exact_community_400_100_400_100_community)
+15 !
+16 [ip community-list](Config_r3_CommunityList_500200__Line1) 500200 [permit](Config_r3_CommunityList_500200__Line1__exact_community_500_200_action) [500:200](Config_r3_CommunityList_500200__Line1__exact_community_500_200_500_200_community)
+17 !
+18 !
+19 !!! BGP import policy on R3 from R2 (R3 <- R2) !!!
+20 route-map R3_IN_FROM_R2 permit 10
+21   match community 400100
+22 !
+23 route-map R3_IN_FROM_R2 permit 20
+24   match community 500200
+25   [set as-path](Config_r3_RoutingPolicy_R3_IN_FROM_R2__Line2) prepend [200](Config_r3_RoutingPolicy_R3_IN_FROM_R2__Line2__prepend_aspath_cost)
+26 !
+27 route-map R3_IN_FROM_R2 deny 100
+28 !
+29 !
+30 !!! BGP import policy on R3 from Customer (R3 <- Customer) !!!
+31 route-map R3_IN_FROM_Customer deny 10
+32   match ip address prefix-list private_ips
+33 !
+34 route-map R3_IN_FROM_Customer permit 100
+35   match ip address prefix-list default_ips

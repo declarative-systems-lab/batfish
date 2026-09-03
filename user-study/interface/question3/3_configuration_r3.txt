@@ -1,0 +1,86 @@
+ 1 !!! Summary of BGP policies on R3 !!!
+ 2 ! Import policies: R3_IN_FROM_R2    R3_IN_FROM_Customer
+ 3 ! Export policies: R3_OUT_TO_Customer
+ 4 !
+ 5 !
+ 6 !!! Prefix-list definitions on R3 !!!
+ 7 [ip prefix-list](Config_r3_RouteFilterList_default_ips__Line1) default_ips seq 5 [permit](Config_r3_RouteFilterList_default_ips__Line1__0_0_0_0__action) [0.0.0.0/0](Config_r3_RouteFilterList_default_ips__Line1__0_0_0_0__ip) [le 32](Config_r3_RouteFilterList_default_ips__Line1__0_0_0_0__prefix_range_end)
+ 8 !
+ 9 [ip prefix-list](Config_r3_RouteFilterList_private_ips__Line1) private_ips seq  5 [deny](Config_r3_RouteFilterList_private_ips__Line1__192_168_144_0__action)   [192.168.144.0/20](Config_r3_RouteFilterList_private_ips__Line1__192_168_144_0__ip) [ge 20](Config_r3_RouteFilterList_private_ips__Line1__192_168_144_0__prefix_range_start) [le 32](Config_r3_RouteFilterList_private_ips__Line1__192_168_144_0__prefix_range_end)
+10 [ip prefix-list](Config_r3_RouteFilterList_private_ips__Line2) private_ips seq 10 [permit](Config_r3_RouteFilterList_private_ips__Line2__192_168_144_0__action) [192.168.144.0/20](Config_r3_RouteFilterList_private_ips__Line2__192_168_144_0__ip) [ge 22](Config_r3_RouteFilterList_private_ips__Line2__192_168_144_0__prefix_range_start) [le 32](Config_r3_RouteFilterList_private_ips__Line2__192_168_144_0__prefix_range_end)
+11 [ip prefix-list](Config_r3_RouteFilterList_private_ips__Line3) private_ips seq 15 [permit](Config_r3_RouteFilterList_private_ips__Line3__192_168_128_0__action) [192.168.130.0/22](Config_r3_RouteFilterList_private_ips__Line3__192_168_128_0__ip) [ge 22](Config_r3_RouteFilterList_private_ips__Line3__192_168_128_0__prefix_range_start) [le 32](Config_r3_RouteFilterList_private_ips__Line3__192_168_128_0__prefix_range_end)
+12 [ip prefix-list](Config_r3_RouteFilterList_private_ips__Line4) private_ips seq 20 [permit](Config_r3_RouteFilterList_private_ips__Line4__192_168_140_0__action) [192.168.142.0/22](Config_r3_RouteFilterList_private_ips__Line4__192_168_140_0__ip) [ge 24](Config_r3_RouteFilterList_private_ips__Line4__192_168_140_0__prefix_range_start) [le 32](Config_r3_RouteFilterList_private_ips__Line4__192_168_140_0__prefix_range_end)
+13 [ip prefix-list](Config_r3_RouteFilterList_private_ips__Line5) private_ips seq 25 [deny](Config_r3_RouteFilterList_private_ips__Line5__192_169_128_0__action)   [192.169.142.0/20](Config_r3_RouteFilterList_private_ips__Line5__192_169_128_0__ip) [ge 24](Config_r3_RouteFilterList_private_ips__Line5__192_169_128_0__prefix_range_start) [le 32](Config_r3_RouteFilterList_private_ips__Line5__192_169_128_0__prefix_range_end)
+14 [ip prefix-list](Config_r3_RouteFilterList_private_ips__Line6) private_ips seq 30 [deny](Config_r3_RouteFilterList_private_ips__Line6__192_169_129_0__action)   [192.169.129.0/24](Config_r3_RouteFilterList_private_ips__Line6__192_169_129_0__ip) [ge 24](Config_r3_RouteFilterList_private_ips__Line6__192_169_129_0__prefix_range_start) [le 32](Config_r3_RouteFilterList_private_ips__Line6__192_169_129_0__prefix_range_end)
+15 [ip prefix-list](Config_r3_RouteFilterList_private_ips__Line7) private_ips seq 35 [deny](Config_r3_RouteFilterList_private_ips__Line7__192_169_128_0__action)   [192.169.128.0/24](Config_r3_RouteFilterList_private_ips__Line7__192_169_128_0__ip) [ge 24](Config_r3_RouteFilterList_private_ips__Line7__192_169_128_0__prefix_range_start) [le 32](Config_r3_RouteFilterList_private_ips__Line7__192_169_128_0__prefix_range_end)
+16 [ip prefix-list](Config_r3_RouteFilterList_private_ips__Line8) private_ips seq 40 [deny](Config_r3_RouteFilterList_private_ips__Line8__192_168_128_0__action)   [192.168.128.0/24](Config_r3_RouteFilterList_private_ips__Line8__192_168_128_0__ip) [ge 24](Config_r3_RouteFilterList_private_ips__Line8__192_168_128_0__prefix_range_start) [le 32](Config_r3_RouteFilterList_private_ips__Line8__192_168_128_0__prefix_range_end)
+17 [ip prefix-list](Config_r3_RouteFilterList_private_ips__Line9) private_ips seq 45 [deny](Config_r3_RouteFilterList_private_ips__Line9__192_168_0_0__action)   [192.168.0.0/16](Config_r3_RouteFilterList_private_ips__Line9__192_168_0_0__ip)   [ge 16](Config_r3_RouteFilterList_private_ips__Line9__192_168_0_0__prefix_range_start) [le 32](Config_r3_RouteFilterList_private_ips__Line9__192_168_0_0__prefix_range_end)
+18 [ip prefix-list](Config_r3_RouteFilterList_private_ips__Line10) private_ips seq 50 [permit](Config_r3_RouteFilterList_private_ips__Line10__192_168_139_0__action) [192.168.139.0/24](Config_r3_RouteFilterList_private_ips__Line10__192_168_139_0__ip) [ge 24](Config_r3_RouteFilterList_private_ips__Line10__192_168_139_0__prefix_range_start) [le 32](Config_r3_RouteFilterList_private_ips__Line10__192_168_139_0__prefix_range_end)
+19 [ip prefix-list](Config_r3_RouteFilterList_private_ips__Line11) private_ips seq 55 [permit](Config_r3_RouteFilterList_private_ips__Line11__192_168_138_0__action) [192.168.138.0/24](Config_r3_RouteFilterList_private_ips__Line11__192_168_138_0__ip) [ge 24](Config_r3_RouteFilterList_private_ips__Line11__192_168_138_0__prefix_range_start) [le 32](Config_r3_RouteFilterList_private_ips__Line11__192_168_138_0__prefix_range_end)
+20 [ip prefix-list](Config_r3_RouteFilterList_private_ips__Line12) private_ips seq 60 [deny](Config_r3_RouteFilterList_private_ips__Line12__192_168_129_0__action)   [192.168.129.0/24](Config_r3_RouteFilterList_private_ips__Line12__192_168_129_0__ip) [ge 24](Config_r3_RouteFilterList_private_ips__Line12__192_168_129_0__prefix_range_start) [le 32](Config_r3_RouteFilterList_private_ips__Line12__192_168_129_0__prefix_range_end)
+21 [ip prefix-list](Config_r3_RouteFilterList_private_ips__Line13) private_ips seq 65 [deny](Config_r3_RouteFilterList_private_ips__Line13__192_0_0_0__action)   [192.0.0.0/8](Config_r3_RouteFilterList_private_ips__Line13__192_0_0_0__ip)      [ge  8](Config_r3_RouteFilterList_private_ips__Line13__192_0_0_0__prefix_range_start) [le 32](Config_r3_RouteFilterList_private_ips__Line13__192_0_0_0__prefix_range_end)
+22 [ip prefix-list](Config_r3_RouteFilterList_private_ips__Line14) private_ips seq 70 [permit](Config_r3_RouteFilterList_private_ips__Line14__192_168_0_0__action) [192.168.0.0/16](Config_r3_RouteFilterList_private_ips__Line14__192_168_0_0__ip)   [ge 16](Config_r3_RouteFilterList_private_ips__Line14__192_168_0_0__prefix_range_start) [le 32](Config_r3_RouteFilterList_private_ips__Line14__192_168_0_0__prefix_range_end)
+23 [ip prefix-list](Config_r3_RouteFilterList_private_ips__Line15) private_ips seq 75 [permit](Config_r3_RouteFilterList_private_ips__Line15__192_168_128_0__action) [192.168.128.0/20](Config_r3_RouteFilterList_private_ips__Line15__192_168_128_0__ip) [ge 20](Config_r3_RouteFilterList_private_ips__Line15__192_168_128_0__prefix_range_start) [le 32](Config_r3_RouteFilterList_private_ips__Line15__192_168_128_0__prefix_range_end)
+24 [ip prefix-list](Config_r3_RouteFilterList_private_ips__Line16) private_ips seq 80 [permit](Config_r3_RouteFilterList_private_ips__Line16__192_168_128_0__action) [192.168.129.0/20](Config_r3_RouteFilterList_private_ips__Line16__192_168_128_0__ip) [ge 20](Config_r3_RouteFilterList_private_ips__Line16__192_168_128_0__prefix_range_start) [le 32](Config_r3_RouteFilterList_private_ips__Line16__192_168_128_0__prefix_range_end)
+25 !
+26 !
+27 !!! Community-list definitions on R3 !!!
+28 [ip community-list](Config_r3_CommunityList_400110__Line1) 400110 [permit](Config_r3_CommunityList_400110__Line1__exact_community_400_110_action) [400:110](Config_r3_CommunityList_400110__Line1__exact_community_400_110_400_110_community)
+29 !                                                       
+30 [ip community-list](Config_r3_CommunityList_400120__Line1) 400120 [permit](Config_r3_CommunityList_400120__Line1__exact_community_400_120_action) [400:120](Config_r3_CommunityList_400120__Line1__exact_community_400_120_400_120_community)
+31 !                                                       
+32 [ip community-list](Config_r3_CommunityList_500210__Line1) 500210 [permit](Config_r3_CommunityList_500210__Line1__exact_community_500_210_action) [500:210](Config_r3_CommunityList_500210__Line1__exact_community_500_210_500_210_community)
+33 !                                                       
+34 [ip community-list](Config_r3_CommunityList_500220__Line1) 500220 [permit](Config_r3_CommunityList_500220__Line1__exact_community_500_220_action) [500:220](Config_r3_CommunityList_500220__Line1__exact_community_500_220_500_220_community)
+35 !                                                       
+36 [ip community-list](Config_r3_CommunityList_100210__Line1) 100210 [permit](Config_r3_CommunityList_100210__Line1__exact_community_100_210_action) [100:210](Config_r3_CommunityList_100210__Line1__exact_community_100_210_100_210_community)
+37 !                                                       
+38 [ip community-list](Config_r3_CommunityList_100220__Line1) 100220 [permit](Config_r3_CommunityList_100220__Line1__exact_community_100_220_action) [100:220](Config_r3_CommunityList_100220__Line1__exact_community_100_220_100_220_community)
+39 !                                                       
+40 [ip community-list](Config_r3_CommunityList_100220__Line1) 200110 [permit](Config_r3_CommunityList_100220__Line1__exact_community_100_220_action) [200:110](Config_r3_CommunityList_200110__Line1__exact_community_200_110_200_110_community)
+41 !
+42 !
+43 !!! BGP import policy on R3 from R2 (R3 <- R2) !!!
+44 route-map R3_IN_FROM_R2 permit 10
+45   match community 500210
+46   [set as-path](Config_r3_RoutingPolicy_R3_IN_FROM_R2__Line1) prepend [200](Config_r3_RoutingPolicy_R3_IN_FROM_R2__Line1__prepend_aspath_cost)
+47 !
+48 route-map R3_IN_FROM_R2 permit 20
+49   match community 100210
+50 !
+51 route-map R3_IN_FROM_R2 deny 30
+52   match community 500220
+53 !
+54 route-map R3_IN_FROM_R2 permit 40
+55   match community 200110
+56   [set as-path](Config_r3_RoutingPolicy_R3_IN_FROM_R2__Line4) prepend [200 200](Config_r3_RoutingPolicy_R3_IN_FROM_R2__Line4__prepend_aspath_cost)
+57 !
+58 route-map R3_IN_FROM_R2 deny 50
+59   match community 400110
+60 !
+61 route-map R3_IN_FROM_R2 deny 60
+62   match community 400120
+63 !
+64 route-map R3_IN_FROM_R2 permit 70
+65   match community 100220
+66 !
+67 route-map R3_IN_FROM_R2 deny 100
+68 !
+69 !
+70 !!! BGP import policy on R3 from Customer (R3 <- Customer) !!!
+71 route-map R3_IN_FROM_Customer deny 10
+72   match ip address prefix-list private_ips
+73 !
+74 route-map R3_IN_FROM_Customer permit 100
+75   match ip address prefix-list default_ips
+76 !
+77 !
+78 !!! BGP export policy on R3 to Customer (R3 -> Customer) !!!
+79 route-map R3_OUT_TO_Customer permit 10
+80   match community 400110
+81 !
+82 route-map R3_OUT_TO_Customer permit 20
+83   match community 400120
+84 !
+85 route-map R3_OUT_TO_Customer permit 100
+86   match ip address prefix-list default_ips

@@ -1,0 +1,93 @@
+Line-Level Subspecs (Normalized)
+=================================
+
+Line Group: Config_r1_CommunityList_200100__Line1
+Subspecs (1):
+  1. (= Config_r1_CommunityList_200100__Line1__exact_community_200_100_200_100_community true) AND (= Config_r1_CommunityList_200100__Line1__exact_community_200_100_action true) AND configurable (permit) = {200:100} AND nonconfigurable (permit) = {400:100, 500:200} AND configurable (deny) = {} AND nonconfigurable (deny) = {200:100, 400:100, 500:200}
+--------------------------------------------------
+
+Line Group: Config_r1_CommunityList_400100__Line1
+Subspecs (1):
+  1. (not (and (not Config_r1_CommunityList_400100__Line1__exact_community_400_100_400_100_community) Config_r1_CommunityList_400100__Line1__exact_community_400_100_action)) AND configurable (permit) = {400:100, 500:200} AND nonconfigurable (permit) = {200:100} AND configurable (deny) = {400:100, 200:100, 500:200} AND nonconfigurable (deny) = {}
+--------------------------------------------------
+
+Line Group: Config_r1_CommunityList_500200__Line1
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Line Group: Config_r1_RouteFilterList_default_ips__Line1
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Line Group: Config_r1_RouteFilterList_isp1_network__Line1
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Line Group: Config_r1_RouteFilterList_isp1_network__Line2
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Line Group: Config_r1_RouteFilterList_isp1_network__Line3
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Line Group: Config_r1_RoutingPolicy_R1_IN_FROM_ISP1__Line1
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Line Group: Config_r2_CommunityList_400100__Line1
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Line Group: Config_r2_RouteFilterList_default_ips__Line1
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Line Group: Config_r2_RouteFilterList_isp2_network__Line1
+Subspecs (1):
+  1. (>= Config_r2_RouteFilterList_isp2_network__Line1__203_0_113_0__prefix_range_end Config_r2_RouteFilterList_isp2_network__Line1__203_0_113_0__length) AND (>= Config_r2_RouteFilterList_isp2_network__Line1__203_0_113_0__prefix_range_start Config_r2_RouteFilterList_isp2_network__Line1__203_0_113_0__length) AND (= ((_ extract 31 8) |0_dst-ip|) #xcb0071) AND (= (bvand |0_dst-ip| Config_r2_RouteFilterList_isp2_network__Line1__203_0_113_0__mask) (bvand Config_r2_RouteFilterList_isp2_network__Line1__203_0_113_0__ip Config_r2_RouteFilterList_isp2_network__Line1__203_0_113_0__mask)) AND (= Config_r2_RouteFilterList_isp2_network__Line1__203_0_113_0__action true) AND (>= Config_r2_RouteFilterList_isp2_network__Line1__203_0_113_0__length 0) AND (<= Config_r2_RouteFilterList_isp2_network__Line1__203_0_113_0__length 32) AND (>= Config_r2_RouteFilterList_isp2_network__Line1__203_0_113_0__prefix_range_end 24) AND (<= Config_r2_RouteFilterList_isp2_network__Line1__203_0_113_0__prefix_range_end 32) AND (>= Config_r2_RouteFilterList_isp2_network__Line1__203_0_113_0__prefix_range_start 0) AND (<= Config_r2_RouteFilterList_isp2_network__Line1__203_0_113_0__prefix_range_start 24)
+--------------------------------------------------
+
+Line Group: Config_r2_RoutingPolicy_R2_IN_FROM_ISP2__Line1
+Subspecs (1):
+  1. (= Config_r2_RoutingPolicy_R2_IN_FROM_ISP2__Line1__add_community_500_200_community true)
+--------------------------------------------------
+
+Line Group: Config_r2_RoutingPolicy_R2_OUT_TO_R1__Line0
+Subspecs (1):
+  1. (= Config_r2_RoutingPolicy_R2_OUT_TO_R1__Line0__set_community_200_100_community true)
+--------------------------------------------------
+
+Line Group: Config_r3_CommunityList_400100__Line1
+Subspecs (1):
+  1. (not (and (not Config_r3_CommunityList_400100__Line1__exact_community_400_100_400_100_community) Config_r3_CommunityList_400100__Line1__exact_community_400_100_action)) AND configurable (permit) = {400:100, 200:100} AND nonconfigurable (permit) = {500:200} AND configurable (deny) = {400:100, 200:100, 500:200} AND nonconfigurable (deny) = {}
+--------------------------------------------------
+
+Line Group: Config_r3_CommunityList_500200__Line1
+Subspecs (1):
+  1. (= Config_r3_CommunityList_500200__Line1__exact_community_500_200_500_200_community true) AND (= Config_r3_CommunityList_500200__Line1__exact_community_500_200_action true) AND configurable (permit) = {500:200} AND nonconfigurable (permit) = {200:100, 400:100} AND configurable (deny) = {} AND nonconfigurable (deny) = {500:200, 200:100, 400:100}
+--------------------------------------------------
+
+Line Group: Config_r3_RouteFilterList_default_ips__Line1
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Line Group: Config_r3_RouteFilterList_private_ips__Line1
+Subspecs (1):
+  1. empty
+--------------------------------------------------
+
+Line Group: Config_r3_RoutingPolicy_R3_IN_FROM_R2__Line2
+Subspecs (1):
+  1. (= Config_r3_RoutingPolicy_R3_IN_FROM_R2__Line2__prepend_aspath_cost 1)
+--------------------------------------------------
+

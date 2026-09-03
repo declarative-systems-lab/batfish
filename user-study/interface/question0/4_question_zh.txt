@@ -1,0 +1,16 @@
+Customer 可以接收到哪些路由？<br><br>请勾选下面选项中的 <span style="color: red;">一项</span>。
+
+option1: [yes]
+```diff
+192.0.2.0/24
+```
+
+option2: [no]
+```diff
+198.51.100.0/24
+```
+
+option3: [no]
+```diff
+未接收到任何路由。
+```

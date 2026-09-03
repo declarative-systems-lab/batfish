@@ -1,0 +1,15 @@
+R1_IN_FROM_ISP1
+R1_OUT_TO_ISP1
+R1_OUT_TO_R3
+R2_IN_FROM_ISP2
+R2_OUT_TO_ISP2
+R2_OUT_TO_R1
+R3_IN_FROM_R2
+R3_IN_FROM_Customer
+default_ips
+private_ips
+isp1_network
+isp2_network
+500200
+400100
+200100

@@ -1,0 +1,7 @@
+<br>Option 1 involves removing an entire configuration line, so we analyze it based on the line-level subspecification. Options 2 and 3 involve modifying a single configuration field, so we analyze them based on the field-level subspecifications.
+<br><b>Option 1:</b>
+The configuration line to be removed has a non-empty line-level subspec. This means the configuration line is relevant to the previously verified network specification. Therefore, removing it may cause the configuration to violate the previously verified specification.
+<br><b>Option 2:</b>
+The community-list action field to be modified has an empty field-level subspec. This means this configuration field is irrelevant to the previously verified network specification and can be modified freely.
+<br><b>Option 3:</b>
+The prepend AS-path field to be modified has a field-level subspec "prepending AS-path length = 1". The field is modified to "300 200 (prepending AS-path length = 2)", which exceeds the range allowed by the subspec. Therefore, modifying it may cause the configuration to violate the previously verified specification.

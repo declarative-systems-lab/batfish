@@ -1,0 +1,5 @@
+1. ISP1 向其 eBGP 邻居 R1 通告路由 192.0.2.0/24 和 198.51.100.0/24。<br>2. R1 应用入站路由策略 <b>R1_IN_FROM_ISP1</b> 来控制接收的路由及其属性。<br>3. R1 执行 BGP 最佳路径选择。<br>4. R1 应用出站路由策略 <b>R1_OUT_TO_Customer</b> 来控制待传播的路由及其属性。<br>5. R1 将这些路由通告给其 eBGP 邻居 Customer。<br>
+<br>
+<em>拓扑图中的每一条边都表示一个 eBGP 连接，其中部分连接配置了路由映射（route-maps），用于控制该连接上传播的路由和其属性，并影响路由选择决策。</em><br>
+<em>R1 配置了等价多路径（ECMP，Equal-Cost Multi-Path）路由和 multipath-relax 选项。</em><br>
+<em>考虑到时间和配置复杂度的限制，我们省略了接口及 BGP 会话的具体配置，仅呈现完整的路由映射部分。</em>

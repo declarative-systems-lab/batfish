@@ -1,0 +1,28 @@
+在常规网络维护过程中，网络运维人员计划移除未被使用的配置行，以简化路由器 R1 的接收到的路由及其属性。<br><br>请勾选下面选项中的 <span style="color: red;">任意数量的选项（可不选）</span>，如果该选项中的配置能够被安全删除且不会影响已验证的 <b>客户端可达性</b> 网络规约。
+
+option1: [no]
+```diff
+  @@ R1 Configuration 64,66 @@
+  route-map R1_IN_FROM_ISP1 permit 10
+    match ip address prefix-list isp1_network1
+-   [set community](Config_r1_RoutingPolicy_R1_IN_FROM_ISP1__Line1) [400:110](Config_r1_RoutingPolicy_R1_IN_FROM_ISP1__Line1__add_community_400_110_community) additive
+```
+
+option2: [yes]
+```diff
+  @@ R1 Configuration 68,70 @@
+  route-map R1_IN_FROM_ISP1 permit 20
+    match ip address prefix-list isp1_network3
+-   [set community](Config_r1_RoutingPolicy_R1_IN_FROM_ISP1__Line2) [400:110](Config_r1_RoutingPolicy_R1_IN_FROM_ISP1__Line2__add_community_400_110_community) additive
+```
+
+option3: [yes]
+```diff
+  @@ R1 Configuration 47,47 @@
+- [ip prefix-list](Config_r1_RouteFilterList_isp1_network3__Line11) isp1_network3 seq 55 [permit](Config_r1_RouteFilterList_isp1_network3__Line11__198_51_100_0__action) [198.51.100.0/24](Config_r1_RouteFilterList_isp1_network3__Line11__198_51_100_0__ip) [ge 24](Config_r1_RouteFilterList_isp1_network3__Line11__198_51_100_0__prefix_range_start)
+<br>
+  @@ R1 Configuration 68,70 @@
+  route-map R1_IN_FROM_ISP1 permit 20
+    match ip address prefix-list isp1_network3
+    [set community](Config_r1_RoutingPolicy_R1_IN_FROM_ISP1__Line2) [400:110](Config_r1_RoutingPolicy_R1_IN_FROM_ISP1__Line2__add_community_400_110_community) additive
+```

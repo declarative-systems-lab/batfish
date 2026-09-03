@@ -1,0 +1,109 @@
+Line-Level Subspecs (Normalized)
+=================================
+
+Line Group: Config_r1_CommunityList_200100__Line1
+Subspecs (1):
+  1. (= Config_r1_CommunityList_200100__Line1__exact_community_200_100_200_100_community true) AND (= Config_r1_CommunityList_200100__Line1__exact_community_200_100_action true) <br>configurable (permit) = {200:100} <br>configurable (deny) &nbsp;&nbsp;= {} <br>nonconfigurable (permit) = {400:100, 500:200} <br>nonconfigurable (deny) &nbsp;&nbsp;= {200:100, 400:100, 500:200}
+  1. Action = permit <b>AND</b> <br>Community = 200:100
+  1. Action 应配置为 permit <b>并且</b> <br>Community 应配置为 200:100
+--------------------------------------------------
+
+Line Group: Config_r1_CommunityList_400100__Line1
+Subspecs (1):
+  1. (not (and (not Config_r1_CommunityList_400100__Line1__exact_community_400_100_400_100_community) Config_r1_CommunityList_400100__Line1__exact_community_400_100_action)) <br>configurable (permit) = {400:100, 500:200} <br>configurable (deny) &nbsp;&nbsp;= {400:100, 200:100, 500:200} <br>nonconfigurable (permit) = {200:100} <br>nonconfigurable (deny) &nbsp;&nbsp;= {}
+  1. <span style="color: red;"><b>Cannot be configured as (all others are allowed):</b></span> <br>Action = permit <b>AND</b> <br>Community = 200:100 <br><br><em>Configurable (permit) = {400:100, 500:200} <br>Configurable (deny) &nbsp;&nbsp;= {400:100, 200:100, 500:200}</em>
+  1. <span style="color: red;"><b>禁止以下配置 (其余配置均允许):</b></span> <br>Action 配置为 permit <b>并且</b> <br>Community 配置为 200:100 <br><br><em>可配置 Community (permit)：{400:100, 500:200} <br>可配置 Community (deny)&nbsp;&nbsp;：{400:100, 200:100, 500:200}</em>
+--------------------------------------------------
+
+Line Group: Config_r1_CommunityList_500200__Line1
+Subspecs (1):
+  1. 与规约无关 / 冗余，无限制
+--------------------------------------------------
+
+Line Group: Config_r1_RouteFilterList_default_ips__Line1
+Subspecs (1):
+  1. 与规约无关 / 冗余，无限制
+--------------------------------------------------
+
+Line Group: Config_r1_RouteFilterList_isp1_network__Line1
+Subspecs (1):
+  1. 与规约无关 / 冗余，无限制
+--------------------------------------------------
+
+Line Group: Config_r1_RouteFilterList_isp1_network__Line2
+Subspecs (1):
+  1. 与规约无关 / 冗余，无限制
+--------------------------------------------------
+
+Line Group: Config_r1_RouteFilterList_isp1_network__Line3
+Subspecs (1):
+  1. 与规约无关 / 冗余，无限制
+--------------------------------------------------
+
+Line Group: Config_r1_RoutingPolicy_R1_IN_FROM_ISP1__Line1
+Subspecs (1):
+  1. 与规约无关 / 冗余，无限制
+--------------------------------------------------
+
+Line Group: Config_r2_CommunityList_400100__Line1
+Subspecs (1):
+  1. 与规约无关 / 冗余，无限制
+--------------------------------------------------
+
+Line Group: Config_r2_RouteFilterList_default_ips__Line1
+Subspecs (1):
+  1. 与规约无关 / 冗余，无限制
+--------------------------------------------------
+
+Line Group: Config_r2_RouteFilterList_isp2_network__Line1
+Subspecs (1):
+  1. (>= Config_r2_RouteFilterList_isp2_network__Line1__203_0_113_0__prefix_range_end Config_r2_RouteFilterList_isp2_network__Line1__203_0_113_0__length) AND (>= Config_r2_RouteFilterList_isp2_network__Line1__203_0_113_0__prefix_range_start Config_r2_RouteFilterList_isp2_network__Line1__203_0_113_0__length) AND (= ((_ extract 31 8) |0_dst-ip|) #xcb0071) AND (= (bvand |0_dst-ip| Config_r2_RouteFilterList_isp2_network__Line1__203_0_113_0__mask) (bvand Config_r2_RouteFilterList_isp2_network__Line1__203_0_113_0__ip Config_r2_RouteFilterList_isp2_network__Line1__203_0_113_0__mask)) AND (= Config_r2_RouteFilterList_isp2_network__Line1__203_0_113_0__action true) AND (>= Config_r2_RouteFilterList_isp2_network__Line1__203_0_113_0__length 0) AND (<= Config_r2_RouteFilterList_isp2_network__Line1__203_0_113_0__length 32) AND (>= Config_r2_RouteFilterList_isp2_network__Line1__203_0_113_0__prefix_range_end 24) AND (<= Config_r2_RouteFilterList_isp2_network__Line1__203_0_113_0__prefix_range_end 32) AND (>= Config_r2_RouteFilterList_isp2_network__Line1__203_0_113_0__prefix_range_start 0) AND (<= Config_r2_RouteFilterList_isp2_network__Line1__203_0_113_0__prefix_range_start 24)
+  1. Action = permit <b>AND</b> <br>Prefix covers 203.0.113.0/24 <b>AND</b> <br>Prefix ge range = 0~24 <b>AND</b> <br>Prefix le range = 24~32 <b>AND</b> <br>Prefix ge/le range >= Prefix length
+  1. Action 应配置为 permit <b>并且</b> <br>基础网络前缀应包含 203.0.113.0/24 <b>并且</b> <br>最小 (ge) 前缀长度范围应为 0~24 <b>并且</b> <br>最大 (le) 前缀长度范围应为 24~32 <b>并且</b> <br>最小 (ge) 与最大 (le) 前缀长度 >= 基础网络前缀长度
+--------------------------------------------------
+
+Line Group: Config_r2_RoutingPolicy_R2_IN_FROM_ISP2__Line1
+Subspecs (1):
+  1. (= Config_r2_RoutingPolicy_R2_IN_FROM_ISP2__Line1__add_community_500_200_community true)
+  1. Community = 500:200
+  1. Community 应配置为 500:200
+--------------------------------------------------
+
+Line Group: Config_r2_RoutingPolicy_R2_OUT_TO_R1__Line0
+Subspecs (1):
+  1. (= Config_r2_RoutingPolicy_R2_OUT_TO_R1__Line0__set_community_200_100_community true)
+  1. Community = 200:100
+  1. Community 应配置为 200:100
+--------------------------------------------------
+
+Line Group: Config_r3_CommunityList_400100__Line1
+Subspecs (1):
+  1. (not (and (not Config_r3_CommunityList_400100__Line1__exact_community_400_100_400_100_community) Config_r3_CommunityList_400100__Line1__exact_community_400_100_action)) <br>configurable (permit) = {400:100, 200:100} <br>configurable (deny) &nbsp;&nbsp;= {400:100, 200:100, 500:200} <br>nonconfigurable (permit) = {500:200} <br>nonconfigurable (deny) &nbsp;&nbsp;= {}
+  1. <span style="color: red;"><b>Cannot be configured as (all others are allowed):</b></span> <br>Action = permit <b>AND</b> <br>Community = 500:200 <br><br><em>Configurable (permit) = {400:100, 200:100} <br>Configurable (deny) &nbsp;&nbsp;= {400:100, 200:100, 500:200}</em>
+  1. <span style="color: red;"><b>禁止以下配置 (其余配置均允许):</b></span> <br>Action 配置为 permit <b>并且</b> <br>Community 配置为 500:200 <br><br><em>可配置 Community (permit)：{400:100, 200:100} <br>可配置 Community (deny)&nbsp;&nbsp;：{400:100, 200:100, 500:200}</em>
+--------------------------------------------------
+
+Line Group: Config_r3_CommunityList_500200__Line1
+Subspecs (1):
+  1. (= Config_r3_CommunityList_500200__Line1__exact_community_500_200_500_200_community true) AND (= Config_r3_CommunityList_500200__Line1__exact_community_500_200_action true) <br>configurable (permit) = {500:200} <br>configurable (deny) &nbsp;&nbsp;= {} <br>nonconfigurable (permit) = {200:100, 400:100} <br>nonconfigurable (deny) &nbsp;&nbsp;= {500:200, 200:100, 400:100}
+  1. Action = permit <b>AND</b> <br>Community = 500:200
+  1. Action 应配置为 permit <b>并且</b> <br>Community 应配置为 500:200
+--------------------------------------------------
+
+Line Group: Config_r3_RouteFilterList_default_ips__Line1
+Subspecs (1):
+  1. 与规约无关 / 冗余，无限制
+--------------------------------------------------
+
+Line Group: Config_r3_RouteFilterList_private_ips__Line1
+Subspecs (1):
+  1. 与规约无关 / 冗余，无限制
+--------------------------------------------------
+
+Line Group: Config_r3_RoutingPolicy_R3_IN_FROM_R2__Line2
+Subspecs (1):
+  1. (= Config_r3_RoutingPolicy_R3_IN_FROM_R2__Line2__prepend_aspath_cost 1)
+  1. AS-path prepend length = 1
+  1. AS-path 前置扩展，长度应为 1
+--------------------------------------------------
+

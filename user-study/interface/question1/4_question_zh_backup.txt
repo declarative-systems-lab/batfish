@@ -1,0 +1,33 @@
+现在，网络运维人员需对设备配置进行修改，以支持额外的网络规约。同时，修改后的配置必须仍满足先前已验证的 <b>等价路由可达性</b> 网络规约。<br><br>请勾选下面选项中的 <span style="color: red;">任意数量的选项（可不选）</span>，如果该选项中的配置被移除或修改后，仍满足已验证的 <b>等价路由可达性</b> 网络规约。
+
+```note
+<code style="font-family: Consolas, 'Courier New', monospace;">set as-path prepend &lt;ASN&gt; [&lt;ASN&gt; &lt;ASN&gt; ...]</code><br>该命令会在路由的 AS-path 属性的前面添加 <span style="color: red;">一个</span> 或<span style="color: red;">多个</span> AS 号（ASN），增加 AS-path 长度，从而影响 BGP 路由的选择。<br><br><code style="font-family: Consolas, 'Courier New', monospace;">set as-path prepend 200 100</code><br>原先的 As-path: 65001 65002<br>延长后的 AS-path: <span style="color: red;">200 100</span> 65001 65002
+```
+
+option1: [no]
+```diff
+  @@ R2 Configuration 17,19 @@
+  route-map R2_IN_FROM_ISP2 permit 10
+    match ip address prefix-list isp2_network
+-   [set community](Config_r2_RoutingPolicy_R2_IN_FROM_ISP2__Line1) [500:200](Config_r2_RoutingPolicy_R2_IN_FROM_ISP2__Line1__add_community_500_200_community) additive
+```
+
+option2: [yes]
+```diff
+  @@ R1 Configuration 15,15 @@
+- [ip community-list](Config_r1_CommunityList_400100__Line1) 400100 [[permit](Config_r1_CommunityList_400100__Line1__exact_community_400_100_action)] [400:100](Config_r1_CommunityList_400100__Line1__exact_community_400_100_400_100_community)
++ [ip community-list]<> 400100 [[deny]<>]   [400:100]<>
+<br>
+  @@ R1 Configuration 42,43 @@
+  route-map R1_OUT_TO_R3 deny 10
+    match community 400100
+```
+
+option3: [no]
+```diff
+  @@ R3 Configuration 23,25 @@
+  route-map R3_IN_FROM_R2 permit 20
+    match community 500200
+-   [set as-path](Config_r3_RoutingPolicy_R3_IN_FROM_R2__Line2) prepend [[200](Config_r3_RoutingPolicy_R3_IN_FROM_R2__Line2__prepend_aspath_cost)]
++   [set as-path]<> prepend [[300 200]<>]
+```

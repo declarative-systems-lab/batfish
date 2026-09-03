@@ -1,0 +1,131 @@
+(declare-fun Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__ip () (_ BitVec 32))
+(declare-fun Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__mask () (_ BitVec 32))
+(declare-fun Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__length () Int)
+(declare-fun Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__prefix_range_start () Int)
+(declare-fun Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__prefix_range_end () Int)
+(declare-fun Config_r1_RouteFilterList_private_ips__Line1__10_0_0_0__action () Bool)
+(declare-fun Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__ip () (_ BitVec 32))
+(declare-fun Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__mask () (_ BitVec 32))
+(declare-fun Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__length () Int)
+(declare-fun Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__prefix_range_start () Int)
+(declare-fun Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__prefix_range_end () Int)
+(declare-fun Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__action () Bool)
+(declare-fun Config_r1_RouteFilterList_private_ips__Line3__192_168_0_0__ip () (_ BitVec 32))
+(declare-fun Config_r1_RouteFilterList_private_ips__Line3__192_168_0_0__mask () (_ BitVec 32))
+(declare-fun Config_r1_RouteFilterList_private_ips__Line3__192_168_0_0__length () Int)
+(declare-fun Config_r1_RouteFilterList_private_ips__Line3__192_168_0_0__prefix_range_start () Int)
+(declare-fun Config_r1_RouteFilterList_private_ips__Line3__192_168_0_0__prefix_range_end () Int)
+(declare-fun Config_r1_RouteFilterList_private_ips__Line3__192_168_0_0__action () Bool)
+(declare-fun |0_FAILED-EDGE_customer_null_interface| () Int)
+(declare-fun |0_FAILED-EDGE_customer_r1| () Int)
+(declare-fun |0_FAILED-NODE_customer| () Int)
+(declare-fun |0_FAILED-NODE_r1| () Int)
+(declare-fun |0_customer_OVERALL_BEST_None_routerID| () Int)
+(declare-fun |0_customer_OVERALL_BEST_None_adminDist| () Int)
+(declare-fun |0_customer_OVERALL_BEST_None_med| () Int)
+(declare-fun |0_customer_OVERALL_BEST_None_metric| () Int)
+(declare-fun |0_customer_OVERALL_BEST_None_prefixLength| () Int)
+(declare-fun |0_customer_BGP_BEST_None_routerID| () Int)
+(declare-fun |0_customer_BGP_BEST_None_med| () Int)
+(declare-fun |0_customer_BGP_BEST_None_metric| () Int)
+(declare-fun |0_customer_BGP_BEST_None_prefixLength| () Int)
+(declare-fun |0_customer_STATIC_BEST_None_prefixLength| () Int)
+(declare-fun |0_r1_OVERALL_BEST_None_med| () Int)
+(declare-fun |0_r1_OVERALL_BEST_None_metric| () Int)
+(declare-fun |0_r1_OVERALL_BEST_None_prefixLength| () Int)
+(declare-fun |0_customer_BGP_SINGLE-EXPORT__med| () Int)
+(declare-fun |0_customer_BGP_SINGLE-EXPORT__metric| () Int)
+(declare-fun |0_customer_BGP_SINGLE-EXPORT__prefixLength| () Int)
+(declare-fun |0_customer_STATIC_IMPORT_null_interface_prefixLength| () Int)
+(declare-fun |0_r1_BGP_SINGLE-EXPORT__med| () Int)
+(declare-fun |0_r1_BGP_SINGLE-EXPORT__metric| () Int)
+(declare-fun |0_r1_BGP_SINGLE-EXPORT__prefixLength| () Int)
+(declare-fun |0_r1_BGP_IMPORT_GigabitEthernet0/0_med| () Int)
+(declare-fun |0_r1_BGP_IMPORT_GigabitEthernet0/0_metric| () Int)
+(declare-fun |0_r1_BGP_IMPORT_GigabitEthernet0/0_prefixLength| () Int)
+(declare-fun |0_customer_BGP_SINGLE-EXPORT__permitted| () Bool)
+(declare-fun |0_customer_OVERALL_BEST_None_history| () (_ BitVec 1))
+(declare-fun |0_dst-ip| () (_ BitVec 32))
+(declare-fun |0_customer_OVERALL_BEST_None_permitted| () Bool)
+(declare-fun |0_customer_STATIC_IMPORT_null_interface_permitted| () Bool)
+(declare-fun |0_r1_BGP_IMPORT_GigabitEthernet0/0_permitted| () Bool)
+(declare-fun |0_CONTROL-FORWARDING_customer_GigabitEthernet0/0| () Bool)
+(declare-fun |0_r1_BGP_SINGLE-EXPORT__permitted| () Bool)
+(declare-fun |0_r1_OVERALL_BEST_None_permitted| () Bool)
+(declare-fun |0_customer_BGP_BEST_None_permitted| () Bool)
+(declare-fun |0_customer_STATIC_BEST_None_permitted| () Bool)
+(declare-fun |0_customer_BGP_IMPORT_GigabitEthernet0/0_choice| () Bool)
+(declare-fun |0_customer_STATIC_IMPORT_null_interface_choice| () Bool)
+(declare-fun |0_r1_BGP_IMPORT_GigabitEthernet0/0_choice| () Bool)
+(declare-fun |0_CONTROL-FORWARDING_customer_null_interface| () Bool)
+(declare-fun |0_CONTROL-FORWARDING_customer_Loopback0| () Bool)
+(declare-fun |0_CONTROL-FORWARDING_r1_GigabitEthernet0/0| () Bool)
+(declare-fun |0_DATA-FORWARDING_customer_GigabitEthernet0/0| () Bool)
+(declare-fun |0_DATA-FORWARDING_customer_Loopback0| () Bool)
+(declare-fun |0_DATA-FORWARDING_customer_null_interface| () Bool)
+(declare-fun |0_DATA-FORWARDING_r1_GigabitEthernet0/0| () Bool)
+(declare-fun |0__reachable-id_customer| () Int)
+(declare-fun |0__reachable_customer| () Bool)
+(declare-fun |0__reachable-id_r1| () Int)
+(declare-fun |0__reachable_r1| () Bool)
+
+(assert (>= Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__length 0))
+(assert (<= Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__length 32))
+(assert (>= Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__prefix_range_end 0))
+(assert (<= Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__prefix_range_end 32))
+(assert (>= Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__prefix_range_start 0))
+(assert (<= Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__prefix_range_start 32))
+(assert (>= Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__prefix_range_end Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__length))
+(assert (>= Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__prefix_range_start Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__length))
+(assert (= ((_ extract 31 20) |0_dst-ip|) #xac1))
+(assert 
+    (let 
+        ((a!1 
+            (= 
+                (bvnot (bvor (bvnot |0_dst-ip|) (bvnot Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__mask))) 
+                (bvnot (bvor (bvnot Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__ip) (bvnot Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__mask)))
+            )
+        ) 
+        (a!2 
+            (>= 
+                (ite 
+                    false
+                    16 
+                    12
+                ) 
+                Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__prefix_range_start
+            )
+        ) 
+        (a!3 
+            (<= 
+                (ite 
+                    false
+                    16 
+                    12
+                ) 
+                Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__prefix_range_end
+            )
+        )
+        ) 
+        (or 
+            (= ((_ extract 31 24) |0_dst-ip|) #x0a) 
+            (ite 
+                (or 
+                    (not a!1) 
+                    (not a!2) 
+                    (not a!3)
+                ) 
+                false
+                Config_r1_RouteFilterList_private_ips__Line2__172_0_0_0__action
+            )
+        )
+    )
+)
+(assert 
+    (not 
+        false
+    )
+)
+
+
+(apply (then simplify propagate-values elim-and solve-eqs ctx-solver-simplify))

@@ -1,0 +1,10 @@
+<br>1. ISP1 向其 eBGP 邻居 R1 通告路由：
+&nbsp;&nbsp;&nbsp;&nbsp;* 192.0.2.0/24
+&nbsp;&nbsp;&nbsp;&nbsp;* 198.51.100.0/24
+<br>2. R1 应用入口路由策略 R1_IN_FROM_ISP1 route-map 来控制从 ISP1 接收到的路由，并设置 community：
+&nbsp;&nbsp;&nbsp;&nbsp;* 192.0.2.0/24（携带 400:100 community）
+&nbsp;&nbsp;&nbsp;&nbsp;* 198.51.100.0/24（携带 500:200 community）
+<br>3. 由于这两个网络前缀都只有一条可用路由，R1 将两条路由都选为最佳路由。
+<br>4. R1 应用出口路由策略 R1_OUT_TO_Customer 来控制传播给 Customer 的路由，仅允许携带 400:100 community 的路由被传播：
+&nbsp;&nbsp;&nbsp;&nbsp;* 192.0.2.0/24（携带 400:100 community）
+<br>5. 因此，Customer 只能接收到 ISP1 宣告的 192.0.2.0/24 路由。

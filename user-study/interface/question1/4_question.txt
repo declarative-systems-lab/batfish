@@ -1,0 +1,29 @@
+Network operators now need to modify network configurations to support additional network specifications. The modified configurations must continue to satisfy the previously verified <b>ECMP Reachability</b> network specification. <br><br>Check the box next to <span style="color: red;">any line(s)</span> that, if removed or modified, could preserve the verified <b>ECMP Reachability</b> network specification.
+
+option1: [no]
+```diff
+  @@ R2 Configuration 17,19 @@
+  route-map R2_IN_FROM_ISP2 permit 10
+    match ip address prefix-list isp2_network
+-   [set community](Config_r2_RoutingPolicy_R2_IN_FROM_ISP2__Line1) [500:200](Config_r2_RoutingPolicy_R2_IN_FROM_ISP2__Line1__add_community_500_200_community) additive
+```
+
+option2: [yes]
+```diff
+  @@ R1 Configuration 15,15 @@
+- [ip community-list](Config_r1_CommunityList_400100__Line1) 400100 [[permit](Config_r1_CommunityList_400100__Line1__exact_community_400_100_action)] [400:100](Config_r1_CommunityList_400100__Line1__exact_community_400_100_400_100_community)
++ [ip community-list]<> 400100 [[deny]<>]   [400:100]<>
+<br>
+  @@ R1 Configuration 42,43 @@
+  route-map R1_OUT_TO_R3 deny 10
+    match community 400100
+```
+
+option3: [no]
+```diff
+  @@ R3 Configuration 23,25 @@
+  route-map R3_IN_FROM_R2 permit 20
+    match community 500200
+-   [set as-path](Config_r3_RoutingPolicy_R3_IN_FROM_R2__Line2) prepend [[200](Config_r3_RoutingPolicy_R3_IN_FROM_R2__Line2__prepend_aspath_cost)]
++   [set as-path]<> prepend [[300 200]<>]
+```

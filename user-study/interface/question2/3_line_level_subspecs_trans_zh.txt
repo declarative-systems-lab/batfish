@@ -1,0 +1,97 @@
+Line-Level Subspecs (Normalized)
+=================================
+
+Line Group: Config_r1_CommunityList_200100__Line1
+Subspecs (1):
+  1. 与规约无关 / 冗余，无限制
+--------------------------------------------------
+
+Line Group: Config_r1_CommunityList_400100__Line1
+Subspecs (1):
+  1. 与规约无关 / 冗余，无限制
+--------------------------------------------------
+
+Line Group: Config_r1_CommunityList_500200__Line1
+Subspecs (1):
+  1. 与规约无关 / 冗余，无限制
+--------------------------------------------------
+
+Line Group: Config_r1_RouteFilterList_default_ips__Line1
+Subspecs (1):
+  1. 与规约无关 / 冗余，无限制
+--------------------------------------------------
+
+Line Group: Config_r1_RouteFilterList_isp1_network__Line1
+Subspecs (1):
+  1. 与规约无关 / 冗余，无限制
+--------------------------------------------------
+
+Line Group: Config_r1_RouteFilterList_isp1_network__Line2
+Subspecs (1):
+  1. 与规约无关 / 冗余，无限制
+--------------------------------------------------
+
+Line Group: Config_r1_RouteFilterList_isp1_network__Line3
+Subspecs (1):
+  1. 与规约无关 / 冗余，无限制
+--------------------------------------------------
+
+Line Group: Config_r1_RoutingPolicy_R1_IN_FROM_ISP1__Line1
+Subspecs (1):
+  1. 与规约无关 / 冗余，无限制
+--------------------------------------------------
+
+Line Group: Config_r2_CommunityList_400100__Line1
+Subspecs (1):
+  1. 与规约无关 / 冗余，无限制
+--------------------------------------------------
+
+Line Group: Config_r2_RouteFilterList_default_ips__Line1
+Subspecs (1):
+  1. 与规约无关 / 冗余，无限制
+--------------------------------------------------
+
+Line Group: Config_r2_RouteFilterList_isp2_network__Line1
+Subspecs (1):
+  1. 与规约无关 / 冗余，无限制
+--------------------------------------------------
+
+Line Group: Config_r2_RoutingPolicy_R2_IN_FROM_ISP2__Line1
+Subspecs (1):
+  1. 与规约无关 / 冗余，无限制
+--------------------------------------------------
+
+Line Group: Config_r2_RoutingPolicy_R2_OUT_TO_R1__Line0
+Subspecs (1):
+  1. 与规约无关 / 冗余，无限制
+--------------------------------------------------
+
+Line Group: Config_r3_CommunityList_400100__Line1
+Subspecs (1):
+  1. 与规约无关 / 冗余，无限制
+--------------------------------------------------
+
+Line Group: Config_r3_CommunityList_500200__Line1
+Subspecs (1):
+  1. 与规约无关 / 冗余，无限制
+--------------------------------------------------
+
+Line Group: Config_r3_RouteFilterList_default_ips__Line1
+Subspecs (1):
+  1. 与规约无关 / 冗余，无限制
+--------------------------------------------------
+
+Line Group: Config_r3_RouteFilterList_private_ips__Line1
+Subspecs (1):
+  1. (>= Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__prefix_range_end Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__length) AND (>= Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__prefix_range_start Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__length) AND (= ((_ extract 31 8) |0_dst-ip|) #xc0a880) AND (= (bvand |0_dst-ip| Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__mask) (bvand Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__ip Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__mask)) AND (= Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__action true) AND (>= Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__length 0) AND (<= Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__length 32) AND (>= Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__prefix_range_end 24) AND (<= Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__prefix_range_end 32) AND (>= Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__prefix_range_start 0) AND (<= Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__prefix_range_start 24)
+  1. (>= Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__prefix_range_end Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__length) AND (>= Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__prefix_range_start Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__length) AND (= ((_ extract 31 8) |0_dst-ip|) #xc0a881) AND (= (bvand |0_dst-ip| Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__mask) (bvand Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__ip Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__mask)) AND (= Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__action true) AND (>= Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__length 0) AND (<= Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__length 32) AND (>= Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__prefix_range_end 24) AND (<= Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__prefix_range_end 32) AND (>= Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__prefix_range_start 0) AND (<= Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__prefix_range_start 24)
+  1. (>= Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__prefix_range_end Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__length) AND (>= Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__prefix_range_start Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__length) AND (or (= ((_ extract 31 8) |0_dst-ip|) #xc0a880) (= ((_ extract 31 8) |0_dst-ip|) #xc0a881)) AND (= (bvand |0_dst-ip| Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__mask) (bvand Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__ip Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__mask)) AND (= Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__action true) AND (>= Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__length 0) AND (<= Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__length 32) AND (>= Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__prefix_range_end 24) AND (<= Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__prefix_range_end 32) AND (>= Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__prefix_range_start 0) AND (<= Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__prefix_range_start 24)
+  1. Action = permit <b>AND</b> <br>Prefix covers 192.168.128.0/23 <br>(aggregated from 192.168.128.0/24 and 192.168.129.0/24) <b>AND</b> <br>Prefix ge range = 0~24 <b>AND</b> <br>Prefix le range = 24~32 <b>AND</b> <br>Prefix ge/le range >= Prefix length
+  1. Action 应配置为 permit <b>并且</b> <br>基础网络前缀应包含 192.168.128.0/23 <b>并且</b> <br>(由 192.168.128.0/24 和 192.168.129.0/24 汇聚而成) <br>最小 (ge) 前缀长度范围应为 0~24 <b>并且</b> <br>最大 (le) 前缀长度范围应为 24~32 <b>并且</b> <br>最小 (ge) 与最大 (le) 前缀长度 >= 基础网络前缀长度
+--------------------------------------------------
+
+Line Group: Config_r3_RoutingPolicy_R3_IN_FROM_R2__Line2
+Subspecs (1):
+  1. 与规约无关 / 冗余，无限制
+--------------------------------------------------
+

@@ -1,0 +1,44 @@
+As part of routine maintenance, network operators may adjust configuration lines to more precisely enforce the specified network specifications. <br><br>Check the box next to <span style="color: red;">any line(s)</span> that, if modified, could preserve the verified <b>Private Prefix Filtering</b> network specification.
+
+```note
+<code style="font-family: Consolas, 'Courier New', monospace;">ip prefix-list network_10_0_0_0 seq 5 permit 10.0.0.0/8 <span style="color: red;">ge 16</span></code><br>The prefix-list will match all subnets of <code style="font-family: Consolas, 'Courier New', monospace;">10.0.0.0/8</code> with mask lengths from <code style="font-family: Consolas, 'Courier New', monospace;">/16</code> to <code style="font-family: Consolas, 'Courier New', monospace;">/32</code>. <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<code style="font-family: Consolas, 'Courier New', monospace;">10.0.0.0/16, &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;10.0.0.0/17, &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;..., 10.0.0.0/32</code><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<code style="font-family: Consolas, 'Courier New', monospace;">10.1.0.0/16, &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;10.1.0.0/17, &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;..., 10.1.0.0/32</code><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<code style="font-family: Consolas, 'Courier New', monospace;">......</code><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<code style="font-family: Consolas, 'Courier New', monospace;">10.255.255.255/16, 10.255.255.255/17, ..., 10.255.255.255/32</code><br><br><code style="font-family: Consolas, 'Courier New', monospace;">ip prefix-list network_10_0_0_0 seq 5 permit 10.0.0.0/8 <span style="color: red;">le 24</span></code><br>The prefix-list will match all subnets of <code style="font-family: Consolas, 'Courier New', monospace;">10.0.0.0/8</code> with mask lengths from <code style="font-family: Consolas, 'Courier New', monospace;">/8</code> to <code style="font-family: Consolas, 'Courier New', monospace;">/24</code>.
+```
+
+option1: [no]
+```
+  @@ R3 Configuration 9,10 @@
+- [ip prefix-list](Config_r3_RouteFilterList_private_ips__Line1) private_ips seq 5  \\
+-         [permit](Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__action) [[192.168.0.0/16](Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__ip)]   [ge 24](Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__prefix_range_start) [le 32](Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__prefix_range_end)
++ [ip prefix-list]<> private_ips seq 5  \\
++         [permit]<> [[192.168.128.0/24]<>] [ge 24]<> [le 32]<>
+<br>
+  @@ R3 Configuration 31,32 @@
+  route-map R3_IN_FROM_Customer deny 10
+    match ip address prefix-list private_ips
+```
+
+option2: [yes]
+```diff
+  @@ R3 Configuration 9,10 @@
+- [ip prefix-list](Config_r3_RouteFilterList_private_ips__Line1) private_ips seq 5  \\
+-         [permit](Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__action) [192.168.0.0/16](Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__ip) [ge 24](Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__prefix_range_start) [[le 32](Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__prefix_range_end)]
++ [ip prefix-list]<> private_ips seq 5  \\
++         [permit]<> [192.168.0.0/16]<> [ge 24]<> [[le 24]<>]
+<br>
+  @@ R3 Configuration 31,32 @@
+  route-map R3_IN_FROM_Customer deny 10
+    match ip address prefix-list private_ips
+```
+
+option3: [yes]
+```diff
+  @@ R3 Configuration 9,10 @@
+- [ip prefix-list](Config_r3_RouteFilterList_private_ips__Line1) private_ips seq 5  \\
+-         [permit](Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__action) [[192.168.0.0/16](Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__ip)]   [[ge 24](Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__prefix_range_start)] [[le 32](Config_r3_RouteFilterList_private_ips__Line1__192_168_0_0__prefix_range_end)]
++ [ip prefix-list]<> private_ips seq 5  \\
++         [permit]<> [[192.168.128.0/23]<>] [[ge 23]<>] [[le 28]<>]
+<br>
+  @@ R3 Configuration 31,32 @@
+  route-map R3_IN_FROM_Customer deny 10
+    match ip address prefix-list private_ips
+```

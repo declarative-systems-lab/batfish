@@ -1,0 +1,113 @@
+  1 !!! Summary of BGP policies on R1 !!!
+  2 ! Import policies: R1_IN_FROM_ISP1
+  3 ! Export policies: R1_OUT_TO_ISP1    R1_OUT_TO_R2    R1_OUT_TO_R3
+  4 !
+  5 !
+  6 !!! Prefix-list definitions on R1 !!!
+  7 [ip prefix-list](Config_r1_RouteFilterList_default_ips__Line1) default_ips seq 5 [permit](Config_r1_RouteFilterList_default_ips__Line1__0_0_0_0__action) [0.0.0.0/0](Config_r1_RouteFilterList_default_ips__Line1__0_0_0_0__ip) [le 32](Config_r1_RouteFilterList_default_ips__Line1__0_0_0_0__prefix_range_end)
+  8 !
+  9 [ip prefix-list](Config_r1_RouteFilterList_isp1_network1__Line1) isp1_network1 seq  5 [permit](Config_r1_RouteFilterList_isp1_network1__Line1__192_0_96_0__action) [192.0.100.0/20](Config_r1_RouteFilterList_isp1_network1__Line1__192_0_96_0__ip)  [ge 20](Config_r1_RouteFilterList_isp1_network1__Line1__192_0_96_0__prefix_range_start)
+ 10 [ip prefix-list](Config_r1_RouteFilterList_isp1_network1__Line2) isp1_network1 seq 10 [permit](Config_r1_RouteFilterList_isp1_network1__Line2__192_0_96_0__action) [192.0.110.0/20](Config_r1_RouteFilterList_isp1_network1__Line2__192_0_96_0__ip)  [ge 20](Config_r1_RouteFilterList_isp1_network1__Line2__192_0_96_0__prefix_range_start)
+ 11 [ip prefix-list](Config_r1_RouteFilterList_isp1_network1__Line3) isp1_network1 seq 15 [permit](Config_r1_RouteFilterList_isp1_network1__Line3__192_51_96_0__action) [192.51.101.0/20](Config_r1_RouteFilterList_isp1_network1__Line3__192_51_96_0__ip) [ge 20](Config_r1_RouteFilterList_isp1_network1__Line3__192_51_96_0__prefix_range_start)
+ 12 [ip prefix-list](Config_r1_RouteFilterList_isp1_network1__Line4) isp1_network1 seq 20 [permit](Config_r1_RouteFilterList_isp1_network1__Line4__192_0_2_0__action) [192.0.2.0/24](Config_r1_RouteFilterList_isp1_network1__Line4__192_0_2_0__ip)    [ge 24](Config_r1_RouteFilterList_isp1_network1__Line4__192_0_2_0__prefix_range_start)
+ 13 [ip prefix-list](Config_r1_RouteFilterList_isp1_network1__Line5) isp1_network1 seq 25 [permit](Config_r1_RouteFilterList_isp1_network1__Line5__192_0_100_0__action) [192.0.100.0/24](Config_r1_RouteFilterList_isp1_network1__Line5__192_0_100_0__ip)  [ge 24](Config_r1_RouteFilterList_isp1_network1__Line5__192_0_100_0__prefix_range_start)
+ 14 [ip prefix-list](Config_r1_RouteFilterList_isp1_network1__Line6) isp1_network1 seq 30 [permit](Config_r1_RouteFilterList_isp1_network1__Line6__192_0_100_0__action) [192.0.100.0/25](Config_r1_RouteFilterList_isp1_network1__Line6__192_0_100_0__ip)  [ge 25](Config_r1_RouteFilterList_isp1_network1__Line6__192_0_100_0__prefix_range_start)
+ 15 [ip prefix-list](Config_r1_RouteFilterList_isp1_network1__Line7) isp1_network1 seq 35 [permit](Config_r1_RouteFilterList_isp1_network1__Line7__197_51_96_0__action) [197.51.110.0/20](Config_r1_RouteFilterList_isp1_network1__Line7__197_51_96_0__ip) [ge 23](Config_r1_RouteFilterList_isp1_network1__Line7__197_51_96_0__prefix_range_start)
+ 16 [ip prefix-list](Config_r1_RouteFilterList_isp1_network1__Line8) isp1_network1 seq 40 [permit](Config_r1_RouteFilterList_isp1_network1__Line8__198_51_96_0__action) [198.51.110.0/20](Config_r1_RouteFilterList_isp1_network1__Line8__198_51_96_0__ip) [ge 23](Config_r1_RouteFilterList_isp1_network1__Line8__198_51_96_0__prefix_range_start)
+ 17 [ip prefix-list](Config_r1_RouteFilterList_isp1_network1__Line9) isp1_network1 seq 45 [permit](Config_r1_RouteFilterList_isp1_network1__Line9__199_51_96_0__action) [199.51.110.0/20](Config_r1_RouteFilterList_isp1_network1__Line9__199_51_96_0__ip) [ge 23](Config_r1_RouteFilterList_isp1_network1__Line9__199_51_96_0__prefix_range_start)
+ 18 [ip prefix-list](Config_r1_RouteFilterList_isp1_network1__Line10) isp1_network1 seq 50 [permit](Config_r1_RouteFilterList_isp1_network1__Line10__201_51_110_0__action) [201.51.110.0/24](Config_r1_RouteFilterList_isp1_network1__Line10__201_51_110_0__ip) [ge 25](Config_r1_RouteFilterList_isp1_network1__Line10__201_51_110_0__prefix_range_start)
+ 19 !
+ 20 [ip prefix-list](Config_r1_RouteFilterList_isp1_network2__Line1) isp1_network2 seq  5 [permit](Config_r1_RouteFilterList_isp1_network2__Line1__192_0_100_0__action) [192.0.100.0/22](Config_r1_RouteFilterList_isp1_network2__Line1__192_0_100_0__ip)  [ge 22](Config_r1_RouteFilterList_isp1_network2__Line1__192_0_100_0__prefix_range_start)
+ 21 [ip prefix-list](Config_r1_RouteFilterList_isp1_network2__Line2) isp1_network2 seq 10 [permit](Config_r1_RouteFilterList_isp1_network2__Line2__192_0_108_0__action) [192.0.110.0/22](Config_r1_RouteFilterList_isp1_network2__Line2__192_0_108_0__ip)  [ge 22](Config_r1_RouteFilterList_isp1_network2__Line2__192_0_108_0__prefix_range_start)
+ 22 [ip prefix-list](Config_r1_RouteFilterList_isp1_network2__Line3) isp1_network2 seq 15 [permit](Config_r1_RouteFilterList_isp1_network2__Line3__198_0_100_0__action) [198.0.100.0/22](Config_r1_RouteFilterList_isp1_network2__Line3__198_0_100_0__ip)  [ge 22](Config_r1_RouteFilterList_isp1_network2__Line3__198_0_100_0__prefix_range_start)
+ 23 [ip prefix-list](Config_r1_RouteFilterList_isp1_network2__Line4) isp1_network2 seq 20 [deny](Config_r1_RouteFilterList_isp1_network2__Line4__192_0_0_0__action)   [192.0.0.0/8](Config_r1_RouteFilterList_isp1_network2__Line4__192_0_0_0__ip)     [ge 8](Config_r1_RouteFilterList_isp1_network2__Line4__192_0_0_0__prefix_range_start)
+ 24 [ip prefix-list](Config_r1_RouteFilterList_isp1_network2__Line5) isp1_network2 seq 25 [deny](Config_r1_RouteFilterList_isp1_network2__Line5__198_0_0_0__action)   [198.0.0.0/8](Config_r1_RouteFilterList_isp1_network2__Line5__198_0_0_0__ip)     [ge 8](Config_r1_RouteFilterList_isp1_network2__Line5__198_0_0_0__prefix_range_start)
+ 25 [ip prefix-list](Config_r1_RouteFilterList_isp1_network2__Line6) isp1_network2 seq 30 [deny](Config_r1_RouteFilterList_isp1_network2__Line6__192_0_220_0__action)   [192.0.220.0/24](Config_r1_RouteFilterList_isp1_network2__Line6__192_0_220_0__ip)
+ 26 [ip prefix-list](Config_r1_RouteFilterList_isp1_network2__Line7) isp1_network2 seq 35 [permit](Config_r1_RouteFilterList_isp1_network2__Line7__192_0_100_0__action) [192.0.100.0/25](Config_r1_RouteFilterList_isp1_network2__Line7__192_0_100_0__ip)  [ge 25](Config_r1_RouteFilterList_isp1_network2__Line7__192_0_100_0__prefix_range_start)
+ 27 [ip prefix-list](Config_r1_RouteFilterList_isp1_network2__Line8) isp1_network2 seq 40 [deny](Config_r1_RouteFilterList_isp1_network2__Line8__198_51_110_0__action)   [198.51.110.0/24](Config_r1_RouteFilterList_isp1_network2__Line8__198_51_110_0__ip)
+ 28 [ip prefix-list](Config_r1_RouteFilterList_isp1_network2__Line9) isp1_network2 seq 45 [permit](Config_r1_RouteFilterList_isp1_network2__Line9__198_51_110_0__action) [198.51.110.0/25](Config_r1_RouteFilterList_isp1_network2__Line9__198_51_110_0__ip) [ge 25](Config_r1_RouteFilterList_isp1_network2__Line9__198_51_110_0__prefix_range_start)
+ 29 [ip prefix-list](Config_r1_RouteFilterList_isp1_network2__Line10) isp1_network2 seq 50 [permit](Config_r1_RouteFilterList_isp1_network2__Line10__198_51_110_0__action) [198.51.110.0/26](Config_r1_RouteFilterList_isp1_network2__Line10__198_51_110_0__ip) [ge 26](Config_r1_RouteFilterList_isp1_network2__Line10__198_51_110_0__prefix_range_start)
+ 30 [ip prefix-list](Config_r1_RouteFilterList_isp1_network2__Line11) isp1_network2 seq 55 [permit](Config_r1_RouteFilterList_isp1_network2__Line11__198_51_110_0__action) [198.51.110.0/23](Config_r1_RouteFilterList_isp1_network2__Line11__198_51_110_0__ip) [ge 24](Config_r1_RouteFilterList_isp1_network2__Line11__198_51_110_0__prefix_range_start)
+ 31 [ip prefix-list](Config_r1_RouteFilterList_isp1_network2__Line12) isp1_network2 seq 60 [permit](Config_r1_RouteFilterList_isp1_network2__Line12__198_51_108_0__action) [198.51.110.0/22](Config_r1_RouteFilterList_isp1_network2__Line12__198_51_108_0__ip) [ge 24](Config_r1_RouteFilterList_isp1_network2__Line12__198_51_108_0__prefix_range_start)
+ 32 [ip prefix-list](Config_r1_RouteFilterList_isp1_network2__Line13) isp1_network2 seq 65 [permit](Config_r1_RouteFilterList_isp1_network2__Line13__198_51_100_0__action) [198.51.101.0/22](Config_r1_RouteFilterList_isp1_network2__Line13__198_51_100_0__ip) [ge 24](Config_r1_RouteFilterList_isp1_network2__Line13__198_51_100_0__prefix_range_start)
+ 33 [ip prefix-list](Config_r1_RouteFilterList_isp1_network2__Line14) isp1_network2 seq 70 [permit](Config_r1_RouteFilterList_isp1_network2__Line14__198_51_96_0__action) [198.51.101.0/20](Config_r1_RouteFilterList_isp1_network2__Line14__198_51_96_0__ip) [ge 20](Config_r1_RouteFilterList_isp1_network2__Line14__198_51_96_0__prefix_range_start)
+ 34 [ip prefix-list](Config_r1_RouteFilterList_isp1_network2__Line15) isp1_network2 seq 75 [permit](Config_r1_RouteFilterList_isp1_network2__Line15__198_51_100_0__action) [198.51.100.0/22](Config_r1_RouteFilterList_isp1_network2__Line15__198_51_100_0__ip) [ge 24](Config_r1_RouteFilterList_isp1_network2__Line15__198_51_100_0__prefix_range_start)
+ 35 [ip prefix-list](Config_r1_RouteFilterList_isp1_network2__Line16) isp1_network2 seq 80 [permit](Config_r1_RouteFilterList_isp1_network2__Line16__198_51_96_0__action) [198.51.100.0/20](Config_r1_RouteFilterList_isp1_network2__Line16__198_51_96_0__ip) [ge 20](Config_r1_RouteFilterList_isp1_network2__Line16__198_51_96_0__prefix_range_start)
+ 36 !
+ 37 [ip prefix-list](Config_r1_RouteFilterList_isp1_network3__Line1) isp1_network3 seq  5 [permit](Config_r1_RouteFilterList_isp1_network3__Line1__192_0_0_0__action) [192.0.1.0/16](Config_r1_RouteFilterList_isp1_network3__Line1__192_0_0_0__ip)    [ge 16](Config_r1_RouteFilterList_isp1_network3__Line1__192_0_0_0__prefix_range_start)
+ 38 [ip prefix-list](Config_r1_RouteFilterList_isp1_network3__Line2) isp1_network3 seq 10 [permit](Config_r1_RouteFilterList_isp1_network3__Line2__192_0_0_0__action) [192.0.2.0/16](Config_r1_RouteFilterList_isp1_network3__Line2__192_0_0_0__ip)    [ge 16](Config_r1_RouteFilterList_isp1_network3__Line2__192_0_0_0__prefix_range_start)
+ 39 [ip prefix-list](Config_r1_RouteFilterList_isp1_network3__Line3) isp1_network3 seq 15 [permit](Config_r1_RouteFilterList_isp1_network3__Line3__192_0_0_0__action) [192.0.3.0/16](Config_r1_RouteFilterList_isp1_network3__Line3__192_0_0_0__ip)    [ge 16](Config_r1_RouteFilterList_isp1_network3__Line3__192_0_0_0__prefix_range_start)
+ 40 [ip prefix-list](Config_r1_RouteFilterList_isp1_network3__Line4) isp1_network3 seq 20 [permit](Config_r1_RouteFilterList_isp1_network3__Line4__198_51_100_0__action) [198.51.100.0/26](Config_r1_RouteFilterList_isp1_network3__Line4__198_51_100_0__ip) [ge 26](Config_r1_RouteFilterList_isp1_network3__Line4__198_51_100_0__prefix_range_start)
+ 41 [ip prefix-list](Config_r1_RouteFilterList_isp1_network3__Line5) isp1_network3 seq 25 [permit](Config_r1_RouteFilterList_isp1_network3__Line5__198_51_100_0__action) [198.51.100.0/25](Config_r1_RouteFilterList_isp1_network3__Line5__198_51_100_0__ip) [ge 25](Config_r1_RouteFilterList_isp1_network3__Line5__198_51_100_0__prefix_range_start)
+ 42 [ip prefix-list](Config_r1_RouteFilterList_isp1_network3__Line6) isp1_network3 seq 30 [permit](Config_r1_RouteFilterList_isp1_network3__Line6__198_51_101_0__action) [198.51.101.0/24](Config_r1_RouteFilterList_isp1_network3__Line6__198_51_101_0__ip) [ge 24](Config_r1_RouteFilterList_isp1_network3__Line6__198_51_101_0__prefix_range_start)
+ 43 [ip prefix-list](Config_r1_RouteFilterList_isp1_network3__Line7) isp1_network3 seq 35 [permit](Config_r1_RouteFilterList_isp1_network3__Line7__198_51_110_0__action) [198.51.110.0/24](Config_r1_RouteFilterList_isp1_network3__Line7__198_51_110_0__ip) [ge 24](Config_r1_RouteFilterList_isp1_network3__Line7__198_51_110_0__prefix_range_start)
+ 44 [ip prefix-list](Config_r1_RouteFilterList_isp1_network3__Line8) isp1_network3 seq 40 [permit](Config_r1_RouteFilterList_isp1_network3__Line8__198_0_0_0__action) [198.0.0.0/16](Config_r1_RouteFilterList_isp1_network3__Line8__198_0_0_0__ip)    [ge 24](Config_r1_RouteFilterList_isp1_network3__Line8__198_0_0_0__prefix_range_start)
+ 45 [ip prefix-list](Config_r1_RouteFilterList_isp1_network3__Line9) isp1_network3 seq 45 [permit](Config_r1_RouteFilterList_isp1_network3__Line9__192_51_0_0__action) [192.51.0.0/16](Config_r1_RouteFilterList_isp1_network3__Line9__192_51_0_0__ip)   [ge 24](Config_r1_RouteFilterList_isp1_network3__Line9__192_51_0_0__prefix_range_start)
+ 46 [ip prefix-list](Config_r1_RouteFilterList_isp1_network3__Line10) isp1_network3 seq 50 [permit](Config_r1_RouteFilterList_isp1_network3__Line10__192_0_2_0__action) [192.0.2.0/24](Config_r1_RouteFilterList_isp1_network3__Line10__192_0_2_0__ip)    [ge 24](Config_r1_RouteFilterList_isp1_network3__Line10__192_0_2_0__prefix_range_start)
+ 47 [ip prefix-list](Config_r1_RouteFilterList_isp1_network3__Line11) isp1_network3 seq 55 [permit](Config_r1_RouteFilterList_isp1_network3__Line11__198_51_100_0__action) [198.51.100.0/24](Config_r1_RouteFilterList_isp1_network3__Line11__198_51_100_0__ip) [ge 24](Config_r1_RouteFilterList_isp1_network3__Line11__198_51_100_0__prefix_range_start)
+ 48 [ip prefix-list](Config_r1_RouteFilterList_isp1_network3__Line12) isp1_network3 seq 60 [deny](Config_r1_RouteFilterList_isp1_network3__Line12__192_0_0_0__action)   [192.0.0.0/4](Config_r1_RouteFilterList_isp1_network3__Line12__192_0_0_0__ip)     [ge 24](Config_r1_RouteFilterList_isp1_network3__Line12__192_0_0_0__prefix_range_start)
+ 49 !
+ 50 !
+ 51 !!! Community-list definitions on R1 !!!
+ 52 [ip community-list](Config_r1_CommunityList_400110__Line1) 400110 [permit](Config_r1_CommunityList_400110__Line1__exact_community_400_110_action) [400:110](Config_r1_CommunityList_400110__Line1__exact_community_400_110_400_110_community)
+ 53 !
+ 54 [ip community-list](Config_r1_CommunityList_400120__Line1) 400120 [permit](Config_r1_CommunityList_400120__Line1__exact_community_400_120_action) [400:120](Config_r1_CommunityList_400120__Line1__exact_community_400_120_400_120_community)
+ 55 !
+ 56 [ip community-list](Config_r1_CommunityList_500210__Line1) 500210 [permit](Config_r1_CommunityList_500210__Line1__exact_community_500_210_action) [500:210](Config_r1_CommunityList_500210__Line1__exact_community_500_210_500_210_community)
+ 57 !
+ 58 [ip community-list](Config_r1_CommunityList_500220__Line1) 500220 [permit](Config_r1_CommunityList_500220__Line1__exact_community_500_220_action) [500:220](Config_r1_CommunityList_500220__Line1__exact_community_500_220_500_220_community)
+ 59 !
+ 60 [ip community-list](Config_r1_CommunityList_200110__Line1) 200110 [permit](Config_r1_CommunityList_200110__Line1__exact_community_200_110_action) [200:110](Config_r1_CommunityList_200110__Line1__exact_community_200_110_200_110_community)
+ 61 !
+ 62 !  
+ 63 !!! BGP import policy on R1 from ISP1 (R1 <- ISP1) !!!
+ 64 route-map R1_IN_FROM_ISP1 permit 10
+ 65   match ip address prefix-list isp1_network1
+ 66   [set community](Config_r1_RoutingPolicy_R1_IN_FROM_ISP1__Line1) [400:110](Config_r1_RoutingPolicy_R1_IN_FROM_ISP1__Line1__add_community_400_110_community) additive
+ 67 !
+ 68 route-map R1_IN_FROM_ISP1 permit 20
+ 69   match ip address prefix-list isp1_network3
+ 70   [set community](Config_r1_RoutingPolicy_R1_IN_FROM_ISP1__Line2) [400:110](Config_r1_RoutingPolicy_R1_IN_FROM_ISP1__Line2__add_community_400_110_community) additive
+ 71 !
+ 72 route-map R1_IN_FROM_ISP1 permit 30
+ 73   match ip address prefix-list isp1_network2
+ 74   [set community](Config_r1_RoutingPolicy_R1_IN_FROM_ISP1__Line3) [400:120](Config_r1_RoutingPolicy_R1_IN_FROM_ISP1__Line3__add_community_400_120_community) additive
+ 75 !
+ 76 route-map R1_IN_FROM_ISP1 deny 100
+ 77 !
+ 78 !
+ 79 !!! BGP import policy on R1 to ISP1 (R1 -> ISP1) !!!
+ 80 route-map R1_OUT_TO_ISP1 deny 10
+ 81   match community 500210
+ 82 !
+ 83 route-map R1_OUT_TO_ISP1 deny 20
+ 84   match community 500220
+ 85 !
+ 86 route-map R1_OUT_TO_ISP1 deny 30
+ 87   match community 200110
+ 88 !
+ 89 route-map R1_OUT_TO_ISP1 permit 100
+ 90   match ip address prefix-list default_ips
+ 91 !
+ 92 !
+ 93 !!! BGP export policy on R1 to R2 (R1 -> R2) !!!
+ 94 route-map R1_OUT_TO_R2 permit 10
+ 95   match community 400110
+ 96   [set community](Config_r1_RoutingPolicy_R1_OUT_TO_R2__Line1) [100:210](Config_r1_RoutingPolicy_R1_OUT_TO_R2__Line1__set_community_100_210_community)
+ 97 !
+ 98 route-map R1_OUT_TO_R2 permit 20
+ 99   match community 400120
+100   [set community](Config_r1_RoutingPolicy_R1_OUT_TO_R2__Line2) [100:220](Config_r1_RoutingPolicy_R1_OUT_TO_R2__Line2__set_community_100_220_community)
+101 !
+102 route-map R1_OUT_TO_R2 permit 100
+103   match ip address prefix-list default_ips
+104 !
+105 !
+106 !!! BGP export policy on R1 to R3 (R1 -> R3) !!!
+107 route-map R1_OUT_TO_R3 deny 10
+108   match community 400110
+109 !
+110 route-map R1_OUT_TO_R3 permit 20
+111   match community 200110
+112 !
+113 route-map R1_OUT_TO_R3 deny 100

@@ -1,0 +1,32 @@
+随着业务的变更，网络运维人员可能需要修改 <b>禁止转发</b> 网络规约。<br><br>请勾选下面选项中的 <span style="color: red;">任意数量的选项（可不选）</span>，如果该选项中的配置被移除或修改后，仍满足已验证的 <b>禁止转发</b> 网络规约。
+
+option1: [yes]
+```diff
+  @@ R1 Configuration 68,70 @@
+  route-map R1_IN_FROM_ISP1 permit 20
+    match ip address prefix-list isp1_network3
+-    [set community](Config_r1_RoutingPolicy_R1_IN_FROM_ISP1__Line2) [[400:110](Config_r1_RoutingPolicy_R1_IN_FROM_ISP1__Line2__add_community_400_110_community)] additive
++    [set community]<> [[400:120]<>] additive
+```
+
+option2: [no]
+```diff
+  @@ R2 Configuration 47,47 @@
+- [ip community-list](Config_r2_CommunityList_400120__Line1) 400120 [permit](Config_r2_CommunityList_400120__Line1__exact_community_400_120_action) [[400:120](Config_r2_CommunityList_400120__Line1__exact_community_400_120_400_120_community)]
++ [ip community-list]<> 400120 [permit]<> [[100:210]<>]
+<br>
+  @@ R2 Configuration 72,73 @@
+  route-map R2_OUT_TO_ISP2 permit 20
+    match community 400120
+```
+
+option3: [yes]
+```diff
+  @@ R1 Configuration 56,56 @@
+- [ip community-list](Config_r1_CommunityList_500210__Line1) 500210 [permit](Config_r1_CommunityList_500210__Line1__exact_community_500_210_action) [[500:210](Config_r1_CommunityList_500210__Line1__exact_community_500_210_500_210_community)]
++ [ip community-list]<> 500210 [permit]<> [[100:210]<>]
+<br>
+  @@ R1 Configuration 80,81 @@
+  route-map R1_OUT_TO_ISP1 deny 10
+    match community 500210
+```

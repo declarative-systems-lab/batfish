@@ -1,0 +1,5 @@
+<span style="text-decoration: underline;"><b>等价路由可达性</b>：路由器 R3 必须能够通过两条 ECMP 等价路径到达 ISP2 宣告的 203.0.113.0/24 前缀。</span><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="text-decoration: underline;">ECMP 路径 1：R3 → R1 → R2 → ISP2</span><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="text-decoration: underline;">ECMP 路径 2：R3 → R2 → ISP2</span><br>
+<br>
+<em>拓扑图中的每一条边都表示一个 eBGP 连接，其中部分连接配置了路由映射（route-maps），用于控制该连接上传播的路由和其属性，并影响路由选择决策。</em><br>
+<em>所有的设备都配置了等价多路径（ECMP，Equal-Cost Multi-Path）路由和 multipath-relax 选项。</em><br>
+<em>考虑到时间和配置复杂度的限制，我们省略了接口及 BGP 会话的具体配置，仅呈现完整的路由映射部分。</em>
