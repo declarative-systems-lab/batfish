@@ -520,13 +520,14 @@ public class PropertyChecker {
 
                 } else {
                   // get a writer for the property variables
-                  PrintWriter writer = enc.getPropertiesVarWriter();
+                  PrintWriter propWriter = enc.getPropertyWriter();
+                  PrintWriter varsWriter = enc.getPropertyVarsWriter();
 
                   // Not a differential query; just a query on a single version of the network.
                   BoolExpr allProp = enc.mkTrue();
                   for (String router : srcRouters) {
                     BoolExpr r = prop.get(router);
-                    writer.println(r);
+                    varsWriter.println(r);
                     // NOTE: Choose original network property or negated network property.
                     // Enable negate flag to verify isolation property via checkReachability method.
                     if (q.getNegate()) {
@@ -534,12 +535,16 @@ public class PropertyChecker {
                     }
                     allProp = enc.mkAnd(allProp, r);
                   }
-                  // Negate this network property for verification.
-                  enc.add(enc.mkNot(allProp));
+                  // Negate this network property for verification and baseline generation.
+                  BoolExpr verificationProp = enc.mkNot(allProp);
+                  enc.add(verificationProp);
+                  propWriter.println(verificationProp);
 
                   // Flush and close the writer
-                  writer.flush();
-                  writer.close();
+                  propWriter.flush();
+                  propWriter.close();
+                  varsWriter.flush();
+                  varsWriter.close();
                 }
 
                 addLinkFailureConstraints(enc, destPorts, failOptions);

@@ -334,6 +334,7 @@ public class Encoder {
   PrintWriter _commIndexesWriter;
   PrintWriter _overallAttrsWriter;
   PrintWriter _cfwdIgnoresWriter;
+  PrintWriter _propertyWriter;
   PrintWriter _propertyVarsWriter;
   PrintWriter _keyPrefixlistsWriter;
   PrintWriter _emptyCommunitiesWriter;
@@ -1251,6 +1252,7 @@ public class Encoder {
     String outputCommunityIndexesFileName   = _outputDirectoryName + "/0_smt_community_indexes.txt";
     String outputOverallAttributesFileName  = _outputDirectoryName + "/0_smt_overall_attributes.txt";
     String outputControlFwdIgnoresFileName  = _outputDirectoryName + "/0_smt_controlfwd_ignores.txt";
+    String outputPropertyFileName           = _outputDirectoryName + "/0_smt_property.txt";
     String outputPropertyVariablesFileName  = _outputDirectoryName + "/0_smt_property_variables.txt";
     String outputKeyPrefixListsFileName     = _outputDirectoryName + "/0_opt_key_prefixlists.txt";
     String outputEmptyCommunitiesFileName   = _outputDirectoryName + "/0_opt_empty_communities.txt";
@@ -1266,6 +1268,7 @@ public class Encoder {
     File outputCommunityIndexesFile         = new File(outputCommunityIndexesFileName);
     File outputOverallAttributesFile        = new File(outputOverallAttributesFileName);
     File outputControlFwdIgnoresFile        = new File(outputControlFwdIgnoresFileName);
+    File outputPropertyFile                 = new File(outputPropertyFileName);
     File outputPropertyVariablesFile        = new File(outputPropertyVariablesFileName);
     File outputKeyPrefixListsFile           = new File(outputKeyPrefixListsFileName);
     File outputEmptyCommunitiesFile         = new File(outputEmptyCommunitiesFileName);
@@ -1282,6 +1285,7 @@ public class Encoder {
       _commIndexesWriter                    = new PrintWriter(new FileWriter(outputCommunityIndexesFile, true), true);
       _overallAttrsWriter                   = new PrintWriter(new FileWriter(outputOverallAttributesFile, true), true);
       _cfwdIgnoresWriter                    = new PrintWriter(new FileWriter(outputControlFwdIgnoresFile, true), true);
+      _propertyWriter                       = new PrintWriter(new FileWriter(outputPropertyFile, true), true);
       _propertyVarsWriter                   = new PrintWriter(new FileWriter(outputPropertyVariablesFile, true), true);
       _keyPrefixlistsWriter                 = new PrintWriter(new FileWriter(outputKeyPrefixListsFile, true), true);
       _emptyCommunitiesWriter               = new PrintWriter(new FileWriter(outputEmptyCommunitiesFile, true), true);
@@ -2233,7 +2237,11 @@ public class Encoder {
     _emptyCommunitiesWriter.close();
   }
 
-  public PrintWriter getPropertiesVarWriter() {
+  public PrintWriter getPropertyVarsWriter() {
     return _propertyVarsWriter;
+  }
+
+  public PrintWriter getPropertyWriter() {
+    return _propertyWriter;
   }
 }
