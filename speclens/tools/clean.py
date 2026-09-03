@@ -26,6 +26,7 @@ INTERMEDIATE_DIRECTORY_PATTERNS = (
     "6_intermediate_subspec_*",
 )
 TIMING_FILE_PATTERN = "times_*.txt"
+BENCHMARK_REPORT_FILE = "benchmark_time.csv"
 
 
 def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
@@ -66,10 +67,13 @@ def clean_intermediate_directories(work_directory: Path) -> None:
 
 
 def clean_timing_files(work_directory: Path) -> None:
-    """Remove timing reports produced by the pipeline runner."""
+    """Remove current and legacy timing reports produced by the runner."""
     for timing_file in sorted(work_directory.glob(TIMING_FILE_PATTERN)):
         if timing_file.is_file():
             timing_file.unlink()
+    benchmark_report = work_directory / BENCHMARK_REPORT_FILE
+    if benchmark_report.is_file():
+        benchmark_report.unlink()
 
 
 def clean_stage(script: Path, work_directory: Path) -> None:

@@ -42,7 +42,10 @@ from utils.util_smt import (
     extract_ssa_variables,
     extract_symbolic_variables_let_aware,
     match_ssa_definition_variable,
+    parse_smt2_sexpr,
+    serialize_smt2_sexpr,
     slice_smt_dependency_closure,
+    tokenize_smt2_sexpr,
 )
 
 
@@ -656,6 +659,87 @@ def _remove_ssa_return_declarations(
     return retained
 
 
+def _parse_smt_expression(expression: str, *, description: str) -> object:
+    """Parse exactly one SMT expression with a contextual error message."""
+    try:
+        tree = parse_smt2_sexpr(tokenize_smt2_sexpr(expression))
+    except ValueError as error:
+        raise ValueError(f"Invalid {description}: {error}") from error
+    if tree is None:
+        raise ValueError(f"Expected exactly one complete {description}")
+    return tree
+
+
+def build_global_subspec_encoding(
+    property_path: Path,
+    global_expressions: Sequence[str],
+    output_path: Path,
+) -> List[str]:
+    """Copy the global encoding while removing the property's outer ``not``."""
+    try:
+        property_expression = property_path.read_text(encoding="utf-8")
+    except OSError as error:
+        raise ValueError(
+            f"Failed to load verification property from {property_path}: {error}"
+        ) from error
+
+    property_tree = _parse_smt_expression(
+        property_expression,
+        description="verification property",
+    )
+    normalized_assertions, _ = _expand_global_assertions(
+        [serialize_smt2_sexpr(["assert", property_tree])],
+        verbose_flag=False,
+    )
+    if len(normalized_assertions) != 1:
+        raise ValueError(
+            "Verification property normalization produced no assertion"
+        )
+    normalized_property = _parse_smt_expression(
+        normalized_assertions[0],
+        description="normalized verification property assertion",
+    )
+
+    matching_indexes = []
+    parsed_expressions = []
+    for index, expression in enumerate(global_expressions):
+        tree = _parse_smt_expression(
+            expression,
+            description="global encoding expression",
+        )
+        parsed_expressions.append(tree)
+        if tree == normalized_property:
+            matching_indexes.append(index)
+
+    if len(matching_indexes) != 1:
+        raise ValueError(
+            "Expected exactly one normalized verification property in the "
+            f"global encoding, found {len(matching_indexes)}"
+        )
+
+    property_index = matching_indexes[0]
+    assertion = parsed_expressions[property_index]
+    if (
+        not isinstance(assertion, list)
+        or len(assertion) != 2
+        or assertion[0] != "assert"
+        or not isinstance(assertion[1], list)
+        or len(assertion[1]) != 2
+        or assertion[1][0] != "not"
+    ):
+        raise ValueError(
+            "The normalized verification property must have the form "
+            "(assert (not ...))"
+        )
+
+    baseline_expressions = list(global_expressions)
+    baseline_expressions[property_index] = serialize_smt2_sexpr(
+        ["assert", assertion[1][1]]
+    )
+    write_smt_expressions(output_path, baseline_expressions)
+    return baseline_expressions
+
+
 def build_router_local_encodings(
     work_dir: Path,
     sliced_expressions: Optional[Sequence[str]] = None,
@@ -693,30 +777,37 @@ def build_router_local_encodings(
 
 def _parse_cli_args(
     args: Sequence[str],
-) -> Tuple[bool, bool, Optional[str]]:
+) -> Tuple[bool, bool, bool, Optional[str]]:
     verbose_flag = False
     delete_flag = False
+    fullsym_baseline = False
     work_dir = None
     for argument in args:
         if argument == "-v":
             verbose_flag = True
         elif argument == "-d":
             delete_flag = True
+        elif argument == "--fullsym-baseline":
+            fullsym_baseline = True
         elif argument.startswith("-"):
             raise ValueError(f"Unknown option: {argument}")
         elif work_dir is not None:
             raise ValueError("Multiple work directories specified")
         else:
             work_dir = argument
-    return verbose_flag, delete_flag, work_dir
+    return verbose_flag, delete_flag, fullsym_baseline, work_dir
 
 
 def _print_usage() -> None:
-    print("Usage: python 2_router_local_encoding.py [-v] [-d] <work_directory>")
+    print(
+        "Usage: python 2_router_local_encoding.py [-v] [-d] "
+        "[--fullsym-baseline] <work_directory>"
+    )
     print("Options:")
     print("  -v     Verbose mode: Show detailed INFO logs")
     print("         Without -v: Only show WARNING/ERROR logs and completion status")
     print("  -d     Delete intermediate output files before running, then exit")
+    print("  --fullsym-baseline  Generate the Stage 6 global baseline")
     print("  -h, --help      Show this help message")
     print("")
     print("Example: python 2_router_local_encoding.py smt_output_0001")
@@ -734,10 +825,23 @@ def _delete_outputs(work_dir: Path) -> None:
         log_info("Deleted intermediate output: %s", deleted_path)
 
 
-def _run_router_local_encoding(work_dir: Path, verbose_flag: bool) -> None:
+def _run_router_local_encoding(
+    work_dir: Path,
+    verbose_flag: bool,
+    *,
+    fullsym_baseline: bool,
+) -> None:
     """Validate inputs and build the global and router-local SMT encoding slices."""
     validate_router_local_encoding_inputs(work_dir)
-    clear_router_local_encoding_files(work_dir)
+    property_path = work_dir / util_keyword.PROPERTY_FILE
+    if fullsym_baseline and not property_path.is_file():
+        raise FileNotFoundError(
+            f"Verification property not found: {property_path}"
+        )
+    clear_router_local_encoding_files(
+        work_dir,
+        preserve_subspec_baseline=not fullsym_baseline,
+    )
     output_dir = ensure_directory(work_dir / util_keyword.ROUTER_LOCAL_ENCODING_DIR)
     global_slice = output_dir / util_keyword.GLOBAL_ENCODING_FILE
 
@@ -748,6 +852,19 @@ def _run_router_local_encoding(work_dir: Path, verbose_flag: bool) -> None:
         global_slice,
         verbose_flag=verbose_flag,
     )
+    if fullsym_baseline:
+        baseline_path = (
+            output_dir / util_keyword.GLOBAL_SUBSPEC_ENCODING_FILE
+        )
+        build_global_subspec_encoding(
+            property_path,
+            sliced_expressions,
+            baseline_path,
+        )
+        verbose_info(
+            verbose_flag,
+            f"Stage 6 baseline written to {baseline_path}.",
+        )
 
     verbose_info(verbose_flag, "\nStep 2: Router-local encoding...")
     build_router_local_encodings(
@@ -771,6 +888,7 @@ def main(args: Optional[Sequence[str]] = None) -> None:
         (
             verbose_flag,
             delete_flag,
+            fullsym_baseline,
             work_dir,
         ) = _parse_cli_args(cli_args)
     except ValueError as error:
@@ -793,7 +911,11 @@ def main(args: Optional[Sequence[str]] = None) -> None:
         return
 
     try:
-        _run_router_local_encoding(work_dir_path, verbose_flag)
+        _run_router_local_encoding(
+            work_dir_path,
+            verbose_flag,
+            fullsym_baseline=fullsym_baseline,
+        )
     except Exception as error:
         exit_with_error(f"Error: {error}")
 

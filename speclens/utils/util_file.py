@@ -2403,14 +2403,21 @@ def delete_router_consistency_outputs(
     return [path for path in candidates if delete_file(path)]
 
 
-def clear_router_local_encoding_files(work_dir: Path) -> List[Path]:
-    """Delete Stage 2 outputs while preserving the manual Stage 6 baseline."""
+def clear_router_local_encoding_files(
+    work_dir: Path,
+    *,
+    preserve_subspec_baseline: bool = True,
+) -> List[Path]:
+    """Delete Stage 2 encodings, optionally preserving the Stage 6 baseline."""
     output_dir = ensure_directory(
         work_dir / util_keyword.ROUTER_LOCAL_ENCODING_DIR
     )
     deleted: List[Path] = []
     for encoding_file in sorted(output_dir.glob("*.smt2")):
-        if encoding_file.name == util_keyword.GLOBAL_SUBSPEC_ENCODING_FILE:
+        if (
+            preserve_subspec_baseline
+            and encoding_file.name == util_keyword.GLOBAL_SUBSPEC_ENCODING_FILE
+        ):
             continue
         if delete_file(encoding_file):
             deleted.append(encoding_file)

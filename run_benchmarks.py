@@ -13,13 +13,15 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Sequence
 
+from speclens.tools.progress import TerminalSpinner
+
 
 ROOT_DIRECTORY = Path(__file__).resolve().parent
 SPECLENS_RUNNER = ROOT_DIRECTORY / "speclens" / "tools" / "run.py"
 BAZEL_TARGET = "//projects/allinone:smt_property_tests"
-DEFAULT_THREADS = 20
-DEFAULT_TIMEOUT_SECONDS = 4 * 60 * 60
 BAZEL_TEST_TIMEOUT_SECONDS = 3000
+DEFAULT_THREADS = 1
+DEFAULT_TIMEOUT_SECONDS = 4 * 60 * 60
 PIPELINE_SEPARATOR = "-" * 70
 
 OUTPUT_DIRECTORY_PATTERN = re.compile(
@@ -71,7 +73,7 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         add_help=False,
         usage=(
-            "%(prog)s [--subspec | --noscope | --fullsym] [-c] "
+            "%(prog)s [--subspec | --noscope | --fullsym | --all] [-c] "
             "[-t THREADS] [--timeout SECONDS] [--internet2] [-v] "
             "work_directory [-h]"
         ),
@@ -79,8 +81,8 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
             "Generate one SMT output per property and run SpecLens on it."
         ),
         epilog=(
-            "The full-symbolic workflow requires a manually prepared "
-            "2_router_local_encoding/global_encoding_subspec.smt2."
+            "The full-symbolic baseline is generated automatically from "
+            "the verification property."
         ),
     )
     workflows = parser.add_argument_group("SpecLens workflows")
@@ -100,6 +102,11 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         action="store_true",
         help="run the fully symbolic subspecification workflow",
     )
+    workflow.add_argument(
+        "--all",
+        action="store_true",
+        help="run all subspecification workflows",
+    )
     parser.add_argument(
         "-c",
         "--community",
@@ -110,18 +117,15 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         "-t",
         "--threads",
         type=_positive_int,
-        default=DEFAULT_THREADS,
-        help=f"maximum SpecLens device workers (default: {DEFAULT_THREADS})",
+        default=None,
+        help="override the SpecLens concurrent device task limit",
     )
     parser.add_argument(
         "--timeout",
         type=_positive_float,
-        default=DEFAULT_TIMEOUT_SECONDS,
+        default=None,
         metavar="SECONDS",
-        help=(
-            "timeout for each property's SpecLens workflow "
-            f"(default: {DEFAULT_TIMEOUT_SECONDS} seconds)"
-        ),
+        help="override the timeout for each property's SpecLens workflow",
     )
     parser.add_argument(
         "--internet2",
@@ -146,7 +150,12 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         help="show this help message and exit",
     )
     options = parser.parse_args(argv)
-    if not (options.subspec or options.noscope or options.fullsym):
+    if not (
+        options.subspec
+        or options.noscope
+        or options.fullsym
+        or options.all
+    ):
         options.subspec = True
     return options
 
@@ -162,6 +171,46 @@ def _is_relative_to(path: Path, parent: Path) -> bool:
 def _display_path(path: Path) -> str:
     """Return a concise path relative to the repository root."""
     return os.path.relpath(path, ROOT_DIRECTORY)
+
+
+def _format_duration(seconds: float) -> str:
+    hours, remaining = divmod(seconds, 60 * 60)
+    minutes, remaining = divmod(remaining, 60)
+    parts = []
+    if hours:
+        parts.append(f"{int(hours)}h")
+    if minutes:
+        parts.append(f"{int(minutes)}min")
+    if remaining or not parts:
+        parts.append(f"{remaining:g}s")
+    return " ".join(parts)
+
+
+def _workflow_name(options: argparse.Namespace) -> str:
+    if options.all:
+        return "all (SubSpec + NoScope + FullSym)"
+    if options.noscope:
+        return "NoScope"
+    if options.fullsym:
+        return "FullSym"
+    return "SubSpec"
+
+
+def _report_run_options(options: argparse.Namespace) -> None:
+    threads = options.threads or DEFAULT_THREADS
+    timeout = options.timeout or DEFAULT_TIMEOUT_SECONDS
+    print(f"[!] Note: Parallel threads: {threads}")
+    print(f"[!] Note: Timeout: {_format_duration(timeout)}")
+    print(f"[!] Note: Workflow: {_workflow_name(options)}")
+    print(
+        "[!] Note: Community subspec extension: "
+        f"{str(options.community).lower()}"
+    )
+    print(
+        "[!] Note: Internet2 refinement: "
+        f"{str(options.internet2).lower()}"
+    )
+    print(PIPELINE_SEPARATOR)
 
 
 def validate_work_directory(work_directory: Path) -> tuple[Path, int]:
@@ -233,6 +282,16 @@ def run_command(
     return CommandResult(process.wait(), "".join(output_lines))
 
 
+def run_visible_command(command: Sequence[str]) -> CommandResult:
+    """Run a command with direct terminal access for interactive progress."""
+    result = subprocess.run(
+        list(command),
+        cwd=ROOT_DIRECTORY,
+        check=False,
+    )
+    return CommandResult(result.returncode, "")
+
+
 def report_failure(
     description: str,
     result: CommandResult,
@@ -245,10 +304,11 @@ def report_failure(
 
 
 def build_projects(verbose: bool) -> bool:
-    result = run_command(
-        ("bazelisk", "build", BAZEL_TARGET),
-        verbose=verbose,
-    )
+    with TerminalSpinner("Running: Build Projects", enabled=not verbose):
+        result = run_command(
+            ("bazelisk", "build", BAZEL_TARGET),
+            verbose=verbose,
+        )
     if not result.succeeded:
         report_failure(
             "Build Projects",
@@ -293,10 +353,15 @@ def generate_property(
         f"--test_env=SMT_DIRECTORY_PREFIX={output_root}",
         f"--test_env=SMT_PROPERTY_INDEX={property_index}",
     )
-    result = run_command(
-        command,
-        verbose=verbose,
+    description = (
+        f"Running: Property {property_index:02d} "
+        "(Simulation State & Verification Encoding)"
     )
+    with TerminalSpinner(description, enabled=not verbose):
+        result = run_command(
+            command,
+            verbose=verbose,
+        )
     if not result.succeeded:
         return None, result
 
@@ -327,45 +392,53 @@ def generate_property(
 def run_speclens(
     output_directory: Path,
     options: argparse.Namespace,
+    *,
+    benchmark: str,
 ) -> CommandResult:
-    command = [sys.executable, str(SPECLENS_RUNNER)]
+    command = [sys.executable, "-u", str(SPECLENS_RUNNER)]
     if options.subspec:
         command.append("--subspec")
     if options.noscope:
         command.append("--noscope")
     if options.fullsym:
         command.append("--fullsym")
+    if options.all:
+        command.append("--all")
     if options.community:
         command.append("--community")
-    command.extend(("--threads", str(options.threads)))
-    command.extend(("--timeout", str(options.timeout)))
+    if options.threads is not None:
+        command.extend(("--threads", str(options.threads)))
+    if options.timeout is not None:
+        command.extend(("--timeout", str(options.timeout)))
     if options.internet2:
         command.append("--internet2")
     if options.verbose:
         command.append("--verbose")
+    command.extend(("--benchmark", benchmark))
     command.append(str(output_directory))
-    return run_command(
-        command,
-        verbose=True,
-    )
+    return run_visible_command(command)
 
 
 def run_pipeline(options: argparse.Namespace) -> bool:
-    work_directory, property_count = validate_work_directory(
-        options.work_directory
-    )
+    _report_run_options(options)
     if not SPECLENS_RUNNER.is_file():
         raise FileNotFoundError(f"SpecLens runner not found: {SPECLENS_RUNNER}")
     if not build_projects(options.verbose):
         return False
 
+    with TerminalSpinner(
+        "Running: Load Configurations",
+        enabled=not options.verbose,
+    ):
+        work_directory, property_count = validate_work_directory(
+            options.work_directory
+        )
     print(
         "[✓] Completed: Load Configurations from "
         f"'{work_directory.relative_to(ROOT_DIRECTORY)}'"
     )
     output_root = _output_root()
     for property_index in range(1, property_count + 1):
-        print()
         output_directory, generation_result = generate_property(
             work_directory,
             property_index,
@@ -384,12 +457,22 @@ def run_pipeline(options: argparse.Namespace) -> bool:
             f"[✓] Completed: Property {property_index:02d} "
             "(Simulation State & Verification Encoding)"
         )
-        print(
-            "[✓] Completed: Store Outputs to "
-            f"'{_display_path(output_directory)}'"
-        )
+        output_display_path = _display_path(output_directory)
+        with TerminalSpinner(
+            f"Running: Store Outputs to '{output_display_path}'",
+            enabled=not options.verbose,
+        ):
+            if not output_directory.is_dir():
+                raise FileNotFoundError(
+                    f"Generated SMT output not found: {output_directory}"
+                )
+        print(f"[✓] Completed: Store Outputs to '{output_display_path}'")
         print(PIPELINE_SEPARATOR)
-        speclens_result = run_speclens(output_directory, options)
+        speclens_result = run_speclens(
+            output_directory,
+            options,
+            benchmark=work_directory.name.lower(),
+        )
         if not speclens_result.succeeded:
             report_failure(
                 f"Property {property_index:02d} SpecLens Pipeline",

@@ -22,6 +22,7 @@ HISTORY_ENUMS_FILE                  = "0_smt_history_enums.txt"
 COMMUNITY_INDEXES_FILE              = "0_smt_community_indexes.txt"
 OVERALL_ATTRIBUTES_FILE             = "0_smt_overall_attributes.txt"
 CONTROLFWD_IGNORES_FILE             = "0_smt_controlfwd_ignores.txt"
+PROPERTY_FILE                       = "0_smt_property.txt"
 PROPERTY_VARIABLES_FILE             = "0_smt_property_variables.txt"
 
 KEY_PREFIXLISTS_FILE                = "0_opt_key_prefixlists.txt"

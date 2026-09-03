@@ -80,7 +80,6 @@ class FullSymbolicSubspecSimplifier(CommonSubspecSimplifierMixin):
 
     def load_inputs(self) -> None:
         """Validate and load the global full-symbolic inputs."""
-        # TODO: Generate the subspecification baseline in Stage 2; it is currently manual.
         (
             self.verification_baseline_file,
             self.subspec_baseline_file,

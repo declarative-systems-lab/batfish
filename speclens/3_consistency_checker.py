@@ -6,6 +6,7 @@ fragments to its local encoding, runs Z3, and optionally computes route-map
 subspecs.
 """
 
+import json
 import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
@@ -50,6 +51,7 @@ CheckResult = Tuple[bool, str]
 RouterCheckResults = Dict[str, CheckResult]
 ConsistencyResults = Dict[str, RouterCheckResults]
 ConsistencyFailures = Dict[str, List[str]]
+INTERNET2_INITIAL_RESULTS_FILE = ".internet2_initial_results"
 
 
 class ConsistencyEncodingBuilder:
@@ -554,11 +556,22 @@ class Internet2ConsistencyRefiner:
 
 def _parse_cli_args(
     args: Sequence[str],
-) -> Tuple[bool, bool, bool, bool, Optional[str], Optional[str]]:
+) -> Tuple[
+    bool,
+    bool,
+    bool,
+    bool,
+    bool,
+    bool,
+    Optional[str],
+    Optional[str],
+]:
     verbose_flag = False
     delete_flag = False
     routemap_subspec = False
     internet2 = False
+    internet2_initial = False
+    internet2_refine = False
     router_filter = None
     work_dir = None
     index = 0
@@ -572,6 +585,10 @@ def _parse_cli_args(
             routemap_subspec = True
         elif argument == "--internet2":
             internet2 = True
+        elif argument == "--internet2-initial":
+            internet2_initial = True
+        elif argument == "--internet2-refine":
+            internet2_refine = True
         elif argument == "--device":
             if index + 1 >= len(args) or args[index + 1].startswith("-"):
                 raise ValueError("--device requires a value")
@@ -586,11 +603,18 @@ def _parse_cli_args(
         else:
             work_dir = argument
         index += 1
+    if sum((internet2, internet2_initial, internet2_refine)) > 1:
+        raise ValueError(
+            "--internet2, --internet2-initial, and --internet2-refine "
+            "are mutually exclusive"
+        )
     return (
         verbose_flag,
         delete_flag,
         routemap_subspec,
         internet2,
+        internet2_initial,
+        internet2_refine,
         router_filter,
         work_dir,
     )
@@ -599,7 +623,8 @@ def _parse_cli_args(
 def _print_usage() -> None:
     print(
         "Usage: python 3_consistency_checker.py [-v] [-d] [-r] "
-        "[--internet2] [--device DEVICE] <work_directory>"
+        "[--internet2 | --internet2-initial | --internet2-refine] "
+        "[--device DEVICE] <work_directory>"
     )
     print("Options:")
     print("  -v     Verbose mode: Show detailed INFO logs")
@@ -607,6 +632,8 @@ def _print_usage() -> None:
     print("  -d     Delete intermediate output files before running, then exit")
     print("  -r     If all tests pass, compute route-map functional subspecs")
     print("  --internet2      Refine assume-guarantee from Z3 models")
+    print("  --internet2-initial  Run and persist the initial Internet2 checks")
+    print("  --internet2-refine   Refine the persisted Internet2 check failures")
     print("  --device DEVICE  Process only the specified device")
     print("                   Without --device DEVICE: Process all devices")
     print("  -h, --help       Show this help message")
@@ -629,16 +656,13 @@ def _delete_outputs(work_dir: Path) -> None:
         log_info("Deleted intermediate output: %s", deleted_path)
 
 
-def _run_consistency_checks(
+def _prepare_consistency_checks(
     work_dir: Path,
     *,
-    routemap_subspec: bool,
-    internet2: bool,
     router_filter: Optional[str],
     verbose_flag: bool,
-) -> Tuple[ConsistencyResults, bool, ConsistencyFailures]:
-    """Run consistency checks and optional route-map subspec calculation."""
-    # Prepare.
+) -> Tuple[ConsistencyChecker, ConsistencyEncodingBuilder]:
+    """Validate inputs, replace prior outputs, and generate check encodings."""
     validate_consistency_checker_inputs(work_dir)
     if router_filter is None:
         delete_consistency_checker_outputs(work_dir)
@@ -654,9 +678,87 @@ def _run_consistency_checks(
         routers=checker.routers,
         verbose_flag=verbose_flag,
     )
-
-    # Generate.
     builder.write_all_router_encodings()
+    return checker, builder
+
+
+def _internet2_results_path(
+    work_dir: Path,
+    router_filter: Optional[str],
+) -> Path:
+    suffix = f"_{router_filter}" if router_filter else ""
+    return (
+        work_dir
+        / util_keyword.CONSISTENCY_CHECK_DIR
+        / f"{INTERNET2_INITIAL_RESULTS_FILE}{suffix}.json"
+    )
+
+
+def _save_internet2_initial_results(
+    work_dir: Path,
+    router_filter: Optional[str],
+    results: ConsistencyResults,
+) -> None:
+    path = _internet2_results_path(work_dir, router_filter)
+    path.write_text(json.dumps(results), encoding="utf-8")
+
+
+def _load_internet2_initial_results(
+    work_dir: Path,
+    router_filter: Optional[str],
+) -> ConsistencyResults:
+    path = _internet2_results_path(work_dir, router_filter)
+    if not path.is_file():
+        raise FileNotFoundError(
+            f"Internet2 initial-check results not found: {path}"
+        )
+    raw_results = json.loads(path.read_text(encoding="utf-8"))
+    results: ConsistencyResults = {}
+    for router, router_results in raw_results.items():
+        results[router] = {
+            check_name: (bool(check_result[0]), str(check_result[1]))
+            for check_name, check_result in router_results.items()
+        }
+    return results
+
+
+def _finish_consistency_checks(
+    checker: ConsistencyChecker,
+    results: ConsistencyResults,
+    *,
+    routemap_subspec: bool,
+    verbose_flag: bool,
+) -> None:
+    if checker.all_checks_passed(results) and routemap_subspec:
+        verbose_info(verbose_flag, "=" * 80)
+        verbose_info(
+            verbose_flag,
+            "All tests passed! Calculating route-map level subspecs "
+            "(-r enabled)...",
+        )
+        verbose_info(verbose_flag, "=" * 80)
+        checker.calculate_routemap_subspecs(parallel=False)
+    elif not checker.all_checks_passed(results):
+        verbose_info(
+            verbose_flag,
+            "Some tests failed. Skipping route-map level subspec calculation.",
+        )
+
+
+def _run_consistency_checks(
+    work_dir: Path,
+    *,
+    routemap_subspec: bool,
+    internet2: bool,
+    router_filter: Optional[str],
+    verbose_flag: bool,
+) -> Tuple[ConsistencyResults, bool, ConsistencyFailures]:
+    """Run consistency checks and optional route-map subspec calculation."""
+    checker, builder = _prepare_consistency_checks(
+        work_dir,
+        router_filter=router_filter,
+        verbose_flag=verbose_flag,
+    )
     refiner = None
     if internet2:
         refiner = Internet2ConsistencyRefiner(checker, builder)
@@ -674,22 +776,67 @@ def _run_consistency_checks(
         if refined_count:
             checker.write_summary(results)
 
-    all_passed = checker.all_checks_passed(results)
-    if all_passed and routemap_subspec:
-        verbose_info(verbose_flag, "=" * 80)
-        verbose_info(
-            verbose_flag,
-            "All tests passed! Calculating route-map level subspecs "
-            "(-r enabled)...",
-        )
-        verbose_info(verbose_flag, "=" * 80)
-        checker.calculate_routemap_subspecs(parallel=False)
-    elif not all_passed:
-        verbose_info(
-            verbose_flag,
-            "Some tests failed. Skipping route-map level subspec calculation.",
-        )
+    _finish_consistency_checks(
+        checker,
+        results,
+        routemap_subspec=routemap_subspec,
+        verbose_flag=verbose_flag,
+    )
     return results, refined_count > 0, initial_failures
+
+
+def _run_internet2_initial_checks(
+    work_dir: Path,
+    *,
+    router_filter: Optional[str],
+    verbose_flag: bool,
+) -> ConsistencyResults:
+    """Run and persist the initial Internet2 checks for later refinement."""
+    checker, builder = _prepare_consistency_checks(
+        work_dir,
+        router_filter=router_filter,
+        verbose_flag=verbose_flag,
+    )
+    Internet2ConsistencyRefiner(checker, builder).patch_generated_violations()
+    results = checker.check_all_routers(parallel=False)
+    checker.write_summary(results)
+    _save_internet2_initial_results(work_dir, router_filter, results)
+    return results
+
+
+def _run_internet2_refinement(
+    work_dir: Path,
+    *,
+    routemap_subspec: bool,
+    router_filter: Optional[str],
+    verbose_flag: bool,
+) -> Tuple[ConsistencyResults, bool]:
+    """Refine the persisted Internet2 failures without repeating initial checks."""
+    validate_consistency_checker_inputs(work_dir)
+    results_path = _internet2_results_path(work_dir, router_filter)
+    results = _load_internet2_initial_results(work_dir, router_filter)
+    checker = ConsistencyChecker(
+        str(work_dir),
+        device_filter=router_filter,
+        verbose_flag=verbose_flag,
+    )
+    builder = ConsistencyEncodingBuilder(
+        str(work_dir),
+        routers=checker.routers,
+        verbose_flag=verbose_flag,
+    )
+    refiner = Internet2ConsistencyRefiner(checker, builder)
+    results, refined_count = refiner.refine_failures(results)
+    if refined_count:
+        checker.write_summary(results)
+    _finish_consistency_checks(
+        checker,
+        results,
+        routemap_subspec=routemap_subspec,
+        verbose_flag=verbose_flag,
+    )
+    results_path.unlink()
+    return results, refined_count > 0
 
 
 def _collect_consistency_failures(
@@ -706,6 +853,25 @@ def _collect_consistency_failures(
         if failed_checks:
             failures[router] = failed_checks
     return failures
+
+
+def _print_internet2_initial_status(
+    results: ConsistencyResults,
+    *,
+    router_filter: Optional[str],
+) -> None:
+    """Report initial failures as refinable without failing the phase."""
+    for router, failed_checks in sorted(
+        _collect_consistency_failures(results).items()
+    ):
+        print(
+            "[?] Failed: Initial Consistency Check Failed for Device "
+            f"{router}: {' / '.join(failed_checks)}"
+        )
+    message = "[✓] Completed: Initial Internet2 Consistency Check"
+    if router_filter is not None:
+        message += f" for Device {router_filter}"
+    print(message)
 
 
 def _print_final_status(
@@ -756,6 +922,8 @@ def main(args: Optional[Sequence[str]] = None) -> None:
             delete_flag,
             routemap_subspec,
             internet2,
+            internet2_initial,
+            internet2_refine,
             router_filter,
             work_dir,
         ) = _parse_cli_args(cli_args)
@@ -779,13 +947,34 @@ def main(args: Optional[Sequence[str]] = None) -> None:
         return
 
     try:
-        results, refined, initial_failures = _run_consistency_checks(
-            work_dir_path,
-            routemap_subspec=routemap_subspec,
-            internet2=internet2,
-            router_filter=router_filter,
-            verbose_flag=verbose_flag,
-        )
+        if internet2_initial:
+            results = _run_internet2_initial_checks(
+                work_dir_path,
+                router_filter=router_filter,
+                verbose_flag=verbose_flag,
+            )
+            _print_internet2_initial_status(
+                results,
+                router_filter=router_filter,
+            )
+            return
+
+        if internet2_refine:
+            results, refined = _run_internet2_refinement(
+                work_dir_path,
+                routemap_subspec=routemap_subspec,
+                router_filter=router_filter,
+                verbose_flag=verbose_flag,
+            )
+            initial_failures = {}
+        else:
+            results, refined, initial_failures = _run_consistency_checks(
+                work_dir_path,
+                routemap_subspec=routemap_subspec,
+                internet2=internet2,
+                router_filter=router_filter,
+                verbose_flag=verbose_flag,
+            )
     except Exception as error:
         exit_with_error(f"Error: {error}")
 
