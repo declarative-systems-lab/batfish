@@ -66,12 +66,12 @@ Open `user-study/interface/generated/index.html` to start.
 
 ```bash
 cd datas
-.venv/bin/python -m jupyter lab evaluation.ipynb
+python3 -m notebook evaluation.ipynb
 ```
 
 Run all cells to display and save the nine accuracy, completion-time, and SUS
-figures under `datas/figs/1_userstudy/`. Create the `.venv` environment first as
-described in the [data analysis instructions](../datas/README.md).
+figures under `datas/figs/1_userstudy/`. See the
+[data analysis instructions](../datas/README.md) for details.
 
 ## Data Privacy
 

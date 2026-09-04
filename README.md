@@ -28,9 +28,9 @@ Other Debian/Ubuntu-based Linux distributions may work if they provide
 `apt-get` and glibc 2.35 or newer, but they have not been tested.
 
 The installer configures `.bazelrc` and installs OpenJDK 11, Bazelisk, Python 3,
-NumPy, Matplotlib, and the Z3 native libraries. On macOS, Homebrew is installed
-automatically if needed. Run the script as a normal user; it requests elevated
-access only when required.
+Jupyter Notebook, pandas, NumPy, Matplotlib, and the Z3 native libraries. On
+macOS, Homebrew is installed automatically if needed. Run the script as a
+normal user; it requests elevated access only when required.
 
 ### Benchmark
 
@@ -102,9 +102,9 @@ For a short end-to-end artifact check, run:
 
 ## Data Analysis
 
-The optional analysis notebook and its isolated Python setup are documented in
-the [data analysis instructions](datas/README.md).
-Jupyter is not installed by `install.sh`.
+The analysis notebook is documented in the
+[data analysis instructions](datas/README.md). Jupyter Notebook and its Python
+dependencies are installed by `install.sh`.
 
 ## Repository Layout
 

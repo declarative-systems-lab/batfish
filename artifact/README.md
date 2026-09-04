@@ -37,9 +37,8 @@ python3 run_benchmark.py benchmarks/FatTrees/fattree4pol
 This smoke test uses the standard runner defaults. The reproduction scripts
 below use the thread count and timeout selected in `artifact/config.json`.
 
-The installer also installs NumPy and Matplotlib, which the artifact scripts
-use to generate figures. Jupyter and pandas remain optional dependencies for
-the analysis notebook and are documented separately.
+The installer also installs Jupyter Notebook, pandas, NumPy, and Matplotlib for
+the artifact scripts and analysis notebook.
 
 The installer and supported operating systems are documented in the main
 [`README.md`](../README.md). Notebook-based analysis is documented in

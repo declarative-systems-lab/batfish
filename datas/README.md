@@ -15,29 +15,23 @@ Generated figures are written below `figs/`.
 For automated reproduction with the `lite`, `fast`, and `full` profiles, see
 the [artifact evaluation guide](../artifact/README.md).
 
-## Run locally with JupyterLab
+## Run Locally
 
-Jupyter is an optional analysis dependency and is not installed by the main
-`install.sh` script. Create an isolated Python environment when you need to run
-the notebook:
+The main `install.sh` installs Jupyter Notebook and all required analysis
+packages. Start the notebook from the `datas/` directory:
 
 ```bash
 cd datas
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install --upgrade pip
-python -m pip install jupyterlab ipykernel pandas numpy matplotlib
-python -m jupyter lab evaluation.ipynb
+python3 -m notebook evaluation.ipynb
 ```
 
-JupyterLab will open the notebook in a browser. Select the `.venv` Python kernel
-if prompted.
+Jupyter Notebook will open in a browser.
 
 ## Run from an editor
 
-Editors with notebook support can run `evaluation.ipynb` without starting JupyterLab
-manually. Create the virtual environment above, open the repository in the
-editor, and select `datas/.venv/bin/python` as the notebook kernel.
+Editors with notebook support can run `evaluation.ipynb` without starting
+Jupyter Notebook manually. Open the repository in the editor and select the
+`python3` interpreter installed by `install.sh` as the notebook kernel.
 
 ## Run in a hosted notebook
 

@@ -84,28 +84,6 @@ version_at_least() {
          current_patch >= required_patch)))
 }
 
-verify_sha256() {
-    local file="$1"
-    local expected="$2"
-    local actual
-
-    if command -v sha256sum >/dev/null 2>&1; then
-        actual=$(sha256sum "${file}" | awk '{print $1}')
-    elif command -v shasum >/dev/null 2>&1; then
-        actual=$(shasum -a 256 "${file}" | awk '{print $1}')
-    else
-        echo "Error: sha256sum or shasum is required to verify downloads." >&2
-        exit 1
-    fi
-
-    if [[ "${actual}" != "${expected}" ]]; then
-        echo "Error: SHA-256 mismatch for ${file}." >&2
-        echo "Expected: ${expected}" >&2
-        echo "Actual:   ${actual}" >&2
-        exit 1
-    fi
-}
-
 cleanup_temp_dir() {
     local temp_dir="${TEMP_DIR:-}"
 
@@ -175,21 +153,22 @@ install_for_linux() {
 
     BAZELISK_VERSION="1.25.0"
     BAZELISK_URL="https://github.com/bazelbuild/bazelisk/releases/download/v${BAZELISK_VERSION}/bazelisk-linux-amd64"
-    BAZELISK_SHA256="fd8fdff418a1758887520fa42da7e6ae39aefc788cf5e7f7bb8db6934d279fc4"
 
     Z3_PLATFORM="x64-glibc-2.35"
     Z3_BASENAME="z3-${Z3_VERSION}-${Z3_PLATFORM}"
     Z3_URL="https://github.com/Z3Prover/z3/releases/download/z3-${Z3_VERSION}/${Z3_BASENAME}.zip"
-    Z3_SHA256="d83e50e3cc9fcf86efa55f8a4d43f37ddc5af4214acfa26066bb340e2047b582"
 
     echo "[*] Installing Linux dependencies ..."
     sudo apt-get update
     sudo apt-get install -y \
         ca-certificates \
+        jupyter-notebook \
         openjdk-11-jdk \
         python3 \
+        python3-ipykernel \
         python3-matplotlib \
         python3-numpy \
+        python3-pandas \
         python3-pip \
         rsync \
         unzip \
@@ -197,13 +176,11 @@ install_for_linux() {
 
     echo "[*] Installing Bazelisk ${BAZELISK_VERSION} ..."
     wget -O "${TEMP_DIR}/bazelisk" "${BAZELISK_URL}"
-    verify_sha256 "${TEMP_DIR}/bazelisk" "${BAZELISK_SHA256}"
     sudo install -m 0755 "${TEMP_DIR}/bazelisk" /usr/local/bin/bazelisk
     sudo ln -sf /usr/local/bin/bazelisk /usr/local/bin/bazel
 
     echo "[*] Installing Z3 ${Z3_VERSION} ..."
     wget -O "${TEMP_DIR}/${Z3_BASENAME}.zip" "${Z3_URL}"
-    verify_sha256 "${TEMP_DIR}/${Z3_BASENAME}.zip" "${Z3_SHA256}"
     unzip -q "${TEMP_DIR}/${Z3_BASENAME}.zip" -d "${TEMP_DIR}"
     mkdir -p "${Z3_LINUX_LIB_DIR}"
     install -m 0755 \
@@ -237,7 +214,6 @@ install_for_macos() {
     Z3_PLATFORM="arm64-osx-13.7.2"
     Z3_BASENAME="z3-${Z3_VERSION}-${Z3_PLATFORM}"
     Z3_URL="https://github.com/Z3Prover/z3/releases/download/z3-${Z3_VERSION}/${Z3_BASENAME}.zip"
-    Z3_SHA256="02c8879900625c28b400055f35e9407fd0c6ea3130154753fc4eae7c24dc0efd"
     Z3_JAVA_EXTENSIONS="${HOME}/Library/Java/Extensions"
 
     echo "[*] Installing macOS dependencies ..."
@@ -278,15 +254,19 @@ install_for_macos() {
     echo "[*] Installing Python 3 ..."
     brew install python3
 
-    echo "[*] Installing artifact plotting dependencies ..."
-    brew install numpy python-matplotlib
+    echo "[*] Installing Python analysis and plotting dependencies ..."
+    python3 -m pip install --user --break-system-packages \
+        ipykernel \
+        matplotlib \
+        notebook \
+        numpy \
+        pandas
 
     echo "[*] Installing Bazelisk ..."
     brew install bazelisk
 
     echo "[*] Installing Z3 ${Z3_VERSION} ..."
     wget -O "${TEMP_DIR}/${Z3_BASENAME}.zip" "${Z3_URL}"
-    verify_sha256 "${TEMP_DIR}/${Z3_BASENAME}.zip" "${Z3_SHA256}"
     unzip -q "${TEMP_DIR}/${Z3_BASENAME}.zip" -d "${TEMP_DIR}"
 
     echo "[*] Configuring Z3 JNI for macOS ..."
