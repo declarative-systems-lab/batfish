@@ -1,119 +1,105 @@
 # SpecLens
 
-SpecLens extracts **localized subspecifications (subspecs)** from network configurations.
-Built on Batfish simulation states and Minesweeper verification encodings, it derives
-sound localized constraints on individual routers, configuration lines, and fields 
-that explain how they preserve a verified network property.
+SpecLens extracts localized subspecifications from network configurations. It
+combines Batfish simulation states with Minesweeper verification encodings to
+explain how routers, configuration lines, and fields preserve a network
+property.
 
-- Project Website: [SpecLens](https://declarative-systems-lab.github.io/SpecLens)
-- User Study Interface: [SpecLens User Study](https://declarative-systems-lab.github.io/SpecLens/userstudy)
+- [Project website](https://declarative-systems-lab.github.io/SpecLens)
 
-## User Study and Benchmarks
+## Quick Start
 
-The [`user study`](user-study) directory contains the easy and hard user study networks.
-The [`benchmarks`](benchmarks) directory contains synthetic and real-world benchmark configurations,
-including Bics, Columbus, USCarrier, Internet2, FatTrees, and Lines.
-
-Each runnable work directory contains:
-
-- `configs/`: network device configurations.
-- `properties.json`: one or more network properties.
-
----
-
-## Install
-
-Run the installation script from the repository root to set up the environment.
-`install.sh` detects the platform, generates `.bazelrc`, and installs the
-dependencies below.
+From the repository root:
 
 ```bash
 ./install.sh
+python3 run_benchmark.py benchmarks/FatTrees/fattree4pol
 ```
+
+### Installation
 
 Supported platforms:
 
-- **Linux (x86_64)**: Debian/Ubuntu with `apt-get`. Tested on Ubuntu 22.04 and
-  Ubuntu 24.04.
-- **macOS (arm64)**: Apple Silicon with [Homebrew](https://brew.sh/). The
-  script installs Homebrew if it is missing and configures Z3 JNI for Java
-  tests.
+- Ubuntu 22.04 and Ubuntu 24.04 (`x86_64`)
+- macOS 13.7.2 or later on Apple Silicon (`arm64`)
 
-The script installs:
+Other Debian/Ubuntu-based Linux distributions may work if they provide
+`apt-get` and glibc 2.35 or newer, but they have not been tested.
 
-- OpenJDK 11
-- Bazelisk (as `bazel`)
-- Z3 4.14.0 and its Java bindings
-- Python 3, pip, and Jupyter Notebook
-- utilities including `wget`, `unzip`, and `rsync`
+The installer configures `.bazelrc` and installs OpenJDK 11, Bazelisk, Python 3,
+and the Z3 native libraries. On macOS, Homebrew is installed automatically if
+needed. Run the script as a normal user; it requests elevated access only when
+required.
 
-On macOS, it also sets `JAVA_HOME` in `~/.zshrc` and `~/.bashrc`.
+### Benchmark
 
-SpecLens additionally requires Python 3.10 or later at runtime.
+A work directory must be below `benchmarks/` or `user-study/` and contain:
 
----
+- `configs/`: network device configurations
+- `properties.json`: one or more verification properties
 
-## Test
+Each property creates a numbered output directory under `smts/smt_output_xxxx/`. 
+The directory contains:
 
-Run the user study task1 network through Batfish, Minesweeper, and SpecLens:
+- `4_subspec/`: localized subspecifications (field-level and line-level)
+- `benchmark_time.csv`: runtime and #subspec data
 
-```bash
-python3 run_benchmarks.py user-study/userstudy_task1
-```
+## Workflows
 
-The runner uses the standard SubSpec workflow (`--subspec`) by default. Select
-one of the following workflow options:
+The runner processes every property in the selected work directory. Available
+workflows are:
 
-- `--subspec`: runs the standard SubSpec workflow.
-- `--noscope`: runs the SubSpec NoScope baseline.
-- `--fullsym`: runs the SubSpec FullSym baseline.
-- `--all`: runs SubSpec, NoScope, and FullSym in sequence.
+- `--subspec`: standard SubSpec workflow and the default (output: `4_subspec/`)
+- `--noscope`: NoScope baseline (output: `5_subspec_noscope/`)
+- `--fullsym`: FullSym baseline (output: `6_subspec_fullsym/`)
+- `--all`: run SubSpec, NoScope, and FullSym
 
-SpecLens uses one worker thread and a four-hour timeout by default. Override
-these settings with `-t/--threads` and `--timeout`, respectively.
+### Options
 
-For each property in the SubSpec and NoScope workflows, the runner:
+- `--threads N`: maximum concurrent device tasks (default: `1`)
+- `--timeout DURATION`: timeout for each property's SpecLens workflow (default:
+  `4h`); accepts seconds or a compact duration such as `30m`, `2s`, or `4h30m2s`
+- `--internet2`: enable compatibility refinement for Internet2 SubSpec or
+  NoScope runs
+- `--help`, `-h`: show all command-line options and exit
 
-1. computes the simulation state with Batfish;
-2. generates the verification encoding with Minesweeper;
-3. checks consistency between the simulation state and verification encoding; and
-4. computes line-level and field-level subspecifications with SpecLens.
-
-The FullSym workflow instead prepares the global encoding and its SubSpec
-baseline before computing line-level and field-level subspecifications.
-
-Generated artifacts are stored under `smts/smt_output_xxxx/`. Final SubSpec,
-NoScope, and FullSym results are written to `4_subspec/`, `5_subspec_noscope/`,
-and `6_subspec_fullsym/`, respectively. Stage timings and standard SubSpec
-counts are written to `benchmark_time.csv`. 
-Run `python3 run_benchmarks.py -h` to list all options.
-
----
-
-## Consistency Check
-
-In the SubSpec and NoScope workflows, SpecLens checks consistency between
-the simulation state and verification encoding before computing subspecifications.
-
-For the Internet2 real-world configurations, enable compatibility refinement:
+Example:
 
 ```bash
-python3 run_benchmarks.py --internet2 benchmarks/Internet2
+python3 run_benchmark.py --threads 4 --timeout 2h benchmarks/FatTrees/fattree4pol
 ```
 
-This option disables external BGP environment inputs in violation checks and
-refines inconsistent assume-guarantee constraints using Z3 models.
+Internet2 example:
 
----
+```bash
+python3 run_benchmark.py --internet2 benchmarks/Internet2
+```
+
+## User Study
+
+User-study configurations and properties are stored in `user-study/`. 
+Run a task with community subspecification enabled:
+
+```bash
+python3 run_benchmark.py --community user-study/userstudy_task1
+```
+
+See the [user-study instructions](user-study/README.md) and the
+[online interface](https://declarative-systems-lab.github.io/SpecLens/userstudy).
+
+## Data Analysis
+
+The optional analysis notebook and its isolated Python setup are documented in
+[`datas/README.md`](datas/README.md). 
+Jupyter is not installed by `install.sh`.
 
 ## Repository Layout
 
-- `projects/`: Batfish and Minesweeper source code.
-- `speclens/`: SpecLens plugin source code, utilities, and pipeline tools.
-- `benchmarks/`: benchmark configurations and properties.
-- `user-study/`: user study task configurations and properties.
-- `smts/`: generated simulation, encoding, and subspecification outputs.
-- `datas/`: user study and benchmarks datas.
-- `install.sh`: installs Linux or macOS dependencies, Jupyter Notebook, and
-  generates `.bazelrc`.
-- `run_benchmarks.py`: runs the selected workflow for every property in a work directory.
+- `projects/`: Batfish and Minesweeper source code
+- `speclens/`: SpecLens implementation and pipeline tools
+- `benchmarks/`: benchmark configurations and properties
+- `user-study/`: user study configurations and properties
+- `datas/`: evaluation data and analysis notebook
+- `smts/`: generated outputs
+- `install.sh`: Linux and macOS environment setup
+- `run_benchmark.py`: benchmark pipeline entry point

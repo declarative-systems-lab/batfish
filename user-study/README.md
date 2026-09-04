@@ -37,7 +37,7 @@ example, to process Task 1:
 
 ```bash
 cd batfish
-python3 run_benchmarks.py -c user-study/userstudy_task1
+python3 run_benchmark.py -c user-study/userstudy_task1
 ```
 
 Results are written under `batfish/smts/smt_output_xxxx/4_subspec/`. The relevant

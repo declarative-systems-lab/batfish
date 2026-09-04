@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import csv
 import os
+import re
 import signal
 import subprocess
 import sys
@@ -125,16 +126,28 @@ def _positive_int(value: str) -> int:
     return number
 
 
-def _positive_float(value: str) -> float:
+def _duration_seconds(value: str) -> float:
     try:
         number = float(value)
-    except ValueError as error:
-        raise argparse.ArgumentTypeError(
-            f"expected a positive number, got {value!r}"
-        ) from error
+    except ValueError:
+        match = re.fullmatch(
+            r"(?:(\d+(?:\.\d+)?)h)?"
+            r"(?:(\d+(?:\.\d+)?)m)?"
+            r"(?:(\d+(?:\.\d+)?)s)?",
+            value,
+        )
+        if match is None or not any(match.groups()):
+            raise argparse.ArgumentTypeError(
+                "expected seconds or a duration such as 4h3m2s, "
+                f"got {value!r}"
+            )
+        hours, minutes, seconds = (
+            float(part or 0) for part in match.groups()
+        )
+        number = hours * 3600 + minutes * 60 + seconds
     if number <= 0:
         raise argparse.ArgumentTypeError(
-            f"expected a positive number, got {value!r}"
+            f"expected a positive duration, got {value!r}"
         )
     return number
 
@@ -177,7 +190,6 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         help="enable community subspecification in selected stages",
     )
     parser.add_argument(
-        "-t",
         "--threads",
         type=_positive_int,
         default=DEFAULT_THREADS,
@@ -185,12 +197,12 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument(
         "--timeout",
-        type=_positive_float,
+        type=_duration_seconds,
         default=DEFAULT_TIMEOUT_SECONDS,
-        metavar="SECONDS",
+        metavar="DURATION",
         help=(
             "timeout for the entire selected workflow "
-            f"(default: {DEFAULT_TIMEOUT_SECONDS} seconds)"
+            "(for example: 7200, 2h, or 1h30m; default: 4h)"
         ),
     )
     parser.add_argument(

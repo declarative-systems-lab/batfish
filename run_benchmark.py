@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate and analyze one SMT output per benchmark property."""
+"""Run the benchmark pipeline for every property in a work directory."""
 
 from __future__ import annotations
 
@@ -55,16 +55,28 @@ def _positive_int(value: str) -> int:
     return number
 
 
-def _positive_float(value: str) -> float:
+def _duration_seconds(value: str) -> float:
     try:
         number = float(value)
-    except ValueError as error:
-        raise argparse.ArgumentTypeError(
-            f"expected a positive number, got {value!r}"
-        ) from error
+    except ValueError:
+        match = re.fullmatch(
+            r"(?:(\d+(?:\.\d+)?)h)?"
+            r"(?:(\d+(?:\.\d+)?)m)?"
+            r"(?:(\d+(?:\.\d+)?)s)?",
+            value,
+        )
+        if match is None or not any(match.groups()):
+            raise argparse.ArgumentTypeError(
+                "expected seconds or a duration such as 4h3m2s, "
+                f"got {value!r}"
+            )
+        hours, minutes, seconds = (
+            float(part or 0) for part in match.groups()
+        )
+        number = hours * 3600 + minutes * 60 + seconds
     if number <= 0:
         raise argparse.ArgumentTypeError(
-            f"expected a positive number, got {value!r}"
+            f"expected a positive duration, got {value!r}"
         )
     return number
 
@@ -74,7 +86,7 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         add_help=False,
         usage=(
             "%(prog)s [--subspec | --noscope | --fullsym | --all] [-c] "
-            "[-t THREADS] [--timeout SECONDS] [--internet2] [-v] "
+            "[--threads THREADS] [--timeout DURATION] [--internet2] [-v] "
             "work_directory [-h]"
         ),
         description=(
@@ -114,7 +126,6 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         help="enable community subspecification",
     )
     parser.add_argument(
-        "-t",
         "--threads",
         type=_positive_int,
         default=None,
@@ -122,10 +133,13 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument(
         "--timeout",
-        type=_positive_float,
+        type=_duration_seconds,
         default=None,
-        metavar="SECONDS",
-        help="override the timeout for each property's SpecLens workflow",
+        metavar="DURATION",
+        help=(
+            "override the timeout for each property's SpecLens workflow "
+            "(for example: 7200, 2h, or 1h30m)"
+        ),
     )
     parser.add_argument(
         "--internet2",
@@ -406,8 +420,9 @@ def run_speclens(
         command.append("--all")
     if options.community:
         command.append("--community")
-    if options.threads is not None:
-        command.extend(("--threads", str(options.threads)))
+    command.extend(
+        ("--threads", str(options.threads or DEFAULT_THREADS))
+    )
     if options.timeout is not None:
         command.extend(("--timeout", str(options.timeout)))
     if options.internet2:
