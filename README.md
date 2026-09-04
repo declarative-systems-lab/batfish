@@ -13,7 +13,12 @@ property.
 From the repository root:
 
 ```bash
-./install.sh
+./install.sh && exec "$SHELL" -i
+```
+
+After the refreshed shell starts:
+
+```bash
 python3 run_benchmark.py benchmarks/FatTrees/fattree4pol
 ```
 
@@ -22,13 +27,13 @@ python3 run_benchmark.py benchmarks/FatTrees/fattree4pol
 Supported platforms:
 
 - Ubuntu 22.04 and Ubuntu 24.04 (`x86_64`)
-- macOS 13.7.2 or later on Apple Silicon (`arm64`)
+- macOS 14.0 or later on Apple Silicon (`arm64`)
 
 Other Debian/Ubuntu-based Linux distributions may work if they provide
 `apt-get` and glibc 2.35 or newer, but they have not been tested.
 
 The installer configures `.bazelrc` and installs OpenJDK 11, Bazelisk, Python 3,
-Jupyter Notebook, pandas, NumPy, Matplotlib, and the Z3 native libraries. On
+Jupyter Notebook, pandas, NumPy, Matplotlib, and the Z3 4.14.0 CLI and native libraries. On
 macOS, Homebrew is installed automatically if needed. Run the script as a
 normal user; it requests elevated access only when required.
 

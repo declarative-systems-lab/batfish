@@ -20,9 +20,12 @@ fi
 SMT_PATH="${ROOT_DIR}/smts"
 BAZELRC_PATH="${ROOT_DIR}/.bazelrc"
 Z3_VERSION="4.14.0"
-Z3_LINUX_LIB_DIR="${HOME}/.local/lib/batfish/z3-${Z3_VERSION}"
+Z3_INSTALL_DIR="${HOME}/.local/share/batfish/z3-${Z3_VERSION}"
+Z3_BIN_DIR="${Z3_INSTALL_DIR}/bin"
+Z3_LINUX_LIB_DIR="${Z3_BIN_DIR}"
 BAZELISK_VERSION="1.25.0"
 JAVA_REQUIRED_MAJOR="11"
+MACOS_MIN_VERSION="14.0.0"
 PYTHON_PACKAGES=(
     "ipykernel"
     "matplotlib"
@@ -102,6 +105,27 @@ cleanup_temp_dir() {
     fi
 }
 
+configure_homebrew_env() {
+    local brew_bin="$1"
+    local shellenv_line
+
+    shellenv_line="eval \"\$(${brew_bin} shellenv)\""
+    eval "$("${brew_bin}" shellenv)"
+
+    update_managed_block \
+        "${HOME}/.zshrc" \
+        "# BEGIN BATFISH HOMEBREW" \
+        "# END BATFISH HOMEBREW" \
+        "# Homebrew environment for Batfish dependencies" \
+        "${shellenv_line}"
+    update_managed_block \
+        "${HOME}/.bashrc" \
+        "# BEGIN BATFISH HOMEBREW" \
+        "# END BATFISH HOMEBREW" \
+        "# Homebrew environment for Batfish dependencies" \
+        "${shellenv_line}"
+}
+
 configure_java_env() {
     local java_home="$1"
     local java_cmd="${java_home}/bin/java"
@@ -136,25 +160,22 @@ configure_java_env() {
 
     JAVA_HOME="${java_home}"
     export JAVA_HOME
-    export PATH="${JAVA_HOME}/bin:${PATH}"
+    export PATH="${JAVA_HOME}/bin:${Z3_BIN_DIR}:${PATH}"
 
     update_managed_block \
         "${HOME}/.zshrc" \
         "# BEGIN BATFISH JAVA" \
         "# END BATFISH JAVA" \
         "export JAVA_HOME=${JAVA_HOME}" \
-        'export PATH="${JAVA_HOME}/bin:${PATH}"'
+        "export PATH=\"\${JAVA_HOME}/bin:${Z3_BIN_DIR}:\${PATH}\""
     update_managed_block \
         "${HOME}/.bashrc" \
         "# BEGIN BATFISH JAVA" \
         "# END BATFISH JAVA" \
         "export JAVA_HOME=${JAVA_HOME}" \
-        'export PATH="${JAVA_HOME}/bin:${PATH}"'
+        "export PATH=\"\${JAVA_HOME}/bin:${Z3_BIN_DIR}:\${PATH}\""
 
     echo "[✓] Java ${JAVA_REQUIRED_MAJOR} detected and configured: ${JAVA_HOME}"
-    echo "[i] Current terminal still needs a reload to inherit this JAVA_HOME:"
-    echo "[i]   source ~/.bashrc  # for bash"
-    echo "[i]   source ~/.zshrc   # for zsh"
 }
 
 install_python_dependencies() {
@@ -167,6 +188,21 @@ install_python_dependencies() {
         pip_install_args+=(--break-system-packages)
     fi
     python3 -m pip install "${pip_install_args[@]}" "${PYTHON_PACKAGES[@]}"
+}
+
+verify_z3_cli() {
+    local version_output
+
+    if ! version_output="$("${Z3_BIN_DIR}/z3" --version 2>&1)"; then
+        echo "Error: Unable to run Z3 from ${Z3_BIN_DIR}/z3." >&2
+        echo "       ${version_output}" >&2
+        exit 1
+    fi
+    if [[ "${version_output}" != "Z3 version ${Z3_VERSION} "* ]]; then
+        echo "Error: Expected Z3 ${Z3_VERSION}, but detected: ${version_output}" >&2
+        exit 1
+    fi
+    echo "[✓] Z3 ${Z3_VERSION} CLI installed: ${Z3_BIN_DIR}/z3"
 }
 
 update_bazelrc_for_linux() {
@@ -236,7 +272,6 @@ install_for_linux() {
     sudo apt-get update
     sudo apt-get install -y \
         ca-certificates \
-        rsync \
         unzip \
         wget
 
@@ -257,21 +292,22 @@ install_for_linux() {
     sudo install -m 0755 "${TEMP_DIR}/bazelisk" /usr/local/bin/bazelisk
     sudo ln -sf /usr/local/bin/bazelisk /usr/local/bin/bazel
 
-    echo "[*] Installing Z3 CLI ..."
-    sudo apt-get install -y z3
-
-    echo "[*] Installing Z3 ${Z3_VERSION} JNI libraries ..."
+    echo "[*] Installing Z3 ${Z3_VERSION} CLI and JNI libraries ..."
     wget -O "${TEMP_DIR}/${Z3_BASENAME}.zip" "${Z3_URL}"
     unzip -q "${TEMP_DIR}/${Z3_BASENAME}.zip" -d "${TEMP_DIR}"
 
     echo "[*] Configuring Z3 JNI for Linux ..."
     mkdir -p "${Z3_LINUX_LIB_DIR}"
     install -m 0755 \
+        "${TEMP_DIR}/${Z3_BASENAME}/bin/z3" \
+        "${Z3_BIN_DIR}/z3"
+    install -m 0755 \
         "${TEMP_DIR}/${Z3_BASENAME}/bin/libz3.so" \
         "${Z3_LINUX_LIB_DIR}/libz3.so"
     install -m 0755 \
         "${TEMP_DIR}/${Z3_BASENAME}/bin/libz3java.so" \
         "${Z3_LINUX_LIB_DIR}/libz3java.so"
+    verify_z3_cli
 
     echo "[✓] Completed: Linux installation"
 }
@@ -282,10 +318,10 @@ install_for_macos() {
         exit 1
     fi
 
-    local macos_version java_home
+    local brew_bin macos_version java_home
     macos_version=$(sw_vers -productVersion)
-    if ! version_at_least "${macos_version}" "13.7.2"; then
-        echo "Error: Z3 ${Z3_VERSION} requires macOS 13.7.2 or newer" >&2
+    if ! version_at_least "${macos_version}" "${MACOS_MIN_VERSION}"; then
+        echo "Error: install.sh requires macOS ${MACOS_MIN_VERSION} or newer" >&2
         echo "       (detected macOS ${macos_version})." >&2
         exit 1
     fi
@@ -299,23 +335,24 @@ install_for_macos() {
     Z3_URL="https://github.com/Z3Prover/z3/releases/download/z3-${Z3_VERSION}/${Z3_BASENAME}.zip"
     Z3_JAVA_EXTENSIONS="${HOME}/Library/Java/Extensions"
 
-    if ! command -v brew >/dev/null 2>&1; then
+    brew_bin="$(command -v brew || true)"
+    if [[ -z "${brew_bin}" ]]; then
         echo "[*] Homebrew not found. Installing Homebrew ..."
         /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
         if [[ -x /opt/homebrew/bin/brew ]]; then
-            eval "$(/opt/homebrew/bin/brew shellenv)"
+            brew_bin=/opt/homebrew/bin/brew
         elif [[ -x /usr/local/bin/brew ]]; then
-            eval "$(/usr/local/bin/brew shellenv)"
+            brew_bin=/usr/local/bin/brew
         else
             echo "Error: Homebrew installation completed, but brew was not found." >&2
             exit 1
         fi
     fi
+    configure_homebrew_env "${brew_bin}"
 
     echo "[*] Installing macOS dependencies ..."
     brew install \
         ca-certificates \
-        rsync \
         unzip \
         wget
 
@@ -331,12 +368,21 @@ install_for_macos() {
     echo "[*] Installing Bazelisk ..."
     brew install bazelisk
 
-    echo "[*] Installing Z3 CLI ..."
-    brew install z3
-
-    echo "[*] Installing Z3 ${Z3_VERSION} JNI libraries ..."
+    echo "[*] Installing Z3 ${Z3_VERSION} CLI and JNI libraries ..."
     wget -O "${TEMP_DIR}/${Z3_BASENAME}.zip" "${Z3_URL}"
     unzip -q "${TEMP_DIR}/${Z3_BASENAME}.zip" -d "${TEMP_DIR}"
+
+    mkdir -p "${Z3_BIN_DIR}"
+    install -m 0755 \
+        "${TEMP_DIR}/${Z3_BASENAME}/bin/z3" \
+        "${Z3_BIN_DIR}/z3"
+    install -m 0755 \
+        "${TEMP_DIR}/${Z3_BASENAME}/bin/libz3.dylib" \
+        "${Z3_BIN_DIR}/libz3.dylib"
+    install -m 0755 \
+        "${TEMP_DIR}/${Z3_BASENAME}/bin/libz3java.dylib" \
+        "${Z3_BIN_DIR}/libz3java.dylib"
+    verify_z3_cli
 
     echo "[*] Configuring Z3 JNI for macOS ..."
     mkdir -p "${Z3_JAVA_EXTENSIONS}"

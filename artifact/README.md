@@ -25,7 +25,7 @@ Run all commands from the repository root as a normal user. Do not run the
 complete installer with `sudo`.
 
 ```bash
-./install.sh
+./install.sh && exec "$SHELL" -i
 ```
 
 Run a small benchmark to confirm the installation:
