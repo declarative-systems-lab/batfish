@@ -21,6 +21,15 @@ SMT_PATH="${ROOT_DIR}/smts"
 BAZELRC_PATH="${ROOT_DIR}/.bazelrc"
 Z3_VERSION="4.14.0"
 Z3_LINUX_LIB_DIR="${HOME}/.local/lib/batfish/z3-${Z3_VERSION}"
+BAZELISK_VERSION="1.25.0"
+JAVA_REQUIRED_MAJOR="11"
+PYTHON_PACKAGES=(
+    "ipykernel"
+    "matplotlib"
+    "notebook"
+    "numpy"
+    "pandas"
+)
 
 echo "Detected system: ${OS} (${ARCH})"
 
@@ -93,6 +102,73 @@ cleanup_temp_dir() {
     fi
 }
 
+configure_java_env() {
+    local java_home="$1"
+    local java_cmd="${java_home}/bin/java"
+    local version_output version_line version_field major_version
+
+    if [[ ! -x "${java_cmd}" ]]; then
+        echo "Error: Java executable not found at ${java_cmd}." >&2
+        exit 1
+    fi
+
+    version_output="$("${java_cmd}" -version 2>&1)"
+    version_line="${version_output%%$'\n'*}"
+    version_field="$(sed -n 's/.*"\([0-9][0-9.]*\)".*/\1/p' <<<"${version_line}")"
+
+    if [[ -z "${version_field}" ]]; then
+        echo "Error: Unable to parse Java version from: ${version_line}" >&2
+        exit 1
+    fi
+
+    if [[ "${version_field}" == 1.* ]]; then
+        major_version="${version_field#1.}"
+        major_version="${major_version%%.*}"
+    else
+        major_version="${version_field%%.*}"
+    fi
+
+    if [[ "${major_version}" != "${JAVA_REQUIRED_MAJOR}" ]]; then
+        echo "Error: Batfish requires Java ${JAVA_REQUIRED_MAJOR}," >&2
+        echo "       but ${java_cmd} reports Java ${version_field}." >&2
+        exit 1
+    fi
+
+    JAVA_HOME="${java_home}"
+    export JAVA_HOME
+    export PATH="${JAVA_HOME}/bin:${PATH}"
+
+    update_managed_block \
+        "${HOME}/.zshrc" \
+        "# BEGIN BATFISH JAVA" \
+        "# END BATFISH JAVA" \
+        "export JAVA_HOME=${JAVA_HOME}" \
+        'export PATH="${JAVA_HOME}/bin:${PATH}"'
+    update_managed_block \
+        "${HOME}/.bashrc" \
+        "# BEGIN BATFISH JAVA" \
+        "# END BATFISH JAVA" \
+        "export JAVA_HOME=${JAVA_HOME}" \
+        'export PATH="${JAVA_HOME}/bin:${PATH}"'
+
+    echo "[✓] Java ${JAVA_REQUIRED_MAJOR} detected and configured: ${JAVA_HOME}"
+    echo "[i] Current terminal still needs a reload to inherit this JAVA_HOME:"
+    echo "[i]   source ~/.bashrc  # for bash"
+    echo "[i]   source ~/.zshrc   # for zsh"
+}
+
+install_python_dependencies() {
+    local pip_install_help
+    local -a pip_install_args=(--user)
+
+    echo "[*] Installing Python analysis and plotting dependencies ..."
+    pip_install_help="$(python3 -m pip install --help)"
+    if [[ "${pip_install_help}" == *"--break-system-packages"* ]]; then
+        pip_install_args+=(--break-system-packages)
+    fi
+    python3 -m pip install "${pip_install_args[@]}" "${PYTHON_PACKAGES[@]}"
+}
+
 update_bazelrc_for_linux() {
     echo "[*] Updating Bazel configuration ..."
     mkdir -p "${SMT_PATH}"
@@ -130,12 +206,8 @@ install_for_linux() {
         echo "Error: Linux installation supports x86_64 only (detected ${ARCH})." >&2
         exit 1
     fi
-    if ! command -v apt-get >/dev/null 2>&1; then
-        echo "Error: apt-get is required." >&2
-        exit 1
-    fi
 
-    local glibc_version
+    local glibc_version java_home
     if ! glibc_version=$(getconf GNU_LIBC_VERSION 2>/dev/null | awk '{print $2}') ||
         [[ -z "${glibc_version}" ]]; then
         echo "Error: Unable to detect glibc; Z3 requires glibc 2.35 or newer." >&2
@@ -151,37 +223,48 @@ install_for_linux() {
     TEMP_DIR=$(mktemp -d "${ROOT_DIR}/.install-z3.XXXXXX")
     trap cleanup_temp_dir EXIT
 
-    BAZELISK_VERSION="1.25.0"
-    BAZELISK_URL="https://github.com/bazelbuild/bazelisk/releases/download/v${BAZELISK_VERSION}/bazelisk-linux-amd64"
-
     Z3_PLATFORM="x64-glibc-2.35"
     Z3_BASENAME="z3-${Z3_VERSION}-${Z3_PLATFORM}"
     Z3_URL="https://github.com/Z3Prover/z3/releases/download/z3-${Z3_VERSION}/${Z3_BASENAME}.zip"
+
+    if ! command -v apt-get >/dev/null 2>&1; then
+        echo "Error: apt-get is required." >&2
+        exit 1
+    fi
 
     echo "[*] Installing Linux dependencies ..."
     sudo apt-get update
     sudo apt-get install -y \
         ca-certificates \
-        jupyter-notebook \
-        openjdk-11-jdk \
-        python3 \
-        python3-ipykernel \
-        python3-matplotlib \
-        python3-numpy \
-        python3-pandas \
-        python3-pip \
         rsync \
         unzip \
         wget
 
+    echo "[*] Installing OpenJDK 11 ..."
+    sudo apt-get install -y openjdk-11-jdk
+    java_home="/usr/lib/jvm/java-11-openjdk-$(dpkg --print-architecture)"
+    configure_java_env "${java_home}"
+
+    echo "[*] Installing Python 3 ..."
+    sudo apt-get install -y \
+        python3 \
+        python3-pip
+    install_python_dependencies
+
     echo "[*] Installing Bazelisk ${BAZELISK_VERSION} ..."
+    BAZELISK_URL="https://github.com/bazelbuild/bazelisk/releases/download/v${BAZELISK_VERSION}/bazelisk-linux-amd64"
     wget -O "${TEMP_DIR}/bazelisk" "${BAZELISK_URL}"
     sudo install -m 0755 "${TEMP_DIR}/bazelisk" /usr/local/bin/bazelisk
     sudo ln -sf /usr/local/bin/bazelisk /usr/local/bin/bazel
 
-    echo "[*] Installing Z3 ${Z3_VERSION} ..."
+    echo "[*] Installing Z3 CLI ..."
+    sudo apt-get install -y z3
+
+    echo "[*] Installing Z3 ${Z3_VERSION} JNI libraries ..."
     wget -O "${TEMP_DIR}/${Z3_BASENAME}.zip" "${Z3_URL}"
     unzip -q "${TEMP_DIR}/${Z3_BASENAME}.zip" -d "${TEMP_DIR}"
+
+    echo "[*] Configuring Z3 JNI for Linux ..."
     mkdir -p "${Z3_LINUX_LIB_DIR}"
     install -m 0755 \
         "${TEMP_DIR}/${Z3_BASENAME}/bin/libz3.so" \
@@ -199,7 +282,7 @@ install_for_macos() {
         exit 1
     fi
 
-    local macos_version
+    local macos_version java_home
     macos_version=$(sw_vers -productVersion)
     if ! version_at_least "${macos_version}" "13.7.2"; then
         echo "Error: Z3 ${Z3_VERSION} requires macOS 13.7.2 or newer" >&2
@@ -216,8 +299,6 @@ install_for_macos() {
     Z3_URL="https://github.com/Z3Prover/z3/releases/download/z3-${Z3_VERSION}/${Z3_BASENAME}.zip"
     Z3_JAVA_EXTENSIONS="${HOME}/Library/Java/Extensions"
 
-    echo "[*] Installing macOS dependencies ..."
-
     if ! command -v brew >/dev/null 2>&1; then
         echo "[*] Homebrew not found. Installing Homebrew ..."
         /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
@@ -231,41 +312,29 @@ install_for_macos() {
         fi
     fi
 
+    echo "[*] Installing macOS dependencies ..."
+    brew install \
+        ca-certificates \
+        rsync \
+        unzip \
+        wget
+
     echo "[*] Installing OpenJDK 11 ..."
     brew install openjdk@11
-    JAVA_HOME="$(brew --prefix openjdk@11)/libexec/openjdk.jdk/Contents/Home"
-    export PATH="${JAVA_HOME}/bin:${PATH}"
-    update_managed_block \
-        "${HOME}/.zshrc" \
-        "# BEGIN BATFISH JAVA" \
-        "# END BATFISH JAVA" \
-        "export JAVA_HOME=${JAVA_HOME}" \
-        'export PATH="${JAVA_HOME}/bin:${PATH}"'
-    update_managed_block \
-        "${HOME}/.bashrc" \
-        "# BEGIN BATFISH JAVA" \
-        "# END BATFISH JAVA" \
-        "export JAVA_HOME=${JAVA_HOME}" \
-        'export PATH="${JAVA_HOME}/bin:${PATH}"'
-
-    echo "[*] Installing wget ..."
-    brew install wget
+    java_home="$(brew --prefix openjdk@11)/libexec/openjdk.jdk/Contents/Home"
+    configure_java_env "${java_home}"
 
     echo "[*] Installing Python 3 ..."
     brew install python3
-
-    echo "[*] Installing Python analysis and plotting dependencies ..."
-    python3 -m pip install --user --break-system-packages \
-        ipykernel \
-        matplotlib \
-        notebook \
-        numpy \
-        pandas
+    install_python_dependencies
 
     echo "[*] Installing Bazelisk ..."
     brew install bazelisk
 
-    echo "[*] Installing Z3 ${Z3_VERSION} ..."
+    echo "[*] Installing Z3 CLI ..."
+    brew install z3
+
+    echo "[*] Installing Z3 ${Z3_VERSION} JNI libraries ..."
     wget -O "${TEMP_DIR}/${Z3_BASENAME}.zip" "${Z3_URL}"
     unzip -q "${TEMP_DIR}/${Z3_BASENAME}.zip" -d "${TEMP_DIR}"
 
