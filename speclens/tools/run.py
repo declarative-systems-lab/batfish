@@ -606,6 +606,13 @@ def _report_command_failure(
         print(diagnostic, file=sys.stderr)
 
 
+def _report_workflow_timeout(workflow: str, timeout_seconds: float) -> None:
+    print(
+        f"[?] Completed: {workflow} Workflow - "
+        f"Time Out ({_format_timeout(timeout_seconds)})"
+    )
+
+
 def run_serial_step(
     step: Step,
     work_directory: Path,
@@ -627,8 +634,9 @@ def run_serial_step(
         )
         return StepRunResult(True, result.elapsed_seconds, "completed")
 
-    _report_command_failure(step, result)
     status = "timed_out" if result.timed_out else "failed"
+    if not result.timed_out:
+        _report_command_failure(step, result)
     return StepRunResult(False, result.elapsed_seconds, status)
 
 
@@ -699,13 +707,16 @@ def run_device_step(
     for _, status_line in sorted(uncertain_statuses):
         print(status_line)
     if failures:
-        for device, result in sorted(failures, key=lambda item: item[0]):
+        command_failures = [
+            (device, result)
+            for device, result in failures
+            if not result.timed_out
+        ]
+        for device, result in sorted(
+            command_failures, key=lambda item: item[0]
+        ):
             _report_command_failure(step, result, device=device)
-        status = (
-            "timed_out"
-            if any(result.timed_out for _, result in failures)
-            else "failed"
-        )
+        status = "failed" if command_failures else "timed_out"
         return StepRunResult(False, elapsed_seconds, status)
 
     completion_details = [_format_elapsed(elapsed_seconds)]
@@ -747,7 +758,6 @@ def run_pipeline(options: argparse.Namespace) -> bool:
     benchmark_report = BenchmarkReport(work_directory, options)
     workflow_deadlines: dict[str, float] = {}
     timed_out_workflows: set[str] = set()
-    had_timeout = False
     subspec_separator_printed = False
     try:
         for step_index, step in enumerate(steps):
@@ -769,12 +779,11 @@ def run_pipeline(options: argparse.Namespace) -> bool:
                 )
             remaining_seconds = deadline - time.monotonic()
             if remaining_seconds <= 0:
-                print(
-                    f"[✗] Timed Out: {workflow or step.description} before "
-                    f"{step.description}",
-                    file=sys.stderr,
-                )
                 if workflow is None:
+                    print(
+                        f"[✗] Timed Out: {step.description}",
+                        file=sys.stderr,
+                    )
                     benchmark_report.record(
                         step,
                         StepRunResult(False, 0.0, "timed_out"),
@@ -782,7 +791,7 @@ def run_pipeline(options: argparse.Namespace) -> bool:
                     return False
                 benchmark_report.record_workflow_timeout(workflow)
                 timed_out_workflows.add(workflow)
-                had_timeout = True
+                _report_workflow_timeout(workflow, options.timeout)
                 print(PIPELINE_SEPARATOR)
                 continue
 
@@ -808,7 +817,7 @@ def run_pipeline(options: argparse.Namespace) -> bool:
                 if result.status == "timed_out" and workflow is not None:
                     benchmark_report.record_workflow_timeout(workflow)
                     timed_out_workflows.add(workflow)
-                    had_timeout = True
+                    _report_workflow_timeout(workflow, options.timeout)
                     print(PIPELINE_SEPARATOR)
                     continue
                 return False
@@ -818,7 +827,7 @@ def run_pipeline(options: argparse.Namespace) -> bool:
                 and step_index < len(steps) - 1
             ):
                 print(PIPELINE_SEPARATOR)
-        return not had_timeout
+        return True
     finally:
         benchmark_report.write()
 

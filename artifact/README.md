@@ -222,8 +222,10 @@ line (`-l`) and field (`-f`) stages share that deadline, so a timeout is counted
 once for the workflow.
 
 After one workflow times out, the runner continues with the next selected
-workflow. After one benchmark or scalability point fails, the artifact script
-continues with the remaining points and reports the failure at the end.
+workflow and treats the configured timeout as a bounded result rather than a
+pipeline failure. Actual execution errors still fail the property. After one
+benchmark or scalability point fails, the artifact script continues with the
+remaining points and reports the failure at the end.
 
 ## Data Analysis
 
