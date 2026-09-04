@@ -39,7 +39,7 @@ A work directory must be below `benchmarks/` or `user-study/` and contain:
 - `configs/`: network device configurations
 - `properties.json`: one or more verification properties
 
-Each property creates a numbered output directory under `smts/smt_output_xxxx/`. 
+Each property creates a numbered output directory under `smts/smt_output_xxxx/`.
 The directory contains:
 
 - `4_subspec/`: localized subspecifications (field-level and line-level)
@@ -58,7 +58,7 @@ workflows are:
 ### Options
 
 - `--threads N`: maximum concurrent device tasks (default: `1`)
-- `--timeout DURATION`: timeout for each property's SpecLens workflow (default:
+- `--timeout DURATION`: timeout for each selected SpecLens workflow (default:
   `4h`); accepts seconds or a compact duration such as `30m`, `2s`, or `4h30m2s`
 - `--internet2`: enable compatibility refinement for Internet2 SubSpec or
   NoScope runs
@@ -78,7 +78,7 @@ python3 run_benchmark.py --internet2 benchmarks/Internet2
 
 ## User Study
 
-User-study configurations and properties are stored in `user-study/`. 
+User-study configurations and properties are stored in `user-study/`.
 Run a task with community subspecification enabled:
 
 ```bash
@@ -87,6 +87,18 @@ python3 run_benchmark.py --community user-study/userstudy_task1
 
 See the [user study instructions](user-study/README.md) and the
 [online user study interface](https://declarative-systems-lab.github.io/SpecLens/userstudy).
+
+## Artifact Evaluation
+
+The [artifact evaluation guide](artifact/README.md) provides `fast` and `full`
+reproduction commands for the efficiency and scalability results. The scripts
+collect timing data and generate the corresponding PNG and PDF figures.
+
+For a short end-to-end artifact check, run:
+
+```bash
+./artifact/run_smoke.sh
+```
 
 ## Data Analysis
 
@@ -101,6 +113,7 @@ Jupyter is not installed by `install.sh`.
 - `benchmarks/`: benchmark configurations and properties
 - `user-study/`: user study configurations and properties
 - `datas/`: evaluation data and analysis notebook
+- `artifact/`: automated artifact evaluation scripts and instructions
 - `smts/`: generated outputs
 - `install.sh`: Linux and macOS environment setup
 - `run_benchmark.py`: benchmark pipeline entry point

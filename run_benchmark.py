@@ -27,6 +27,12 @@ PIPELINE_SEPARATOR = "-" * 70
 OUTPUT_DIRECTORY_PATTERN = re.compile(
     r"^Output Directory: (smt_output_\d+)$"
 )
+BATFISH_SIMULATION_TIME_PATTERN = re.compile(
+    r"^SPECLENS_BATFISH_SIMULATION_MS=(\d+)$"
+)
+CONFIGURATION_ENCODING_TIME_PATTERN = re.compile(
+    r"^SPECLENS_CONFIGURATION_ENCODING_MS=(\d+)$"
+)
 
 
 @dataclass(frozen=True)
@@ -86,7 +92,8 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         add_help=False,
         usage=(
             "%(prog)s [--subspec | --noscope | --fullsym | --all] [-c] "
-            "[--threads THREADS] [--timeout DURATION] [--internet2] [-v] "
+            "[--property INDEX] [--benchmark NAME] [--threads THREADS] "
+            "[--timeout DURATION] [--internet2] [-v] "
             "work_directory [-h]"
         ),
         description=(
@@ -124,6 +131,19 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         "--community",
         action="store_true",
         help="enable community subspecification",
+    )
+    parser.add_argument(
+        "--property",
+        type=_positive_int,
+        default=None,
+        metavar="INDEX",
+        help="run only one 1-based property index",
+    )
+    parser.add_argument(
+        "--benchmark",
+        default=None,
+        metavar="NAME",
+        help="benchmark label stored in benchmark_time.csv",
     )
     parser.add_argument(
         "--threads",
@@ -215,6 +235,8 @@ def _report_run_options(options: argparse.Namespace) -> None:
     timeout = options.timeout or DEFAULT_TIMEOUT_SECONDS
     print(f"[!] Note: Parallel threads: {threads}")
     print(f"[!] Note: Timeout: {_format_duration(timeout)}")
+    if options.property is not None:
+        print(f"[!] Note: Property: {options.property}")
     print(f"[!] Note: Workflow: {_workflow_name(options)}")
     print(
         "[!] Note: Community subspec extension: "
@@ -363,6 +385,7 @@ def generate_property(
         "--cache_test_results=no",
         f"--test_timeout={BAZEL_TEST_TIMEOUT_SECONDS}",
         "--test_output=streamed",
+        f"--sandbox_writable_path={output_root}",
         f"--test_env=SMT_WORK_DIRECTORY={relative_work_directory}",
         f"--test_env=SMT_DIRECTORY_PREFIX={output_root}",
         f"--test_env=SMT_PROPERTY_INDEX={property_index}",
@@ -403,11 +426,32 @@ def generate_property(
     return output_directory, result
 
 
+def parse_step1_time(output: str) -> float:
+    """Return Batfish simulation plus configuration encoding time in seconds."""
+    simulation_times = []
+    encoding_times = []
+    for line in output.splitlines():
+        line = line.strip()
+        simulation_match = BATFISH_SIMULATION_TIME_PATTERN.fullmatch(line)
+        if simulation_match is not None:
+            simulation_times.append(int(simulation_match.group(1)))
+        encoding_match = CONFIGURATION_ENCODING_TIME_PATTERN.fullmatch(line)
+        if encoding_match is not None:
+            encoding_times.append(int(encoding_match.group(1)))
+    if len(simulation_times) != 1 or not encoding_times:
+        raise ValueError(
+            "Unable to identify Batfish simulation and configuration "
+            "encoding timings from benchmark output"
+        )
+    return (simulation_times[0] + sum(encoding_times)) / 1000.0
+
+
 def run_speclens(
     output_directory: Path,
     options: argparse.Namespace,
     *,
     benchmark: str,
+    step1_time: float,
 ) -> CommandResult:
     command = [sys.executable, "-u", str(SPECLENS_RUNNER)]
     if options.subspec:
@@ -430,6 +474,7 @@ def run_speclens(
     if options.verbose:
         command.append("--verbose")
     command.extend(("--benchmark", benchmark))
+    command.extend(("--step1-time", str(step1_time)))
     command.append(str(output_directory))
     return run_visible_command(command)
 
@@ -453,7 +498,18 @@ def run_pipeline(options: argparse.Namespace) -> bool:
         f"'{work_directory.relative_to(ROOT_DIRECTORY)}'"
     )
     output_root = _output_root()
-    for property_index in range(1, property_count + 1):
+    if options.property is not None:
+        if options.property > property_count:
+            raise ValueError(
+                f"Property index {options.property} exceeds the "
+                f"{property_count} properties in {work_directory}"
+            )
+        property_indexes = (options.property,)
+    else:
+        property_indexes = range(1, property_count + 1)
+
+    all_succeeded = True
+    for property_index in property_indexes:
         output_directory, generation_result = generate_property(
             work_directory,
             property_index,
@@ -466,12 +522,19 @@ def run_pipeline(options: argparse.Namespace) -> bool:
                 generation_result,
                 output_already_visible=options.verbose,
             )
-            return False
+            all_succeeded = False
+            continue
 
         print(
             f"[✓] Completed: Property {property_index:02d} "
             "(Simulation State & Verification Encoding)"
         )
+        try:
+            step1_time = parse_step1_time(generation_result.output)
+        except ValueError as error:
+            print(f"[✗] Failed: {error}", file=sys.stderr)
+            all_succeeded = False
+            continue
         output_display_path = _display_path(output_directory)
         with TerminalSpinner(
             f"Running: Store Outputs to '{output_display_path}'",
@@ -486,7 +549,8 @@ def run_pipeline(options: argparse.Namespace) -> bool:
         speclens_result = run_speclens(
             output_directory,
             options,
-            benchmark=work_directory.name.lower(),
+            benchmark=options.benchmark or work_directory.name.lower(),
+            step1_time=step1_time,
         )
         if not speclens_result.succeeded:
             report_failure(
@@ -494,9 +558,9 @@ def run_pipeline(options: argparse.Namespace) -> bool:
                 speclens_result,
                 output_already_visible=True,
             )
-            return False
+            all_succeeded = False
 
-    return True
+    return all_succeeded
 
 
 def main(argv: Sequence[str] | None = None) -> int:

@@ -85,6 +85,16 @@ def _step_seconds(steps: dict[str, float], key: str) -> float:
     return float(val)
 
 
+def _workflow_seconds(
+    steps: dict[str, float], first_step: str, second_step: str
+) -> float:
+    first = _step_seconds(steps, first_step)
+    second = _step_seconds(steps, second_step)
+    if first >= TIMEOUT_SEC or second >= TIMEOUT_SEC:
+        return float(TIMEOUT_SEC)
+    return first + second
+
+
 def compute_three_bar_heights(steps: dict[str, float], include_step14: bool = False) -> tuple[float, float, float]:
     """Return (fullsym, subspecns, subspec) total seconds for one case."""
     prep = (
@@ -95,9 +105,20 @@ def compute_three_bar_heights(steps: dict[str, float], include_step14: bool = Fa
     )
     if include_step14:
         prep += _step_seconds(steps, "step1.4")
-    fullsym = _step_seconds(steps, "step4.1") + _step_seconds(steps, "step4.2")
-    subspecns = prep + _step_seconds(steps, "step3.1") + _step_seconds(steps, "step3.2")
-    subspec = prep + _step_seconds(steps, "step2.1") + _step_seconds(steps, "step2.2")
+    fullsym_workflow = _workflow_seconds(steps, "step4.1", "step4.2")
+    subspecns_workflow = _workflow_seconds(steps, "step3.1", "step3.2")
+    subspec_workflow = _workflow_seconds(steps, "step2.1", "step2.2")
+    fullsym = fullsym_workflow
+    subspecns = (
+        TIMEOUT_SEC
+        if subspecns_workflow >= TIMEOUT_SEC
+        else prep + subspecns_workflow
+    )
+    subspec = (
+        TIMEOUT_SEC
+        if subspec_workflow >= TIMEOUT_SEC
+        else prep + subspec_workflow
+    )
     return fullsym, subspecns, subspec
 
 

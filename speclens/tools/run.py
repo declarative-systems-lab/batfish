@@ -61,6 +61,19 @@ STEP_COLUMNS = {
     "fullsym_line": "step4.1",
     "fullsym_field": "step4.2",
 }
+WORKFLOW_BY_STEP = {
+    "subspec_line": "SubSpec",
+    "subspec_field": "SubSpec",
+    "noscope_line": "NoScope",
+    "noscope_field": "NoScope",
+    "fullsym_line": "FullSym",
+    "fullsym_field": "FullSym",
+}
+WORKFLOW_COLUMNS = {
+    "SubSpec": ("step2.1", "step2.2"),
+    "NoScope": ("step3.1", "step3.2"),
+    "FullSym": ("step4.1", "step4.2"),
+}
 SUBSPEC_OUTPUT_BY_FINAL_STEP = {
     "subspec_field": util_keyword.SUBSPEC_DIR,
     "noscope_field": util_keyword.SUBSPEC_NOSCOPE_DIR,
@@ -201,7 +214,7 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         default=DEFAULT_TIMEOUT_SECONDS,
         metavar="DURATION",
         help=(
-            "timeout for the entire selected workflow "
+            "timeout shared by the line and field stages of each workflow "
             "(for example: 7200, 2h, or 1h30m; default: 4h)"
         ),
     )
@@ -221,6 +234,13 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         default="-",
         metavar="NAME",
         help="benchmark label stored in benchmark_time.csv (default: -)",
+    )
+    parser.add_argument(
+        "--step1-time",
+        type=float,
+        default=0.0,
+        metavar="SECONDS",
+        help="Batfish simulation plus configuration encoding time",
     )
     parser.add_argument(
         "work_directory",
@@ -486,6 +506,15 @@ def _format_elapsed(seconds: float) -> str:
     return f"{int(hours)}h {int(minutes)}m {remaining:.2f}s"
 
 
+def _format_timeout(seconds: float) -> str:
+    seconds = float(seconds)
+    if seconds.is_integer() and seconds % 3600 == 0:
+        return f"{int(seconds // 3600)}h"
+    if seconds.is_integer() and seconds % 60 == 0:
+        return f"{int(seconds // 60)}min"
+    return f"{seconds:g}s"
+
+
 def _diagnostic(output: str, *, line_count: int = 5) -> str:
     lines = [line for line in output.splitlines() if line.strip()]
     return "\n".join(lines[-line_count:])
@@ -513,7 +542,8 @@ class BenchmarkReport:
         self.values = {column: "-" for column in BENCHMARK_COLUMNS}
         self.values["benchmark"] = options.benchmark
         self.values["case"] = work_directory.name
-        self.values["step1.0"] = "0s"
+        self.values["step1.0"] = _format_elapsed(options.step1_time)
+        self.timeout_label = _format_timeout(options.timeout)
         run_subspec, run_noscope, _ = _selected_stages(options)
         if (run_subspec or run_noscope) and not options.internet2:
             self.values["step1.4"] = "0s"
@@ -522,13 +552,19 @@ class BenchmarkReport:
     def record(self, step: Step, result: StepRunResult) -> None:
         column = STEP_COLUMNS[step.name]
         if result.status == "timed_out":
-            value = "4h+"
+            value = f"{self.timeout_label}+"
         elif result.status == "failed":
             value = "ERROR"
         else:
             value = _format_elapsed(result.elapsed_seconds)
             self.completed_columns.add(column)
         self.values[column] = value
+
+    def record_workflow_timeout(self, workflow: str) -> None:
+        """Mark both stages when their shared workflow deadline expires."""
+        for column in WORKFLOW_COLUMNS[workflow]:
+            self.values[column] = f"{self.timeout_label}+"
+            self.completed_columns.discard(column)
 
     def _record_subspec_counts(self) -> None:
         required = {"step2.1", "step2.2"}
@@ -709,29 +745,46 @@ def run_pipeline(options: argparse.Namespace) -> bool:
     devices = sorted(util_file.load_hostnames(work_directory))
 
     benchmark_report = BenchmarkReport(work_directory, options)
-    pipeline_started_at = time.monotonic()
-    pipeline_deadline = pipeline_started_at + options.timeout
+    workflow_deadlines: dict[str, float] = {}
+    timed_out_workflows: set[str] = set()
+    had_timeout = False
     subspec_separator_printed = False
     try:
         for step_index, step in enumerate(steps):
+            workflow = WORKFLOW_BY_STEP.get(step.name)
+            if workflow in timed_out_workflows:
+                continue
             if (
                 step.name in FIRST_SUBSPEC_STEPS
                 and not subspec_separator_printed
             ):
                 print(PIPELINE_SEPARATOR)
                 subspec_separator_printed = True
-            remaining_seconds = pipeline_deadline - time.monotonic()
+            if workflow is None:
+                deadline = time.monotonic() + options.timeout
+            else:
+                deadline = workflow_deadlines.setdefault(
+                    workflow,
+                    time.monotonic() + options.timeout,
+                )
+            remaining_seconds = deadline - time.monotonic()
             if remaining_seconds <= 0:
                 print(
-                    f"[✗] Timed Out: SpecLens Pipeline before "
+                    f"[✗] Timed Out: {workflow or step.description} before "
                     f"{step.description}",
                     file=sys.stderr,
                 )
-                benchmark_report.record(
-                    step,
-                    StepRunResult(False, 0.0, "timed_out"),
-                )
-                return False
+                if workflow is None:
+                    benchmark_report.record(
+                        step,
+                        StepRunResult(False, 0.0, "timed_out"),
+                    )
+                    return False
+                benchmark_report.record_workflow_timeout(workflow)
+                timed_out_workflows.add(workflow)
+                had_timeout = True
+                print(PIPELINE_SEPARATOR)
+                continue
 
             if step.per_device:
                 result = run_device_step(
@@ -739,7 +792,7 @@ def run_pipeline(options: argparse.Namespace) -> bool:
                     work_directory,
                     devices,
                     threads=options.threads,
-                    deadline=pipeline_deadline,
+                    deadline=deadline,
                     verbose=options.verbose,
                 )
             else:
@@ -752,6 +805,12 @@ def run_pipeline(options: argparse.Namespace) -> bool:
 
             benchmark_report.record(step, result)
             if not result.succeeded:
+                if result.status == "timed_out" and workflow is not None:
+                    benchmark_report.record_workflow_timeout(workflow)
+                    timed_out_workflows.add(workflow)
+                    had_timeout = True
+                    print(PIPELINE_SEPARATOR)
+                    continue
                 return False
             _report_subspec_output(step, work_directory)
             if (
@@ -759,7 +818,7 @@ def run_pipeline(options: argparse.Namespace) -> bool:
                 and step_index < len(steps) - 1
             ):
                 print(PIPELINE_SEPARATOR)
-        return True
+        return not had_timeout
     finally:
         benchmark_report.write()
 

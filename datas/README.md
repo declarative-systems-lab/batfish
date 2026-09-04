@@ -12,6 +12,9 @@ imports the local `utils` package and reads data from the following directories:
 
 Generated figures are written below `figs/`.
 
+For automated efficiency and scalability reproduction, including `fast` and
+`full` profiles, see the [artifact evaluation guide](../artifact/README.md).
+
 ## Run locally with JupyterLab
 
 Jupyter is an optional analysis dependency and is not installed by the main
@@ -44,6 +47,6 @@ missing Python packages, and change the working directory to `datas/` before
 running the cells. Uploading only `evaluation.ipynb` is not sufficient because it
 depends on the local `utils` package and data directories.
 
-Opening the notebook as a static file in a browser allows viewing saved output,
-but executing cells still requires a Python kernel, either locally or in a
-hosted environment.
+Opening the notebook as a static file in a browser allows inspection of its
+cells, but executing them still requires a Python kernel, either locally or in
+a hosted environment.

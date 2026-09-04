@@ -475,6 +475,7 @@ public class Encoder {
     // initialize configuration constant - SMT symbolic variable
     initConfigurationConstants();
     long end = System.currentTimeMillis();
+    System.out.printf("SPECLENS_CONFIGURATION_ENCODING_MS=%d%n", end - start);
 
     // initialize _symbolicFailures and _allVariables, which involving
     //   + all GraphEdge getPeer() == null according to _edgeMap  (_failedEdgeLinks)

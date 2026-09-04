@@ -34,18 +34,21 @@ final class BatfishSimulationRunner {
     return _batfish;
   }
 
-  void computeAndPrintDataPlane(String outputDir) throws IOException {
+  long computeAndPrintDataPlane(String outputDir) throws IOException {
     try (PrintWriter bgpRouteWriter =
             new PrintWriter(new FileWriter(new File(outputDir, "0_sim_bgp_routes.txt"), true));
         PrintWriter ospfRouteWriter =
             new PrintWriter(new FileWriter(new File(outputDir, "0_sim_ospf_routes.txt"), true));
         PrintWriter dataPlaneWriter =
             new PrintWriter(new FileWriter(new File(outputDir, "0_sim_data_plane.txt"), true))) {
+      long simulationStartedAt = System.currentTimeMillis();
       _batfish.computeDataPlane(_batfish.getSnapshot(), bgpRouteWriter, ospfRouteWriter);
+      long simulationElapsedMs = System.currentTimeMillis() - simulationStartedAt;
       RoutesQuestion routesQuestion = new RoutesQuestion();
       RoutesAnswerer routesAnswerer = new RoutesAnswerer(routesQuestion, _batfish);
       AnswerElement routesAnswer = routesAnswerer.answer(_batfish.getSnapshot());
       RibPrinter.printRouteTable(routesAnswer, dataPlaneWriter);
+      return simulationElapsedMs;
     }
   }
 

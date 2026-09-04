@@ -19,16 +19,17 @@ The warm-up question is excluded from the reported results.
 ## Contents
 
 - [`userstudy_intro.pdf`](userstudy_intro.pdf): participant training material.
-- [`userstudy_task1/`](userstudy_task1) — [`userstudy_task4/`](userstudy_task4): network configurations and
-  verification properties for the four evaluated tasks.
+- [`userstudy_task1/`](userstudy_task1) through
+  [`userstudy_task4/`](userstudy_task4): network configurations and verification
+  properties for the four evaluated tasks.
 - [`interface/`](interface): bilingual study interface, question materials, and
   page generator.
 - [`../datas/1_userstudy`](../datas/1_userstudy): de-identified study data.
-- [`../datas/datas.ipynb`](../datas/datas.ipynb): analysis and plotting
+- [`../datas/evaluation.ipynb`](../datas/evaluation.ipynb): analysis and plotting
   notebook.
 
-**The study interface is also available
-[online](https://declarative-systems-lab.github.io/SpecLens/userstudy).**
+The study interface is also available
+[online](https://declarative-systems-lab.github.io/SpecLens/userstudy).
 
 ## Generate SubSpecs
 
@@ -36,13 +37,12 @@ From the repository root, run SpecLens with community handling enabled. For
 example, to process Task 1:
 
 ```bash
-cd batfish
 python3 run_benchmark.py -c user-study/userstudy_task1
 ```
 
-Results are written under `batfish/smts/smt_output_xxxx/4_subspec/`. The relevant
+Results are written under `smts/smt_output_xxxx/4_subspec/`. The relevant
 field-level and line-level constraints were copied into the corresponding
-`batfish/user-study/interface/questionN/` directory, where the `*_trans.txt` and 
+`user-study/interface/questionN/` directory, where the `*_trans.txt` and
 `*_trans_zh.txt` files contain manually prepared English and Chinese descriptions.
 
 The SubSpecs bundled with the interface are the versions presented during the
@@ -53,25 +53,25 @@ when generated from the same tasks.
 ## Build the Interface
 
 ```bash
-cd batfish/user-study/interface
-python3 generate_userstudy_interface.py
+python3 user-study/interface/generate_userstudy_interface.py
 ```
 
-The generator creates html pages in `batfish/user-study/interface/generated/`: 
-an entry page, English and Chinese pages for Groups A and B, and two 
-sample-question pages. 
+The generator creates HTML pages in `user-study/interface/generated/`: an entry
+page, English and Chinese pages for Groups A and B, and two sample-question
+pages.
 
-Open `batfish/user-study/interface/generated/index.html` to start.
+Open `user-study/interface/generated/index.html` to start.
 
 ## Reproduce the Figures
 
 ```bash
-cd batfish/datas
-jupyter notebook datas.ipynb
+cd datas
+.venv/bin/python -m jupyter lab evaluation.ipynb
 ```
 
 Run all cells to display and save the nine accuracy, completion-time, and SUS
-figures under `batfish/datas/figs/1_userstudy/`.
+figures under `datas/figs/1_userstudy/`. Create the `.venv` environment first as
+described in the [data analysis instructions](../datas/README.md).
 
 ## Data Privacy
 

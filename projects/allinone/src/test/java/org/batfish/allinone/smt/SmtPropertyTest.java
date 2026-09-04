@@ -62,7 +62,8 @@ public class SmtPropertyTest {
         BatfishObjectMapper.prettyWriter()
             .writeValue(new File(outputDir, "0_all_property.json"), _property);
 
-        _simulationRunner.computeAndPrintDataPlane(outputDir);
+        long simulationElapsedMs = _simulationRunner.computeAndPrintDataPlane(outputDir);
+        System.out.printf("SPECLENS_BATFISH_SIMULATION_MS=%d%n", simulationElapsedMs);
         boolean verified = _minesweeperRunner.verify(_property);
         String outputDirectoryName = new File(outputDir).getName();
         if (verified) {
