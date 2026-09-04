@@ -1,0 +1,16 @@
+{
+  "profiles": {
+    "lite": {
+      "threads": 20,
+      "timeout": "10m"
+    },
+    "fast": {
+      "threads": 20,
+      "timeout": "30m"
+    },
+    "full": {
+      "threads": 20,
+      "timeout": "4h"
+    }
+  }
+}
