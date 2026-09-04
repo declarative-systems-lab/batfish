@@ -1,0 +1,83 @@
+================================================================================
+Timing Benchmark Results
+Generated: 2026-02-05 01:17:47
+================================================================================
+
+
+[DIRECTORY]
+name=smt_output_fattree04pol
+step1.0: 3.77s
+step1.1: 0.08s
+step1.2: 0.60s
+step1.3: 0.16s
+step2.1: 0.60s
+step2.2: 0.29s
+step3.1: 0.59s
+step3.2: 0.68s
+step4.1: 1m 59.50s
+step4.2: 3m 3.75s
+
+[DIRECTORY]
+name=smt_output_fattree12pol
+step1.0: 9.49s
+step1.1: 1.33s
+step1.2: 14.13s
+step1.3: 1.49s
+step2.1: 15.38s
+step2.2: 2.66s
+step3.1: 15.24s
+step3.2: 17.66s
+step4.1: 4h +
+step4.2: 4h +
+
+[DIRECTORY]
+name=smt_output_fattree16pol
+step1.0: 16.28s
+step1.1: 6.49s
+step1.2: 34.61s
+step1.3: 3.01s
+step2.1: 42.30s
+step2.2: 5.26s
+step3.1: 42.00s
+step3.2: 48.46s
+step4.1: 4h +
+step4.2: 4h +
+
+[DIRECTORY]
+name=smt_output_fattree20pol
+step1.0: 29.61s
+step1.1: 24.74s
+step1.2: 1m 11.92s
+step1.3: 5.58s
+step2.1: 1m 35.94s
+step2.2: 9.06s
+step3.1: 1m 35.67s
+step3.2: 1m 48.95s
+step4.1: 4h +
+step4.2: 4h +
+
+[DIRECTORY]
+name=smt_output_fattree24pol
+step1.0: 52.377s
+step1.1: 1m 10.13s
+step1.2: 2m 12.32s
+step1.3: 9.56s
+step2.1: 3m 7.66s
+step2.2: 14.73s
+step3.1: 3m 7.27s
+step3.2: 3m 31.88s
+step4.1: 4h +
+step4.2: 4h +
+
+[DIRECTORY]
+name=smt_output_fattree32pol
+step1.0: 2m 58.60s
+step1.1: 5m 57.35s
+step1.2: 5m 53.77s
+step1.3: 26.92s
+step2.1: 9m 19.43s
+step2.2: 33.95s
+step3.1: 9m 18.16s
+step3.2: 10m 26.72s
+step4.1: 4h +
+step4.2: 4h +

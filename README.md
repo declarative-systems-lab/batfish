@@ -5,7 +5,8 @@ combines Batfish simulation states with Minesweeper verification encodings to
 explain how routers, configuration lines, and fields preserve a network
 property.
 
-- [Project website](https://declarative-systems-lab.github.io/SpecLens)
+- [Project Website](https://declarative-systems-lab.github.io/SpecLens)
+- [User Study Interface](https://declarative-systems-lab.github.io/SpecLens/userstudy)
 
 ## Quick Start
 
@@ -84,13 +85,13 @@ Run a task with community subspecification enabled:
 python3 run_benchmark.py --community user-study/userstudy_task1
 ```
 
-See the [user-study instructions](user-study/README.md) and the
-[online interface](https://declarative-systems-lab.github.io/SpecLens/userstudy).
+See the [user study instructions](user-study/README.md) and the
+[online user study interface](https://declarative-systems-lab.github.io/SpecLens/userstudy).
 
 ## Data Analysis
 
 The optional analysis notebook and its isolated Python setup are documented in
-[`datas/README.md`](datas/README.md). 
+the [data analysis instructions](datas/README.md).
 Jupyter is not installed by `install.sh`.
 
 ## Repository Layout

@@ -1,0 +1,243 @@
+Subspec count log
+Work dir: /home/linyx/benchmarks/auto-netsubspec/smt_outputs_internet2
+
+================================================================================
+Recorded: 2026-07-03 23:16:29
+Source: counts_0001.txt
+================================================================================
+================================================================================
+Subspec Count Results
+Generated: 2026-07-03 23:16:29
+Work dir: /home/linyx/benchmarks/auto-netsubspec/smt_outputs_internet2
+================================================================================
+
+[DIRECTORY]
+name=smt_output_0001
+field_level:
+  non_empty_subspec=859
+  no_subspec_found=0
+  empty_subspec=73554
+  all_subspec=74413
+  non_empty_pct=1.1544
+line_level:
+  non_empty_subspec=869
+  no_subspec_found=0
+  empty_subspec=14304
+  all_subspec=15173
+  non_empty_pct=5.7273
+total:
+  non_empty_subspec=1728
+  no_subspec_found=0
+  empty_subspec=87858
+  all_subspec=89586
+  non_empty_pct=1.9289
+
+[DIRECTORY]
+name=smt_output_0002
+field_level:
+  non_empty_subspec=859
+  no_subspec_found=0
+  empty_subspec=73554
+  all_subspec=74413
+  non_empty_pct=1.1544
+line_level:
+  non_empty_subspec=869
+  no_subspec_found=0
+  empty_subspec=14304
+  all_subspec=15173
+  non_empty_pct=5.7273
+total:
+  non_empty_subspec=1728
+  no_subspec_found=0
+  empty_subspec=87858
+  all_subspec=89586
+  non_empty_pct=1.9289
+
+[DIRECTORY]
+name=smt_output_0003
+field_level:
+  non_empty_subspec=859
+  no_subspec_found=0
+  empty_subspec=73554
+  all_subspec=74413
+  non_empty_pct=1.1544
+line_level:
+  non_empty_subspec=869
+  no_subspec_found=0
+  empty_subspec=14304
+  all_subspec=15173
+  non_empty_pct=5.7273
+total:
+  non_empty_subspec=1728
+  no_subspec_found=0
+  empty_subspec=87858
+  all_subspec=89586
+  non_empty_pct=1.9289
+
+[DIRECTORY]
+name=smt_output_0004
+field_level:
+  non_empty_subspec=859
+  no_subspec_found=0
+  empty_subspec=73554
+  all_subspec=74413
+  non_empty_pct=1.1544
+line_level:
+  non_empty_subspec=869
+  no_subspec_found=0
+  empty_subspec=14304
+  all_subspec=15173
+  non_empty_pct=5.7273
+total:
+  non_empty_subspec=1728
+  no_subspec_found=0
+  empty_subspec=87858
+  all_subspec=89586
+  non_empty_pct=1.9289
+
+[DIRECTORY]
+name=smt_output_0005
+field_level:
+  non_empty_subspec=859
+  no_subspec_found=0
+  empty_subspec=73554
+  all_subspec=74413
+  non_empty_pct=1.1544
+line_level:
+  non_empty_subspec=869
+  no_subspec_found=0
+  empty_subspec=14304
+  all_subspec=15173
+  non_empty_pct=5.7273
+total:
+  non_empty_subspec=1728
+  no_subspec_found=0
+  empty_subspec=87858
+  all_subspec=89586
+  non_empty_pct=1.9289
+
+[DIRECTORY]
+name=smt_output_0006
+field_level:
+  non_empty_subspec=859
+  no_subspec_found=0
+  empty_subspec=73554
+  all_subspec=74413
+  non_empty_pct=1.1544
+line_level:
+  non_empty_subspec=869
+  no_subspec_found=0
+  empty_subspec=14304
+  all_subspec=15173
+  non_empty_pct=5.7273
+total:
+  non_empty_subspec=1728
+  no_subspec_found=0
+  empty_subspec=87858
+  all_subspec=89586
+  non_empty_pct=1.9289
+
+[DIRECTORY]
+name=smt_output_0007
+field_level:
+  non_empty_subspec=777
+  no_subspec_found=0
+  empty_subspec=73636
+  all_subspec=74413
+  non_empty_pct=1.0442
+line_level:
+  non_empty_subspec=787
+  no_subspec_found=0
+  empty_subspec=14386
+  all_subspec=15173
+  non_empty_pct=5.1868
+total:
+  non_empty_subspec=1564
+  no_subspec_found=0
+  empty_subspec=88022
+  all_subspec=89586
+  non_empty_pct=1.7458
+
+[DIRECTORY]
+name=smt_output_0008
+field_level:
+  non_empty_subspec=656
+  no_subspec_found=0
+  empty_subspec=73757
+  all_subspec=74413
+  non_empty_pct=0.8816
+line_level:
+  non_empty_subspec=663
+  no_subspec_found=0
+  empty_subspec=14510
+  all_subspec=15173
+  non_empty_pct=4.3696
+total:
+  non_empty_subspec=1319
+  no_subspec_found=0
+  empty_subspec=88267
+  all_subspec=89586
+  non_empty_pct=1.4723
+
+[DIRECTORY]
+name=smt_output_0009
+field_level:
+  non_empty_subspec=860
+  no_subspec_found=0
+  empty_subspec=73553
+  all_subspec=74413
+  non_empty_pct=1.1557
+line_level:
+  non_empty_subspec=870
+  no_subspec_found=0
+  empty_subspec=14303
+  all_subspec=15173
+  non_empty_pct=5.7339
+total:
+  non_empty_subspec=1730
+  no_subspec_found=0
+  empty_subspec=87856
+  all_subspec=89586
+  non_empty_pct=1.9311
+
+[DIRECTORY]
+name=smt_output_0010
+field_level:
+  non_empty_subspec=706
+  no_subspec_found=0
+  empty_subspec=73707
+  all_subspec=74413
+  non_empty_pct=0.9488
+line_level:
+  non_empty_subspec=706
+  no_subspec_found=0
+  empty_subspec=14467
+  all_subspec=15173
+  non_empty_pct=4.6530
+total:
+  non_empty_subspec=1412
+  no_subspec_found=0
+  empty_subspec=88174
+  all_subspec=89586
+  non_empty_pct=1.5761
+
+[AVERAGE]
+cases=10
+field_level:
+  non_empty_subspec=815.3000
+  no_subspec_found=0.0000
+  empty_subspec=73597.7000
+  all_subspec=74413.0000
+  non_empty_pct=1.0957
+line_level:
+  non_empty_subspec=824.0000
+  no_subspec_found=0.0000
+  empty_subspec=14349.0000
+  all_subspec=15173.0000
+  non_empty_pct=5.4307
+total:
+  non_empty_subspec=1639.3000
+  no_subspec_found=0.0000
+  empty_subspec=87946.7000
+  all_subspec=89586.0000
+  non_empty_pct=1.8299

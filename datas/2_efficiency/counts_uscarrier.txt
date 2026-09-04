@@ -1,0 +1,484 @@
+Subspec count log
+Work dir: /home/deza/codes/auto-netsubspec/smt_outputs_benchmarks
+
+================================================================================
+Recorded: 2026-07-03 22:17:57
+Source: counts_0004.txt
+================================================================================
+================================================================================
+Subspec Count Results
+Generated: 2026-07-03 22:17:57
+Work dir: /home/deza/codes/auto-netsubspec/smt_outputs_benchmarks
+================================================================================
+
+[DIRECTORY]
+name=smt_output_uscarrier_0001
+field_level:
+  non_empty_subspec=81
+  no_subspec_found=0
+  empty_subspec=1768
+  all_subspec=1849
+  non_empty_pct=4.3807
+line_level:
+  non_empty_subspec=215
+  no_subspec_found=0
+  empty_subspec=419
+  all_subspec=634
+  non_empty_pct=33.9117
+total:
+  non_empty_subspec=296
+  no_subspec_found=0
+  empty_subspec=2187
+  all_subspec=2483
+  non_empty_pct=11.9211
+
+[DIRECTORY]
+name=smt_output_uscarrier_0002
+field_level:
+  non_empty_subspec=63
+  no_subspec_found=0
+  empty_subspec=1786
+  all_subspec=1849
+  non_empty_pct=3.4072
+line_level:
+  non_empty_subspec=211
+  no_subspec_found=0
+  empty_subspec=423
+  all_subspec=634
+  non_empty_pct=33.2808
+total:
+  non_empty_subspec=274
+  no_subspec_found=0
+  empty_subspec=2209
+  all_subspec=2483
+  non_empty_pct=11.0350
+
+[DIRECTORY]
+name=smt_output_uscarrier_0003
+field_level:
+  non_empty_subspec=57
+  no_subspec_found=0
+  empty_subspec=1792
+  all_subspec=1849
+  non_empty_pct=3.0827
+line_level:
+  non_empty_subspec=214
+  no_subspec_found=0
+  empty_subspec=421
+  all_subspec=635
+  non_empty_pct=33.7008
+total:
+  non_empty_subspec=271
+  no_subspec_found=0
+  empty_subspec=2213
+  all_subspec=2484
+  non_empty_pct=10.9098
+
+[DIRECTORY]
+name=smt_output_uscarrier_0004
+field_level:
+  non_empty_subspec=61
+  no_subspec_found=0
+  empty_subspec=1788
+  all_subspec=1849
+  non_empty_pct=3.2991
+line_level:
+  non_empty_subspec=218
+  no_subspec_found=0
+  empty_subspec=421
+  all_subspec=639
+  non_empty_pct=34.1158
+total:
+  non_empty_subspec=279
+  no_subspec_found=0
+  empty_subspec=2209
+  all_subspec=2488
+  non_empty_pct=11.2138
+
+[DIRECTORY]
+name=smt_output_uscarrier_0005
+field_level:
+  non_empty_subspec=56
+  no_subspec_found=0
+  empty_subspec=1793
+  all_subspec=1849
+  non_empty_pct=3.0287
+line_level:
+  non_empty_subspec=213
+  no_subspec_found=0
+  empty_subspec=420
+  all_subspec=633
+  non_empty_pct=33.6493
+total:
+  non_empty_subspec=269
+  no_subspec_found=0
+  empty_subspec=2213
+  all_subspec=2482
+  non_empty_pct=10.8380
+
+[DIRECTORY]
+name=smt_output_uscarrier_0006
+field_level:
+  non_empty_subspec=57
+  no_subspec_found=0
+  empty_subspec=1792
+  all_subspec=1849
+  non_empty_pct=3.0827
+line_level:
+  non_empty_subspec=214
+  no_subspec_found=0
+  empty_subspec=422
+  all_subspec=636
+  non_empty_pct=33.6478
+total:
+  non_empty_subspec=271
+  no_subspec_found=0
+  empty_subspec=2214
+  all_subspec=2485
+  non_empty_pct=10.9054
+
+[DIRECTORY]
+name=smt_output_uscarrier_0007
+field_level:
+  non_empty_subspec=60
+  no_subspec_found=0
+  empty_subspec=1789
+  all_subspec=1849
+  non_empty_pct=3.2450
+line_level:
+  non_empty_subspec=217
+  no_subspec_found=0
+  empty_subspec=419
+  all_subspec=636
+  non_empty_pct=34.1195
+total:
+  non_empty_subspec=277
+  no_subspec_found=0
+  empty_subspec=2208
+  all_subspec=2485
+  non_empty_pct=11.1469
+
+[DIRECTORY]
+name=smt_output_uscarrier_0008
+field_level:
+  non_empty_subspec=58
+  no_subspec_found=0
+  empty_subspec=1791
+  all_subspec=1849
+  non_empty_pct=3.1368
+line_level:
+  non_empty_subspec=215
+  no_subspec_found=0
+  empty_subspec=421
+  all_subspec=636
+  non_empty_pct=33.8050
+total:
+  non_empty_subspec=273
+  no_subspec_found=0
+  empty_subspec=2212
+  all_subspec=2485
+  non_empty_pct=10.9859
+
+[DIRECTORY]
+name=smt_output_uscarrier_0009
+field_level:
+  non_empty_subspec=59
+  no_subspec_found=0
+  empty_subspec=1790
+  all_subspec=1849
+  non_empty_pct=3.1909
+line_level:
+  non_empty_subspec=216
+  no_subspec_found=0
+  empty_subspec=419
+  all_subspec=635
+  non_empty_pct=34.0157
+total:
+  non_empty_subspec=275
+  no_subspec_found=0
+  empty_subspec=2209
+  all_subspec=2484
+  non_empty_pct=11.0709
+
+[DIRECTORY]
+name=smt_output_uscarrier_0010
+field_level:
+  non_empty_subspec=57
+  no_subspec_found=0
+  empty_subspec=1792
+  all_subspec=1849
+  non_empty_pct=3.0827
+line_level:
+  non_empty_subspec=214
+  no_subspec_found=0
+  empty_subspec=421
+  all_subspec=635
+  non_empty_pct=33.7008
+total:
+  non_empty_subspec=271
+  no_subspec_found=0
+  empty_subspec=2213
+  all_subspec=2484
+  non_empty_pct=10.9098
+
+[AVERAGE]
+cases=10
+field_level:
+  non_empty_subspec=60.9000
+  no_subspec_found=0.0000
+  empty_subspec=1788.1000
+  all_subspec=1849.0000
+  non_empty_pct=3.2937
+line_level:
+  non_empty_subspec=214.7000
+  no_subspec_found=0.0000
+  empty_subspec=420.6000
+  all_subspec=635.3000
+  non_empty_pct=33.7947
+total:
+  non_empty_subspec=275.6000
+  no_subspec_found=0.0000
+  empty_subspec=2208.7000
+  all_subspec=2484.3000
+  non_empty_pct=11.0937
+
+================================================================================
+Recorded: 2026-07-03 22:20:14
+Source: counts_0005.txt
+================================================================================
+================================================================================
+Subspec Count Results
+Generated: 2026-07-03 22:20:14
+Work dir: /home/deza/codes/auto-netsubspec/smt_outputs_benchmarks
+================================================================================
+
+[DIRECTORY]
+name=smt_output_uscarrier_0001
+field_level:
+  non_empty_subspec=81
+  no_subspec_found=0
+  empty_subspec=1768
+  all_subspec=1849
+  non_empty_pct=4.3807
+line_level:
+  non_empty_subspec=215
+  no_subspec_found=0
+  empty_subspec=406
+  all_subspec=621
+  non_empty_pct=34.6216
+total:
+  non_empty_subspec=296
+  no_subspec_found=0
+  empty_subspec=2174
+  all_subspec=2470
+  non_empty_pct=11.9838
+
+[DIRECTORY]
+name=smt_output_uscarrier_0002
+field_level:
+  non_empty_subspec=63
+  no_subspec_found=0
+  empty_subspec=1786
+  all_subspec=1849
+  non_empty_pct=3.4072
+line_level:
+  non_empty_subspec=211
+  no_subspec_found=0
+  empty_subspec=410
+  all_subspec=621
+  non_empty_pct=33.9775
+total:
+  non_empty_subspec=274
+  no_subspec_found=0
+  empty_subspec=2196
+  all_subspec=2470
+  non_empty_pct=11.0931
+
+[DIRECTORY]
+name=smt_output_uscarrier_0003
+field_level:
+  non_empty_subspec=57
+  no_subspec_found=0
+  empty_subspec=1792
+  all_subspec=1849
+  non_empty_pct=3.0827
+line_level:
+  non_empty_subspec=214
+  no_subspec_found=0
+  empty_subspec=407
+  all_subspec=621
+  non_empty_pct=34.4605
+total:
+  non_empty_subspec=271
+  no_subspec_found=0
+  empty_subspec=2199
+  all_subspec=2470
+  non_empty_pct=10.9717
+
+[DIRECTORY]
+name=smt_output_uscarrier_0004
+field_level:
+  non_empty_subspec=61
+  no_subspec_found=0
+  empty_subspec=1788
+  all_subspec=1849
+  non_empty_pct=3.2991
+line_level:
+  non_empty_subspec=218
+  no_subspec_found=0
+  empty_subspec=403
+  all_subspec=621
+  non_empty_pct=35.1047
+total:
+  non_empty_subspec=279
+  no_subspec_found=0
+  empty_subspec=2191
+  all_subspec=2470
+  non_empty_pct=11.2955
+
+[DIRECTORY]
+name=smt_output_uscarrier_0005
+field_level:
+  non_empty_subspec=56
+  no_subspec_found=0
+  empty_subspec=1793
+  all_subspec=1849
+  non_empty_pct=3.0287
+line_level:
+  non_empty_subspec=213
+  no_subspec_found=0
+  empty_subspec=408
+  all_subspec=621
+  non_empty_pct=34.2995
+total:
+  non_empty_subspec=269
+  no_subspec_found=0
+  empty_subspec=2201
+  all_subspec=2470
+  non_empty_pct=10.8907
+
+[DIRECTORY]
+name=smt_output_uscarrier_0006
+field_level:
+  non_empty_subspec=57
+  no_subspec_found=0
+  empty_subspec=1792
+  all_subspec=1849
+  non_empty_pct=3.0827
+line_level:
+  non_empty_subspec=214
+  no_subspec_found=0
+  empty_subspec=407
+  all_subspec=621
+  non_empty_pct=34.4605
+total:
+  non_empty_subspec=271
+  no_subspec_found=0
+  empty_subspec=2199
+  all_subspec=2470
+  non_empty_pct=10.9717
+
+[DIRECTORY]
+name=smt_output_uscarrier_0007
+field_level:
+  non_empty_subspec=60
+  no_subspec_found=0
+  empty_subspec=1789
+  all_subspec=1849
+  non_empty_pct=3.2450
+line_level:
+  non_empty_subspec=217
+  no_subspec_found=0
+  empty_subspec=404
+  all_subspec=621
+  non_empty_pct=34.9436
+total:
+  non_empty_subspec=277
+  no_subspec_found=0
+  empty_subspec=2193
+  all_subspec=2470
+  non_empty_pct=11.2146
+
+[DIRECTORY]
+name=smt_output_uscarrier_0008
+field_level:
+  non_empty_subspec=58
+  no_subspec_found=0
+  empty_subspec=1791
+  all_subspec=1849
+  non_empty_pct=3.1368
+line_level:
+  non_empty_subspec=215
+  no_subspec_found=0
+  empty_subspec=406
+  all_subspec=621
+  non_empty_pct=34.6216
+total:
+  non_empty_subspec=273
+  no_subspec_found=0
+  empty_subspec=2197
+  all_subspec=2470
+  non_empty_pct=11.0526
+
+[DIRECTORY]
+name=smt_output_uscarrier_0009
+field_level:
+  non_empty_subspec=59
+  no_subspec_found=0
+  empty_subspec=1790
+  all_subspec=1849
+  non_empty_pct=3.1909
+line_level:
+  non_empty_subspec=216
+  no_subspec_found=0
+  empty_subspec=405
+  all_subspec=621
+  non_empty_pct=34.7826
+total:
+  non_empty_subspec=275
+  no_subspec_found=0
+  empty_subspec=2195
+  all_subspec=2470
+  non_empty_pct=11.1336
+
+[DIRECTORY]
+name=smt_output_uscarrier_0010
+field_level:
+  non_empty_subspec=57
+  no_subspec_found=0
+  empty_subspec=1792
+  all_subspec=1849
+  non_empty_pct=3.0827
+line_level:
+  non_empty_subspec=214
+  no_subspec_found=0
+  empty_subspec=407
+  all_subspec=621
+  non_empty_pct=34.4605
+total:
+  non_empty_subspec=271
+  no_subspec_found=0
+  empty_subspec=2199
+  all_subspec=2470
+  non_empty_pct=10.9717
+
+[AVERAGE]
+cases=10
+field_level:
+  non_empty_subspec=60.9000
+  no_subspec_found=0.0000
+  empty_subspec=1788.1000
+  all_subspec=1849.0000
+  non_empty_pct=3.2937
+line_level:
+  non_empty_subspec=214.7000
+  no_subspec_found=0.0000
+  empty_subspec=406.3000
+  all_subspec=621.0000
+  non_empty_pct=34.5733
+total:
+  non_empty_subspec=275.6000
+  no_subspec_found=0.0000
+  empty_subspec=2194.4000
+  all_subspec=2470.0000
+  non_empty_pct=11.1579

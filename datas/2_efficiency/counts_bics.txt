@@ -1,0 +1,243 @@
+Subspec count log
+Work dir: /home/deza/codes/auto-netsubspec/smt_outputs_bics
+
+================================================================================
+Recorded: 2026-07-03 22:21:05
+Source: counts_0001.txt
+================================================================================
+================================================================================
+Subspec Count Results
+Generated: 2026-07-03 22:21:05
+Work dir: /home/deza/codes/auto-netsubspec/smt_outputs_bics
+================================================================================
+
+[DIRECTORY]
+name=smt_output_bics_0001
+field_level:
+  non_empty_subspec=49
+  no_subspec_found=0
+  empty_subspec=762
+  all_subspec=811
+  non_empty_pct=6.0419
+line_level:
+  non_empty_subspec=70
+  no_subspec_found=0
+  empty_subspec=249
+  all_subspec=319
+  non_empty_pct=21.9436
+total:
+  non_empty_subspec=119
+  no_subspec_found=0
+  empty_subspec=1011
+  all_subspec=1130
+  non_empty_pct=10.5310
+
+[DIRECTORY]
+name=smt_output_bics_0002
+field_level:
+  non_empty_subspec=40
+  no_subspec_found=0
+  empty_subspec=771
+  all_subspec=811
+  non_empty_pct=4.9322
+line_level:
+  non_empty_subspec=66
+  no_subspec_found=0
+  empty_subspec=253
+  all_subspec=319
+  non_empty_pct=20.6897
+total:
+  non_empty_subspec=106
+  no_subspec_found=0
+  empty_subspec=1024
+  all_subspec=1130
+  non_empty_pct=9.3805
+
+[DIRECTORY]
+name=smt_output_bics_0003
+field_level:
+  non_empty_subspec=26
+  no_subspec_found=0
+  empty_subspec=785
+  all_subspec=811
+  non_empty_pct=3.2059
+line_level:
+  non_empty_subspec=59
+  no_subspec_found=0
+  empty_subspec=260
+  all_subspec=319
+  non_empty_pct=18.4953
+total:
+  non_empty_subspec=85
+  no_subspec_found=0
+  empty_subspec=1045
+  all_subspec=1130
+  non_empty_pct=7.5221
+
+[DIRECTORY]
+name=smt_output_bics_0004
+field_level:
+  non_empty_subspec=28
+  no_subspec_found=0
+  empty_subspec=783
+  all_subspec=811
+  non_empty_pct=3.4525
+line_level:
+  non_empty_subspec=60
+  no_subspec_found=0
+  empty_subspec=259
+  all_subspec=319
+  non_empty_pct=18.8088
+total:
+  non_empty_subspec=88
+  no_subspec_found=0
+  empty_subspec=1042
+  all_subspec=1130
+  non_empty_pct=7.7876
+
+[DIRECTORY]
+name=smt_output_bics_0005
+field_level:
+  non_empty_subspec=28
+  no_subspec_found=0
+  empty_subspec=783
+  all_subspec=811
+  non_empty_pct=3.4525
+line_level:
+  non_empty_subspec=60
+  no_subspec_found=0
+  empty_subspec=259
+  all_subspec=319
+  non_empty_pct=18.8088
+total:
+  non_empty_subspec=88
+  no_subspec_found=0
+  empty_subspec=1042
+  all_subspec=1130
+  non_empty_pct=7.7876
+
+[DIRECTORY]
+name=smt_output_bics_0006
+field_level:
+  non_empty_subspec=26
+  no_subspec_found=0
+  empty_subspec=785
+  all_subspec=811
+  non_empty_pct=3.2059
+line_level:
+  non_empty_subspec=59
+  no_subspec_found=0
+  empty_subspec=260
+  all_subspec=319
+  non_empty_pct=18.4953
+total:
+  non_empty_subspec=85
+  no_subspec_found=0
+  empty_subspec=1045
+  all_subspec=1130
+  non_empty_pct=7.5221
+
+[DIRECTORY]
+name=smt_output_bics_0007
+field_level:
+  non_empty_subspec=27
+  no_subspec_found=0
+  empty_subspec=784
+  all_subspec=811
+  non_empty_pct=3.3292
+line_level:
+  non_empty_subspec=59
+  no_subspec_found=0
+  empty_subspec=260
+  all_subspec=319
+  non_empty_pct=18.4953
+total:
+  non_empty_subspec=86
+  no_subspec_found=0
+  empty_subspec=1044
+  all_subspec=1130
+  non_empty_pct=7.6106
+
+[DIRECTORY]
+name=smt_output_bics_0008
+field_level:
+  non_empty_subspec=23
+  no_subspec_found=0
+  empty_subspec=788
+  all_subspec=811
+  non_empty_pct=2.8360
+line_level:
+  non_empty_subspec=56
+  no_subspec_found=0
+  empty_subspec=263
+  all_subspec=319
+  non_empty_pct=17.5549
+total:
+  non_empty_subspec=79
+  no_subspec_found=0
+  empty_subspec=1051
+  all_subspec=1130
+  non_empty_pct=6.9912
+
+[DIRECTORY]
+name=smt_output_bics_0009
+field_level:
+  non_empty_subspec=34
+  no_subspec_found=0
+  empty_subspec=777
+  all_subspec=811
+  non_empty_pct=4.1924
+line_level:
+  non_empty_subspec=67
+  no_subspec_found=0
+  empty_subspec=252
+  all_subspec=319
+  non_empty_pct=21.0031
+total:
+  non_empty_subspec=101
+  no_subspec_found=0
+  empty_subspec=1029
+  all_subspec=1130
+  non_empty_pct=8.9381
+
+[DIRECTORY]
+name=smt_output_bics_0010
+field_level:
+  non_empty_subspec=32
+  no_subspec_found=0
+  empty_subspec=779
+  all_subspec=811
+  non_empty_pct=3.9457
+line_level:
+  non_empty_subspec=65
+  no_subspec_found=0
+  empty_subspec=254
+  all_subspec=319
+  non_empty_pct=20.3762
+total:
+  non_empty_subspec=97
+  no_subspec_found=0
+  empty_subspec=1033
+  all_subspec=1130
+  non_empty_pct=8.5841
+
+[AVERAGE]
+cases=10
+field_level:
+  non_empty_subspec=31.3000
+  no_subspec_found=0.0000
+  empty_subspec=779.7000
+  all_subspec=811.0000
+  non_empty_pct=3.8594
+line_level:
+  non_empty_subspec=62.1000
+  no_subspec_found=0.0000
+  empty_subspec=256.9000
+  all_subspec=319.0000
+  non_empty_pct=19.4671
+total:
+  non_empty_subspec=93.4000
+  no_subspec_found=0.0000
+  empty_subspec=1036.6000
+  all_subspec=1130.0000
+  non_empty_pct=8.2655

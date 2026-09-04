@@ -1,0 +1,243 @@
+Subspec count log
+Work dir: /home/deza/codes/auto-netsubspec/smt_outputs_columbus
+
+================================================================================
+Recorded: 2026-07-03 22:21:26
+Source: counts_0001.txt
+================================================================================
+================================================================================
+Subspec Count Results
+Generated: 2026-07-03 22:21:26
+Work dir: /home/deza/codes/auto-netsubspec/smt_outputs_columbus
+================================================================================
+
+[DIRECTORY]
+name=smt_output_columbus_0001
+field_level:
+  non_empty_subspec=59
+  no_subspec_found=0
+  empty_subspec=1343
+  all_subspec=1402
+  non_empty_pct=4.2083
+line_level:
+  non_empty_subspec=128
+  no_subspec_found=0
+  empty_subspec=402
+  all_subspec=530
+  non_empty_pct=24.1509
+total:
+  non_empty_subspec=187
+  no_subspec_found=0
+  empty_subspec=1745
+  all_subspec=1932
+  non_empty_pct=9.6791
+
+[DIRECTORY]
+name=smt_output_columbus_0002
+field_level:
+  non_empty_subspec=79
+  no_subspec_found=0
+  empty_subspec=1323
+  all_subspec=1402
+  non_empty_pct=5.6348
+line_level:
+  non_empty_subspec=129
+  no_subspec_found=0
+  empty_subspec=401
+  all_subspec=530
+  non_empty_pct=24.3396
+total:
+  non_empty_subspec=208
+  no_subspec_found=0
+  empty_subspec=1724
+  all_subspec=1932
+  non_empty_pct=10.7660
+
+[DIRECTORY]
+name=smt_output_columbus_0003
+field_level:
+  non_empty_subspec=74
+  no_subspec_found=0
+  empty_subspec=1328
+  all_subspec=1402
+  non_empty_pct=5.2782
+line_level:
+  non_empty_subspec=126
+  no_subspec_found=0
+  empty_subspec=404
+  all_subspec=530
+  non_empty_pct=23.7736
+total:
+  non_empty_subspec=200
+  no_subspec_found=0
+  empty_subspec=1732
+  all_subspec=1932
+  non_empty_pct=10.3520
+
+[DIRECTORY]
+name=smt_output_columbus_0004
+field_level:
+  non_empty_subspec=68
+  no_subspec_found=0
+  empty_subspec=1334
+  all_subspec=1402
+  non_empty_pct=4.8502
+line_level:
+  non_empty_subspec=121
+  no_subspec_found=0
+  empty_subspec=409
+  all_subspec=530
+  non_empty_pct=22.8302
+total:
+  non_empty_subspec=189
+  no_subspec_found=0
+  empty_subspec=1743
+  all_subspec=1932
+  non_empty_pct=9.7826
+
+[DIRECTORY]
+name=smt_output_columbus_0005
+field_level:
+  non_empty_subspec=60
+  no_subspec_found=0
+  empty_subspec=1342
+  all_subspec=1402
+  non_empty_pct=4.2796
+line_level:
+  non_empty_subspec=129
+  no_subspec_found=0
+  empty_subspec=401
+  all_subspec=530
+  non_empty_pct=24.3396
+total:
+  non_empty_subspec=189
+  no_subspec_found=0
+  empty_subspec=1743
+  all_subspec=1932
+  non_empty_pct=9.7826
+
+[DIRECTORY]
+name=smt_output_columbus_0006
+field_level:
+  non_empty_subspec=60
+  no_subspec_found=0
+  empty_subspec=1342
+  all_subspec=1402
+  non_empty_pct=4.2796
+line_level:
+  non_empty_subspec=130
+  no_subspec_found=0
+  empty_subspec=400
+  all_subspec=530
+  non_empty_pct=24.5283
+total:
+  non_empty_subspec=190
+  no_subspec_found=0
+  empty_subspec=1742
+  all_subspec=1932
+  non_empty_pct=9.8344
+
+[DIRECTORY]
+name=smt_output_columbus_0007
+field_level:
+  non_empty_subspec=62
+  no_subspec_found=0
+  empty_subspec=1340
+  all_subspec=1402
+  non_empty_pct=4.4223
+line_level:
+  non_empty_subspec=131
+  no_subspec_found=0
+  empty_subspec=399
+  all_subspec=530
+  non_empty_pct=24.7170
+total:
+  non_empty_subspec=193
+  no_subspec_found=0
+  empty_subspec=1739
+  all_subspec=1932
+  non_empty_pct=9.9896
+
+[DIRECTORY]
+name=smt_output_columbus_0008
+field_level:
+  non_empty_subspec=56
+  no_subspec_found=0
+  empty_subspec=1346
+  all_subspec=1402
+  non_empty_pct=3.9943
+line_level:
+  non_empty_subspec=126
+  no_subspec_found=0
+  empty_subspec=404
+  all_subspec=530
+  non_empty_pct=23.7736
+total:
+  non_empty_subspec=182
+  no_subspec_found=0
+  empty_subspec=1750
+  all_subspec=1932
+  non_empty_pct=9.4203
+
+[DIRECTORY]
+name=smt_output_columbus_0009
+field_level:
+  non_empty_subspec=57
+  no_subspec_found=0
+  empty_subspec=1345
+  all_subspec=1402
+  non_empty_pct=4.0656
+line_level:
+  non_empty_subspec=126
+  no_subspec_found=0
+  empty_subspec=404
+  all_subspec=530
+  non_empty_pct=23.7736
+total:
+  non_empty_subspec=183
+  no_subspec_found=0
+  empty_subspec=1749
+  all_subspec=1932
+  non_empty_pct=9.4720
+
+[DIRECTORY]
+name=smt_output_columbus_0010
+field_level:
+  non_empty_subspec=61
+  no_subspec_found=0
+  empty_subspec=1341
+  all_subspec=1402
+  non_empty_pct=4.3509
+line_level:
+  non_empty_subspec=131
+  no_subspec_found=0
+  empty_subspec=399
+  all_subspec=530
+  non_empty_pct=24.7170
+total:
+  non_empty_subspec=192
+  no_subspec_found=0
+  empty_subspec=1740
+  all_subspec=1932
+  non_empty_pct=9.9379
+
+[AVERAGE]
+cases=10
+field_level:
+  non_empty_subspec=63.6000
+  no_subspec_found=0.0000
+  empty_subspec=1338.4000
+  all_subspec=1402.0000
+  non_empty_pct=4.5364
+line_level:
+  non_empty_subspec=127.7000
+  no_subspec_found=0.0000
+  empty_subspec=402.3000
+  all_subspec=530.0000
+  non_empty_pct=24.0943
+total:
+  non_empty_subspec=191.3000
+  no_subspec_found=0.0000
+  empty_subspec=1740.7000
+  all_subspec=1932.0000
+  non_empty_pct=9.9017

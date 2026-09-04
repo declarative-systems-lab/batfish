@@ -1,0 +1,19 @@
+benchmark,case,step1.0,step1.1,step1.2,step1.3,step2.1,step2.2,step3.1,step3.2,step4.1,step4.2
+fattrees,smt_output_fattree04pol,3.77s,0.08s,0.60s,0.16s,0.60s,0.29s,0.59s,0.68s,1m 59.50s,3m 3.75s
+fattrees,smt_output_fattree12pol,9.49s,1.33s,14.13s,1.49s,15.38s,2.66s,15.24s,17.66s,4h +,4h +
+fattrees,smt_output_fattree16pol,16.28s,6.49s,34.61s,3.01s,42.30s,5.26s,42.00s,48.46s,4h +,4h +
+fattrees,smt_output_fattree20pol,29.61s,24.74s,1m 11.92s,5.58s,1m 35.94s,9.06s,1m 35.67s,1m 48.95s,4h +,4h +
+fattrees,smt_output_fattree24pol,52.377s,1m 10.13s,2m 12.32s,9.56s,3m 7.66s,14.73s,3m 7.27s,3m 31.88s,4h +,4h +
+fattrees,smt_output_fattree32pol,2m 58.60s,5m 57.35s,5m 53.77s,26.92s,9m 19.43s,33.95s,9m 18.16s,10m 26.72s,4h +,4h +
+lines,smt_output_line00010,2.52s,0.19s,0.17s,0.19s,0.48s,0.79s,0.96s,2.02s,1.20s,2.96s
+lines,smt_output_line00100,2.46s,0.20s,0.38s,0.19s,1.87s,9.85s,13.05s,27.41s,7.55s,26.71s
+lines,smt_output_line01000,3.61s,0.22s,2.87s,0.43s,19.55s,2m 42.45s,5m 15.80s,20m 14.43s,3m 24.18s,13m 17.53s
+lines,smt_output_line02000,4.43s,0.16s,5.84s,1.02s,1m 14.39s,6m 33.07s,19m 52.82s,55m 30.67s,11m 55.85s,50m 48.23s
+lines,smt_output_line05000,7.43s,0.21s,15.18s,2.50s,7m 7.25s,24m 10.23s,4h +,4h +,4h +,4h +
+lines,smt_output_line10000,11.13s,0.20s,40.57s,4.45s,27m 12.17s,1h 26m 32.70s,4h +,4h +,4h +,4h +
+threads,smt_output_fattree24pol_thread01,52.377s,1m 9.40s,2m 9.58s,1m 46.22s,34m 8.90s,2m 52.51s,33m 56.84s,39m 9.70s,4h +,4h +
+threads,smt_output_fattree24pol_thread04,52.377s,1m 7.13s,2m 9.46s,26.65s,8m 31.03s,42.26s,8m 31.71s,9m 48.22s,4h +,4h +
+threads,smt_output_fattree24pol_thread08,52.377s,1m 6.92s,2m 9.14s,13.70s,4m 15.61s,21.72s,4m 13.97s,4m 51.21s,4h +,4h +
+threads,smt_output_fattree24pol_thread12,52.377s,1m 6.39s,2m 9.35s,10.60s,3m 24.93s,16.86s,3m 24.05s,3m 53.38s,4h +,4h +
+threads,smt_output_fattree24pol_thread16,52.377s,1m 9.99s,2m 9.50s,9.90s,3m 13.35s,15.43s,3m 11.83s,3m 39.50s,4h +,4h +
+threads,smt_output_fattree24pol_thread20,52.377s,1m 4.22s,2m 9.02s,9.42s,3m 6.75s,14.67s,3m 6.59s,3m 30.49s,4h +,4h +

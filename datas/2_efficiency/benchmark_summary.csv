@@ -1,0 +1,41 @@
+benchmark,case,step1.0,step1.1,step1.2,step1.3,step1.4,step2.1,step2.2,step3.1,step3.2,step4.1,step4.2,field_non_empty,field_all,line_non_empty,line_all
+bics,smt_output_bics_0001,4.829s,0.21s,2.36s,0.43s,0s,1.93s,1.04s,1.84s,3.14s,13m 2.28s,31m 17.44s,49,811,70,319
+bics,smt_output_bics_0002,6.222s,0.22s,3.10s,0.58s,0s,1.48s,0.93s,1.56s,2.55s,14m 44.92s,36m 40.92s,40,811,66,319
+bics,smt_output_bics_0003,5.17s,0.24s,2.40s,0.42s,0s,1.72s,0.96s,1.77s,2.94s,8m 34.24s,17m 18.71s,26,811,59,319
+bics,smt_output_bics_0004,6.213s,0.24s,2.37s,0.38s,0s,1.89s,1.16s,1.76s,3.06s,10m 47.02s,26m 41.14s,28,811,60,319
+bics,smt_output_bics_0005,6.148s,0.25s,2.42s,0.38s,0s,1.62s,0.79s,1.53s,2.48s,13m 39.11s,27m 42.31s,28,811,60,319
+bics,smt_output_bics_0006,5.523s,0.26s,2.41s,0.40s,0s,1.84s,1.22s,2.07s,2.93s,12m 39.84s,29m 54.24s,26,811,59,319
+bics,smt_output_bics_0007,5.676s,0.26s,2.38s,0.40s,0s,1.83s,1.25s,1.89s,2.91s,10m 28.83s,25m 55.94s,27,811,59,319
+bics,smt_output_bics_0008,6.579s,0.25s,2.40s,0.40s,0s,1.72s,0.95s,1.80s,2.80s,11m 19.85s,24m 44.70s,23,811,56,319
+bics,smt_output_bics_0009,6.158s,0.24s,2.42s,0.40s,0s,1.68s,0.81s,1.64s,2.82s,9m 9.00s,21m 50.30s,34,811,67,319
+bics,smt_output_bics_0010,6.196s,0.20s,2.39s,0.40s,0s,1.73s,0.85s,1.66s,2.67s,10m 26.18s,26m 30.11s,32,811,65,319
+columbus,smt_output_columbus_0001,6.483s,0.60s,4.61s,0.66s,0s,1.77s,1.36s,1.75s,2.97s,4h+,4h+,59,1402,128,530
+columbus,smt_output_columbus_0002,5.617s,0.49s,4.56s,0.66s,0s,2.05s,1.31s,1.93s,3.18s,4h+,4h+,79,1402,129,530
+columbus,smt_output_columbus_0003,5.298s,0.51s,4.57s,0.67s,0s,1.78s,1.32s,1.70s,2.87s,4h+,4h+,74,1402,126,530
+columbus,smt_output_columbus_0004,5.007s,0.51s,4.55s,0.66s,0s,1.77s,1.27s,1.70s,3.03s,4h+,4h+,68,1402,121,530
+columbus,smt_output_columbus_0005,5.626s,0.59s,4.56s,0.65s,0s,1.96s,1.37s,1.97s,3.16s,4h+,4h+,60,1402,129,530
+columbus,smt_output_columbus_0006,5.004s,0.60s,4.68s,0.65s,0s,1.86s,1.35s,1.85s,2.96s,4h+,4h+,60,1402,130,530
+columbus,smt_output_columbus_0007,5.864s,0.63s,4.60s,0.67s,0s,1.84s,1.34s,1.83s,3.07s,4h+,4h+,62,1402,131,530
+columbus,smt_output_columbus_0008,5.253s,0.53s,4.59s,0.67s,0s,1.80s,1.33s,1.76s,2.84s,4h+,4h+,56,1402,126,530
+columbus,smt_output_columbus_0009,5.031s,0.51s,4.55s,0.66s,0s,1.81s,1.30s,1.77s,2.82s,4h+,4h+,57,1402,126,530
+columbus,smt_output_columbus_0010,5.244s,0.52s,4.56s,0.64s,0s,1.86s,1.36s,1.76s,2.91s,4h+,4h+,61,1402,131,530
+uscarrier,smt_output_uscarrier_0001,8.678s,2.14s,11.41s,1.22s,0s,2.71s,2.24s,2.53s,3.77s,4h+,4h+,81,1849,215,634
+uscarrier,smt_output_uscarrier_0002,9.693s,2.17s,11.52s,1.24s,0s,2.66s,2.24s,2.55s,3.63s,4h+,4h+,63,1849,211,634
+uscarrier,smt_output_uscarrier_0003,8.657s,2.24s,11.52s,1.23s,0s,2.66s,2.24s,2.55s,3.57s,4h+,4h+,57,1849,214,635
+uscarrier,smt_output_uscarrier_0004,9.223s,2.23s,11.49s,1.24s,0s,2.70s,2.28s,2.59s,3.70s,4h+,4h+,61,1849,218,639
+uscarrier,smt_output_uscarrier_0005,9.555s,2.28s,11.53s,1.24s,0s,2.66s,2.24s,2.57s,3.68s,4h+,4h+,56,1849,213,633
+uscarrier,smt_output_uscarrier_0006,8.734s,2.27s,11.70s,1.21s,0s,2.74s,2.33s,2.54s,3.65s,4h+,4h+,57,1849,214,636
+uscarrier,smt_output_uscarrier_0007,8.762s,2.29s,11.47s,1.24s,0s,2.73s,2.27s,2.61s,3.64s,4h+,4h+,60,1849,217,636
+uscarrier,smt_output_uscarrier_0008,9.229s,2.35s,11.47s,1.23s,0s,2.72s,2.27s,2.58s,3.63s,4h+,4h+,58,1849,215,636
+uscarrier,smt_output_uscarrier_0009,9.396s,2.39s,11.60s,1.22s,0s,2.72s,2.30s,2.55s,3.61s,4h+,4h+,59,1849,216,635
+uscarrier,smt_output_uscarrier_0010,8.819s,2.39s,11.51s,1.24s,0s,2.71s,2.29s,2.55s,3.67s,4h+,4h+,57,1849,214,635
+internet2,smt_output_0001,20.436s,0.15s,3m 22.55s,19.35s,16.29s,4m 41.45s,1m 14.27s,4h+,4h+,4h+,4h+,859,74413,869,15173
+internet2,smt_output_0002,13.739s,0.16s,3m 17.51s,30.66s,34.59s,3m 49.62s,1m 14.88s,4h+,4h+,4h+,4h+,859,74413,869,15173
+internet2,smt_output_0003,15.05s,0.16s,3m 16.40s,33.78s,33.05s,3m 56.97s,1m 14.94s,4h+,4h+,4h+,4h+,859,74413,869,15173
+internet2,smt_output_0004,13.458s,0.15s,3m 7.25s,44.90s,16.75s,3m 40.62s,1m 14.82s,4h+,4h+,4h+,4h+,859,74413,869,15173
+internet2,smt_output_0005,14.552s,0.16s,3m 15.31s,39.27s,41.63s,3m 49.86s,1m 13.38s,4h+,4h+,4h+,4h+,859,74413,869,15173
+internet2,smt_output_0006,15.655s,0.14s,3m 7.62s,41.17s,36.37s,3m 30.12s,1m 13.81s,4h+,4h+,4h+,4h+,859,74413,869,15173
+internet2,smt_output_0007,13.579s,0.15s,3m 14.23s,19.16s,16.12s,4m 22.45s,1m 14.52s,4h+,4h+,4h+,4h+,777,74413,787,15173
+internet2,smt_output_0008,16.216s,0.13s,3m 16.22s,24.24s,20.46s,4m 5.64s,1m 13.23s,4h+,4h+,4h+,4h+,656,74413,663,15173
+internet2,smt_output_0009,14.739s,0.15s,3m 17.12s,17.58s,16.30s,4m 46.50s,1m 14.62s,4h+,4h+,4h+,4h+,860,74413,870,15173
+internet2,smt_output_0010,15.649s,0.14s,3m 21.56s,38.98s,15.47s,3m 30.25s,1m 12.99s,4h+,4h+,4h+,4h+,706,74413,706,15173
