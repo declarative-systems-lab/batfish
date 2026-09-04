@@ -286,6 +286,9 @@ install_for_linux() {
         python3-pip
     install_python_dependencies
 
+    echo "[*] Installing Z3 ${Z3_VERSION} via apt ..."
+    sudo apt-get install -y "z3=${Z3_VERSION}"
+
     echo "[*] Installing Bazelisk ${BAZELISK_VERSION} ..."
     BAZELISK_URL="https://github.com/bazelbuild/bazelisk/releases/download/v${BAZELISK_VERSION}/bazelisk-linux-amd64"
     wget -O "${TEMP_DIR}/bazelisk" "${BAZELISK_URL}"
@@ -367,6 +370,9 @@ install_for_macos() {
 
     echo "[*] Installing Bazelisk ..."
     brew install bazelisk
+
+    echo "[*] Installing Z3 ${Z3_VERSION} via Homebrew ..."
+    brew install "z3@${Z3_VERSION}"
 
     echo "[*] Installing Z3 ${Z3_VERSION} CLI and JNI libraries ..."
     wget -O "${TEMP_DIR}/${Z3_BASENAME}.zip" "${Z3_URL}"
