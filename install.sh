@@ -1,20 +1,17 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+if ((EUID == 0)); then
+    echo "Error: Do not run install.sh as root or with sudo." >&2
+    echo "Run it as your normal user; the script invokes sudo when required." >&2
+    exit 1
+fi
+
 OS=$(uname -s)
 ARCH=$(uname -m)
 
-if [[ "${OS}" == "Darwin" ]]; then
-    if ! command -v greadlink >/dev/null 2>&1; then
-        if ! command -v brew >/dev/null 2>&1; then
-            echo "Error: Homebrew is required on macOS." >&2
-            exit 1
-        fi
-        brew install coreutils
-    fi
-    ROOT_DIR=$(dirname "$(greadlink -f "$0")")
-elif [[ "${OS}" == "Linux" ]]; then
-    ROOT_DIR=$(dirname "$(readlink -f "$0")")
+if [[ "${OS}" == "Darwin" || "${OS}" == "Linux" ]]; then
+    ROOT_DIR=$(cd "$(dirname "$0")" && pwd -P)
 else
     echo "Error: install.sh supports Linux and macOS only (detected ${OS})." >&2
     exit 1
@@ -22,8 +19,101 @@ fi
 
 SMT_PATH="${ROOT_DIR}/smts"
 BAZELRC_PATH="${ROOT_DIR}/.bazelrc"
+Z3_VERSION="4.14.0"
+Z3_LINUX_LIB_DIR="${HOME}/.local/lib/batfish/z3-${Z3_VERSION}"
 
 echo "Detected system: ${OS} (${ARCH})"
+
+update_managed_block() {
+    local file="$1"
+    local start_marker="$2"
+    local end_marker="$3"
+    local start_count end_count temp_file managed_line_1 managed_line_2
+    shift 3
+    managed_line_1="$1"
+    managed_line_2="$2"
+
+    touch "${file}"
+    start_count=$(awk -v marker="${start_marker}" '$0 == marker { count++ } END { print count + 0 }' "${file}")
+    end_count=$(awk -v marker="${end_marker}" '$0 == marker { count++ } END { print count + 0 }' "${file}")
+    if ((start_count != end_count || start_count > 1)); then
+        echo "Error: Invalid Batfish-managed block in ${file}." >&2
+        echo "Fix or remove the ${start_marker} / ${end_marker} markers and retry." >&2
+        exit 1
+    fi
+
+    temp_file=$(mktemp "${TEMP_DIR}/shell-profile.XXXXXX")
+    if ((start_count == 1)); then
+        awk -v start="${start_marker}" -v end="${end_marker}" \
+            -v managed1="${managed_line_1}" -v managed2="${managed_line_2}" '
+            $0 == start { skipping = 1; next }
+            $0 == end { skipping = 0; next }
+            $0 == managed1 || $0 == managed2 { next }
+            !skipping { print }
+        ' "${file}" >"${temp_file}"
+    else
+        awk -v managed1="${managed_line_1}" -v managed2="${managed_line_2}" '
+            $0 != managed1 && $0 != managed2 { print }
+        ' "${file}" >"${temp_file}"
+    fi
+
+    {
+        printf '\n%s\n' "${start_marker}"
+        printf '%s\n' "$@"
+        printf '%s\n' "${end_marker}"
+    } >>"${temp_file}"
+    cat "${temp_file}" >"${file}"
+}
+
+version_at_least() {
+    local current_major current_minor current_patch
+    local required_major required_minor required_patch
+
+    IFS=. read -r current_major current_minor current_patch <<<"$1"
+    IFS=. read -r required_major required_minor required_patch <<<"$2"
+    current_major=$((10#${current_major:-0}))
+    current_minor=$((10#${current_minor:-0}))
+    current_patch=$((10#${current_patch:-0}))
+    required_major=$((10#${required_major:-0}))
+    required_minor=$((10#${required_minor:-0}))
+    required_patch=$((10#${required_patch:-0}))
+
+    ((current_major > required_major ||
+        (current_major == required_major && current_minor > required_minor) ||
+        (current_major == required_major && current_minor == required_minor &&
+         current_patch >= required_patch)))
+}
+
+verify_sha256() {
+    local file="$1"
+    local expected="$2"
+    local actual
+
+    if command -v sha256sum >/dev/null 2>&1; then
+        actual=$(sha256sum "${file}" | awk '{print $1}')
+    elif command -v shasum >/dev/null 2>&1; then
+        actual=$(shasum -a 256 "${file}" | awk '{print $1}')
+    else
+        echo "Error: sha256sum or shasum is required to verify downloads." >&2
+        exit 1
+    fi
+
+    if [[ "${actual}" != "${expected}" ]]; then
+        echo "Error: SHA-256 mismatch for ${file}." >&2
+        echo "Expected: ${expected}" >&2
+        echo "Actual:   ${actual}" >&2
+        exit 1
+    fi
+}
+
+cleanup_temp_dir() {
+    local temp_dir="${TEMP_DIR:-}"
+
+    if [[ -n "${temp_dir}" && -d "${temp_dir}" &&
+        "${temp_dir}" == "${ROOT_DIR}"/.install-z3.* ]]; then
+        rm -rf -- "${temp_dir}"
+    fi
+}
 
 update_bazelrc_for_linux() {
     echo "[*] Updating Bazel configuration ..."
@@ -33,6 +123,10 @@ update_bazelrc_for_linux() {
 build --sandbox_writable_path=${SMT_PATH}/ \
       --action_env=SMT_DIRECTORY_PREFIX=${SMT_PATH}/ \
       --explicit_java_test_deps
+
+# Z3 JNI: load user-local native libraries
+test --test_env=JAVA_TOOL_OPTIONS=-Djava.library.path=${Z3_LINUX_LIB_DIR}
+test --test_env=LD_LIBRARY_PATH=${Z3_LINUX_LIB_DIR}
 EOF
 }
 
@@ -63,16 +157,30 @@ install_for_linux() {
         exit 1
     fi
 
-    TEMP_DIR=$(mktemp -d)
-    trap 'rm -rf "${TEMP_DIR}"' EXIT
+    local glibc_version
+    if ! glibc_version=$(getconf GNU_LIBC_VERSION 2>/dev/null | awk '{print $2}') ||
+        [[ -z "${glibc_version}" ]]; then
+        echo "Error: Unable to detect glibc; Z3 requires glibc 2.35 or newer." >&2
+        exit 1
+    fi
+    if ! version_at_least "${glibc_version}" "2.35"; then
+        echo "Error: Z3 ${Z3_VERSION} requires glibc 2.35 or newer" >&2
+        echo "       (detected glibc ${glibc_version})." >&2
+        exit 1
+    fi
+    echo "[*] Compatibility check passed: glibc ${glibc_version}"
+
+    TEMP_DIR=$(mktemp -d "${ROOT_DIR}/.install-z3.XXXXXX")
+    trap cleanup_temp_dir EXIT
 
     BAZELISK_VERSION="1.25.0"
     BAZELISK_URL="https://github.com/bazelbuild/bazelisk/releases/download/v${BAZELISK_VERSION}/bazelisk-linux-amd64"
+    BAZELISK_SHA256="fd8fdff418a1758887520fa42da7e6ae39aefc788cf5e7f7bb8db6934d279fc4"
 
-    Z3_VERSION="4.14.0"
     Z3_PLATFORM="x64-glibc-2.35"
     Z3_BASENAME="z3-${Z3_VERSION}-${Z3_PLATFORM}"
     Z3_URL="https://github.com/Z3Prover/z3/releases/download/z3-${Z3_VERSION}/${Z3_BASENAME}.zip"
+    Z3_SHA256="d83e50e3cc9fcf86efa55f8a4d43f37ddc5af4214acfa26066bb340e2047b582"
 
     echo "[*] Installing Linux dependencies ..."
     sudo apt-get update
@@ -87,24 +195,21 @@ install_for_linux() {
 
     echo "[*] Installing Bazelisk ${BAZELISK_VERSION} ..."
     wget -O "${TEMP_DIR}/bazelisk" "${BAZELISK_URL}"
+    verify_sha256 "${TEMP_DIR}/bazelisk" "${BAZELISK_SHA256}"
     sudo install -m 0755 "${TEMP_DIR}/bazelisk" /usr/local/bin/bazelisk
     sudo ln -sf /usr/local/bin/bazelisk /usr/local/bin/bazel
 
     echo "[*] Installing Z3 ${Z3_VERSION} ..."
     wget -O "${TEMP_DIR}/${Z3_BASENAME}.zip" "${Z3_URL}"
+    verify_sha256 "${TEMP_DIR}/${Z3_BASENAME}.zip" "${Z3_SHA256}"
     unzip -q "${TEMP_DIR}/${Z3_BASENAME}.zip" -d "${TEMP_DIR}"
-    sudo install -m 0755 "${TEMP_DIR}/${Z3_BASENAME}/bin/z3" /usr/bin/z3
-    sudo install -m 0755 "${TEMP_DIR}/${Z3_BASENAME}/bin/libz3.so" /usr/lib/libz3.so
-    sudo install -m 0755 \
+    mkdir -p "${Z3_LINUX_LIB_DIR}"
+    install -m 0755 \
+        "${TEMP_DIR}/${Z3_BASENAME}/bin/libz3.so" \
+        "${Z3_LINUX_LIB_DIR}/libz3.so"
+    install -m 0755 \
         "${TEMP_DIR}/${Z3_BASENAME}/bin/libz3java.so" \
-        /usr/lib/libz3java.so
-    sudo install -m 0644 \
-        "${TEMP_DIR}/${Z3_BASENAME}/bin/com.microsoft.z3.jar" \
-        /usr/lib/com.microsoft.z3.jar
-    sudo rsync -a "${TEMP_DIR}/${Z3_BASENAME}/include/" /usr/include/
-
-    echo "[*] Installing Jupyter Notebook ..."
-    sudo pip3 install notebook
+        "${Z3_LINUX_LIB_DIR}/libz3java.so"
 
     echo "[✓] Completed: Linux installation"
 }
@@ -115,30 +220,55 @@ install_for_macos() {
         exit 1
     fi
 
-    TEMP_DIR=$(mktemp -d)
-    trap 'rm -rf "${TEMP_DIR}"' EXIT
+    local macos_version
+    macos_version=$(sw_vers -productVersion)
+    if ! version_at_least "${macos_version}" "13.7.2"; then
+        echo "Error: Z3 ${Z3_VERSION} requires macOS 13.7.2 or newer" >&2
+        echo "       (detected macOS ${macos_version})." >&2
+        exit 1
+    fi
+    echo "[*] Compatibility check passed: macOS ${macos_version}"
 
-    Z3_VERSION="4.14.0"
+    TEMP_DIR=$(mktemp -d "${ROOT_DIR}/.install-z3.XXXXXX")
+    trap cleanup_temp_dir EXIT
+
     Z3_PLATFORM="arm64-osx-13.7.2"
     Z3_BASENAME="z3-${Z3_VERSION}-${Z3_PLATFORM}"
     Z3_URL="https://github.com/Z3Prover/z3/releases/download/z3-${Z3_VERSION}/${Z3_BASENAME}.zip"
-    Z3_BIN_DIR="/usr/local/bin"
-    Z3_INCLUDE_DIR="/usr/local/include"
-    Z3_LIB_DIR="/usr/local/lib"
+    Z3_SHA256="02c8879900625c28b400055f35e9407fd0c6ea3130154753fc4eae7c24dc0efd"
+    Z3_JAVA_EXTENSIONS="${HOME}/Library/Java/Extensions"
 
     echo "[*] Installing macOS dependencies ..."
 
     if ! command -v brew >/dev/null 2>&1; then
         echo "[*] Homebrew not found. Installing Homebrew ..."
         /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+        if [[ -x /opt/homebrew/bin/brew ]]; then
+            eval "$(/opt/homebrew/bin/brew shellenv)"
+        elif [[ -x /usr/local/bin/brew ]]; then
+            eval "$(/usr/local/bin/brew shellenv)"
+        else
+            echo "Error: Homebrew installation completed, but brew was not found." >&2
+            exit 1
+        fi
     fi
 
     echo "[*] Installing OpenJDK 11 ..."
     brew install openjdk@11
     JAVA_HOME="$(brew --prefix openjdk@11)/libexec/openjdk.jdk/Contents/Home"
     export PATH="${JAVA_HOME}/bin:${PATH}"
-    echo "export JAVA_HOME=${JAVA_HOME}" >>"${HOME}/.zshrc"
-    echo "export JAVA_HOME=${JAVA_HOME}" >>"${HOME}/.bashrc"
+    update_managed_block \
+        "${HOME}/.zshrc" \
+        "# BEGIN BATFISH JAVA" \
+        "# END BATFISH JAVA" \
+        "export JAVA_HOME=${JAVA_HOME}" \
+        'export PATH="${JAVA_HOME}/bin:${PATH}"'
+    update_managed_block \
+        "${HOME}/.bashrc" \
+        "# BEGIN BATFISH JAVA" \
+        "# END BATFISH JAVA" \
+        "export JAVA_HOME=${JAVA_HOME}" \
+        'export PATH="${JAVA_HOME}/bin:${PATH}"'
 
     echo "[*] Installing wget ..."
     brew install wget
@@ -148,35 +278,28 @@ install_for_macos() {
 
     echo "[*] Installing Bazelisk ..."
     brew install bazelisk
-    brew link --overwrite bazelisk
 
     echo "[*] Installing Z3 ${Z3_VERSION} ..."
     wget -O "${TEMP_DIR}/${Z3_BASENAME}.zip" "${Z3_URL}"
+    verify_sha256 "${TEMP_DIR}/${Z3_BASENAME}.zip" "${Z3_SHA256}"
     unzip -q "${TEMP_DIR}/${Z3_BASENAME}.zip" -d "${TEMP_DIR}"
-    sudo install -m 0755 "${TEMP_DIR}/${Z3_BASENAME}/bin/z3" "${Z3_BIN_DIR}/z3"
-    sudo install -m 0755 "${TEMP_DIR}/${Z3_BASENAME}/bin/libz3.dylib" "${Z3_LIB_DIR}/libz3.dylib"
-    sudo install -m 0755 \
-        "${TEMP_DIR}/${Z3_BASENAME}/bin/libz3java.dylib" \
-        "${Z3_LIB_DIR}/libz3java.dylib"
-    sudo install -m 0644 \
-        "${TEMP_DIR}/${Z3_BASENAME}/bin/com.microsoft.z3.jar" \
-        "${Z3_LIB_DIR}/com.microsoft.z3.jar"
-    sudo rsync -a "${TEMP_DIR}/${Z3_BASENAME}/include/" "${Z3_INCLUDE_DIR}/"
 
     echo "[*] Configuring Z3 JNI for macOS ..."
-    mkdir -p "${HOME}/Library/Java/Extensions"
-    cp -f "${Z3_LIB_DIR}/libz3.dylib" "${Z3_LIB_DIR}/libz3java.dylib" \
-        "${HOME}/Library/Java/Extensions/"
+    mkdir -p "${Z3_JAVA_EXTENSIONS}"
+    install -m 0755 \
+        "${TEMP_DIR}/${Z3_BASENAME}/bin/libz3.dylib" \
+        "${Z3_JAVA_EXTENSIONS}/libz3.dylib"
+    install -m 0755 \
+        "${TEMP_DIR}/${Z3_BASENAME}/bin/libz3java.dylib" \
+        "${Z3_JAVA_EXTENSIONS}/libz3java.dylib"
     install_name_tool -change libz3.dylib @loader_path/libz3.dylib \
-        "${HOME}/Library/Java/Extensions/libz3java.dylib"
-    sudo install_name_tool -change libz3.dylib @loader_path/libz3.dylib \
-        "${Z3_LIB_DIR}/libz3java.dylib"
-    if [[ -x "${ROOT_DIR}/tools/fix_z3_macos_gatekeeper.sh" ]]; then
-        "${ROOT_DIR}/tools/fix_z3_macos_gatekeeper.sh" || true
-    fi
+        "${Z3_JAVA_EXTENSIONS}/libz3java.dylib"
 
-    echo "[*] Installing Jupyter Notebook ..."
-    sudo pip3 install notebook
+    echo "[*] Signing Z3 JNI libraries for macOS ..."
+    codesign --force --sign - "${Z3_JAVA_EXTENSIONS}/libz3.dylib"
+    codesign --force --sign - "${Z3_JAVA_EXTENSIONS}/libz3java.dylib"
+    codesign --verify --strict "${Z3_JAVA_EXTENSIONS}/libz3.dylib"
+    codesign --verify --strict "${Z3_JAVA_EXTENSIONS}/libz3java.dylib"
 
     echo "[✓] Completed: macOS installation"
 }
