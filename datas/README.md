@@ -12,8 +12,8 @@ imports the local `utils` package and reads data from the following directories:
 
 Generated figures are written below `figs/`.
 
-For automated efficiency and scalability reproduction, including `fast` and
-`full` profiles, see the [artifact evaluation guide](../artifact/README.md).
+For automated reproduction with the `lite`, `fast`, and `full` profiles, see
+the [artifact evaluation guide](../artifact/README.md).
 
 ## Run locally with JupyterLab
 

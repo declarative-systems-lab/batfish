@@ -188,6 +188,8 @@ install_for_linux() {
         ca-certificates \
         openjdk-11-jdk \
         python3 \
+        python3-matplotlib \
+        python3-numpy \
         python3-pip \
         rsync \
         unzip \
@@ -275,6 +277,9 @@ install_for_macos() {
 
     echo "[*] Installing Python 3 ..."
     brew install python3
+
+    echo "[*] Installing artifact plotting dependencies ..."
+    brew install numpy python-matplotlib
 
     echo "[*] Installing Bazelisk ..."
     brew install bazelisk

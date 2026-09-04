@@ -37,14 +37,9 @@ python3 run_benchmark.py benchmarks/FatTrees/fattree4pol
 This smoke test uses the standard runner defaults. The reproduction scripts
 below use the thread count and timeout selected in `artifact/config.json`.
 
-The experiment scripts require Matplotlib and NumPy to generate figures. An
-isolated environment can be created with:
-
-```bash
-python3 -m venv datas/.venv
-datas/.venv/bin/python -m pip install --upgrade pip
-datas/.venv/bin/python -m pip install matplotlib numpy pandas
-```
+The installer also installs NumPy and Matplotlib, which the artifact scripts
+use to generate figures. Jupyter and pandas remain optional dependencies for
+the analysis notebook and are documented separately.
 
 The installer and supported operating systems are documented in the main
 [`README.md`](../README.md). Notebook-based analysis is documented in
@@ -66,6 +61,9 @@ The profiles are defined in `artifact/config.json`:
 - `lite`: 20 device threads and a 10-minute timeout for each workflow
 - `fast`: 20 device threads and a 30-minute timeout for each workflow
 - `full`: 20 device threads and a four-hour timeout for each workflow
+
+The `lite` profile is available for the smoke and efficiency runners. The
+scalability runners accept `fast` or `full`.
 
 The router and prefix scalability experiments use the configured thread count.
 The thread scalability experiment instead evaluates 1, 4, 8, 12, 16, and 20
@@ -146,6 +144,7 @@ make the estimates upper-bound oriented.
 SubSpec, NoScope, and FullSym workflows.
 
 - `fast`: property 1 from each benchmark
+- `lite`: property 1 from each benchmark with a 10-minute workflow timeout
 - `full`: all ten properties from each benchmark
 - Figure: `efficiency.png` and `efficiency.pdf`
 
@@ -191,6 +190,7 @@ Each run uses a timestamped directory and does not overwrite bundled results:
 ```text
 artifact/results/efficiency/<profile>-<timestamp>/
 artifact/results/scalability/<experiment>-<profile>-<timestamp>/
+artifact/results/smoke/lite-<timestamp>/
 ```
 
 Each result directory contains:

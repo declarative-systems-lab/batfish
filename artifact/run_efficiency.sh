@@ -37,7 +37,9 @@ else
 fi
 
 if ! "${PLOT_PYTHON}" -c 'import matplotlib' >/dev/null 2>&1; then
-    echo "[!] Plotting requires matplotlib. See datas/README.md for setup." >&2
+    echo "[!] Missing artifact plotting dependency: Matplotlib." >&2
+    echo "[!] Run './install.sh' from the repository root, then retry." >&2
+    echo "[!] Python interpreter: ${PLOT_PYTHON}" >&2
     exit 1
 fi
 
@@ -92,11 +94,15 @@ fi
 SUMMARY_CSV="${RESULT_DIR}/benchmark_summary.csv"
 awk 'FNR == 1 && NR != 1 { next } { print }' "${reports[@]}" > "${SUMMARY_CSV}"
 
-"${PLOT_PYTHON}" "${ROOT_DIR}/datas/plot_efficiency.py" \
+if ! "${PLOT_PYTHON}" "${ROOT_DIR}/datas/plot_efficiency.py" \
     --input "${SUMMARY_CSV}" \
     --output-dir "${RESULT_DIR}/figures" \
     --timeout-seconds "${TIMEOUT_SECONDS}" \
-    --mode "${MODE}"
+    --mode "${MODE}"; then
+    echo "[!] Failed to generate the efficiency figures." >&2
+    echo "[!] Timing data remain available at: ${SUMMARY_CSV}" >&2
+    exit 1
+fi
 
 if ((${#failures[@]} > 0)); then
     echo "[!] Some runs failed or timed out: ${failures[*]}" >&2

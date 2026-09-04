@@ -67,7 +67,9 @@ else
     PLOT_PYTHON=python3
 fi
 if ! "${PLOT_PYTHON}" -c 'import matplotlib, numpy' >/dev/null 2>&1; then
-    echo "[!] Plotting requires matplotlib and numpy. See datas/README.md." >&2
+    echo "[!] Missing artifact plotting dependencies: NumPy or Matplotlib." >&2
+    echo "[!] Run './install.sh' from the repository root, then retry." >&2
+    echo "[!] Python interpreter: ${PLOT_PYTHON}" >&2
     exit 1
 fi
 
@@ -132,12 +134,16 @@ if ((report_count == 0)); then
     exit 1
 fi
 
-"${PLOT_PYTHON}" "${ROOT_DIR}/datas/plot_scalability.py" \
+if ! "${PLOT_PYTHON}" "${ROOT_DIR}/datas/plot_scalability.py" \
     --input "${SUMMARY_CSV}" \
     --dataset "${BENCHMARK}" \
     --timeout-seconds "${TIMEOUT_SECONDS}" \
     --mode "${MODE}" \
-    --output-dir "${RESULT_DIR}/figures"
+    --output-dir "${RESULT_DIR}/figures"; then
+    echo "[!] Failed to generate the ${EXPERIMENT} scalability figures." >&2
+    echo "[!] Timing data remain available at: ${SUMMARY_CSV}" >&2
+    exit 1
+fi
 
 if ((${#failures[@]} > 0)); then
     echo "[!] Some points failed or timed out: ${failures[*]}" >&2

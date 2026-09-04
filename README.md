@@ -28,9 +28,9 @@ Other Debian/Ubuntu-based Linux distributions may work if they provide
 `apt-get` and glibc 2.35 or newer, but they have not been tested.
 
 The installer configures `.bazelrc` and installs OpenJDK 11, Bazelisk, Python 3,
-and the Z3 native libraries. On macOS, Homebrew is installed automatically if
-needed. Run the script as a normal user; it requests elevated access only when
-required.
+NumPy, Matplotlib, and the Z3 native libraries. On macOS, Homebrew is installed
+automatically if needed. Run the script as a normal user; it requests elevated
+access only when required.
 
 ### Benchmark
 
@@ -90,9 +90,9 @@ See the [user study instructions](user-study/README.md) and the
 
 ## Artifact Evaluation
 
-The [artifact evaluation guide](artifact/README.md) provides `fast` and `full`
-reproduction commands for the efficiency and scalability results. The scripts
-collect timing data and generate the corresponding PNG and PDF figures.
+The [artifact evaluation guide](artifact/README.md) provides `lite`, `fast`, and
+`full` reproduction commands for the efficiency and scalability results. The
+scripts collect timing data and generate the corresponding PNG and PDF figures.
 
 For a short end-to-end artifact check, run:
 
