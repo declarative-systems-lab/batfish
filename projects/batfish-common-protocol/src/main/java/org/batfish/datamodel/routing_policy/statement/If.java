@@ -174,9 +174,11 @@ public class If extends Statement {
       simpleFalseStatementsBuilder.addAll(falseStatement.simplify());
     }
     List<Statement> simpleFalseStatements = simpleFalseStatementsBuilder.build();
-    if (simpleGuard.equals(BooleanExprs.TRUE)) {
+    // Keep route-map clause identities available to concrete policy tracing.
+    boolean preserveClause = getComment() != null && getComment().startsWith("~RMCLAUSE~");
+    if (simpleGuard.equals(BooleanExprs.TRUE) && !preserveClause) {
       _simplified = simpleTrueStatements;
-    } else if (simpleGuard.equals(BooleanExprs.FALSE)) {
+    } else if (simpleGuard.equals(BooleanExprs.FALSE) && !preserveClause) {
       _simplified = simpleFalseStatements;
       // TODO: allow following simplification only if guard is pure
       // } else if (simpleTrueStatements.isEmpty() && simpleFalseStatements.isEmpty()) {

@@ -324,6 +324,13 @@ final class OspfRoutingProcess implements RoutingProcess<OspfTopology, OspfRoute
     return _ospfRib.getTypedRoutes();
   }
 
+  /** Returns a read-only snapshot of routes selected by each OSPF route-type RIB. */
+  Set<OspfRoute> getProtocolRoutes() {
+    return Stream.of(_intraAreaRib, _interAreaRib, _internalSummaryRib, _type1Rib, _type2Rib)
+        .flatMap(rib -> rib.getTypedRoutes().stream())
+        .collect(ImmutableSet.toImmutableSet());
+  }
+
   @Override
   public void redistribute(RibDelta<? extends AnnotatedRoute<AbstractRoute>> mainRibDelta) {
     _queuedForRedistribution = computeRedistributionDelta(mainRibDelta);
